@@ -115,6 +115,9 @@ int echo()
     fprintf(stderr,"%d nonbonded pairs.\n",nnbp);
 }
 
+int make_exclude_list()
+{}
+
 int velinit()
 {
     int ii, jj, kk;

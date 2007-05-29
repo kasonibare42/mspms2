@@ -14,6 +14,7 @@
 #define ndih_max	2000
 #define nimp_max	2000
 #define nnbp_max	2000
+#define exclude_max	4000
 #define Rgas		8.314472 /* J/mol/K */
 #define rRgas		0.120272219 /* reciprocal of Rgas */
 
@@ -39,6 +40,8 @@ int dih_type[nbond_max];
 float c1[nbond_max], c2[nbond_max], c3[nbond_max], c4[nbond_max];
 int imp_idx[nimp_max][4];
 int nbp_idx[nnbp_max][2];
+int excllist[exclude_max];
+int pointexcl[natom_max+1]; // the index of exclude list starts and ends
 
 char sysname[200];
 
@@ -53,10 +56,11 @@ float boxlx, boxly, boxlz; /* box size */
 int nconstraint; // constraint, 3 for periodic, 6 for aperiodic
 
 
-/* energies */
 float upot, ukin;
 
 int nfree; // freedom
 float tinst; // instantaneous temperature
+
+
 
 #endif /* VARS_H */
