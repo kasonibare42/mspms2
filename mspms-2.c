@@ -32,6 +32,9 @@ int init_vars()
 
     // calculate the degree of freedom
     nfree = 3*natom - nconstraint;
+    
+    // cutoff square
+    rcutoffsq = rcutoff*rcutoff;
 }
 
 /* Read in input and config files */
@@ -68,8 +71,8 @@ int readins()
     fscanf(fpcfg, "%d bonds\n", &nbond);
     assert(nbond<=nbond_max);
     for (ii=0;ii<nbond;ii++)
-	fscanf(fpcfg,"%d %d %d %f %f\n",&bond_idx[ii][0],&bond_idx[ii][1],
-		&bond_type[ii],&Kb[ii],&Req[ii]);
+	fscanf(fpcfg,"%d %d %d %f %f %f\n",&bond_idx[ii][0],&bond_idx[ii][1],
+		&bond_type[ii],&Kb[ii],&Req[ii],&alpha[ii]);
 
     // read in angle list
     fscanf(fpcfg, "%d angles\n", &nangle);

@@ -5,6 +5,20 @@
 #define OUTPUT		"out.mspms"
 #define CONFIG		"cfg.mspms"
 
+#define true		1
+#define false		0
+#define not_ghost	0
+#define lj_ghost	1
+#define all_ghost	2
+
+#define bond_none		0
+#define bond_harmonic		1
+#define bond_morse		2
+#define bond_fene		3
+
+#define angle_none		0
+#define angle_harmonic		1
+#define angle_TRwater		2  // Toukan and Rahman water potentials
 
 #define nspecie_max	3
 #define nmole_max	1000
@@ -31,7 +45,7 @@ int tasostype[natom_max]; /* atom type for tasos interpolation */
 int nbond, nangle, ndih, nimp, nnbp;
 int bond_idx[nbond_max][2];
 int bond_type[nbond_max]; 
-float Kb[nbond_max], Req[nbond_max];
+float Kb[nbond_max], Req[nbond_max], alpha[nbond_max];
 int angle_idx[nangle_max][3];
 int angle_type[nangle_max];
 float Ktheta[nbond_max], Thetaeq[nbond_max];
@@ -54,9 +68,12 @@ int ij, jk;
 float treq, preq; /* input required temperature, pressure */
 float boxlx, boxly, boxlz; /* box size */
 int nconstraint; // constraint, 3 for periodic, 6 for aperiodic
+float rcutoff, rcutoffsq;
 
 
 float upot, ukin;
+float uvdw; // van der wall energy, LJ energy
+float ubond, uangle, udih, uimp;
 
 int nfree; // freedom
 float tinst; // instantaneous temperature
