@@ -116,7 +116,77 @@ int echo()
 }
 
 int make_exclude_list()
-{}
+{
+    int ii, jj, nexcllist;
+    nexcllist = 0;
+
+    for (ii=0;ii<natom;ii++)
+    {
+	pointexcl[ii] = nexcllist;
+       	// exclude bonded atoms
+	for (jj=0;jj<nbond;jj++)
+	{
+	    if (bond_idx[jj][0] == ii)
+	    {
+		excllist[nexcllist] = bond_idx[jj][1];
+		nexcllist++;
+	    }
+	    else if (bond_idx[jj][1] == ii)
+	    {
+		excllist[nexcllist] = bond_idx[jj][0];
+		nexcllist++;
+	    }
+	    assert(nexcllist<exclude_max);
+	}
+       	// exclude angled atoms
+	for (jj=0;jj<nangle;jj++)
+	{
+	    if (angle_idx[jj][0] == ii)
+	    {
+		excllist[nexcllist] = angle_idx[jj][2];
+		nexcllist++;
+	    }
+	    else if (angle_idx[jj][2] == ii)
+	    {
+		excllist[nexcllist] = angle_idx[jj][0];
+		nexcllist++;
+	    }
+	    assert(nexcllist<exclude_max);
+	}
+	// exclude dihedraled atoms
+	for (jj=0;jj<ndih;jj++)
+	{
+	    if (dih_idx[jj][0] == ii)
+	    {
+		excllist[nexcllist] = dih_idx[jj][3];
+		nexcllist++;
+	    }
+	    else if (dih_idx[jj][3] == ii)
+	    {
+		excllist[nexcllist] = dih_idx[jj][0];
+		nexcllist++;
+	    }
+	    assert(nexcllist<exclude_max);
+	}
+    }
+    pointexcl[natom] = nexcllist;
+
+    // check the exclude list
+    /*
+    printf("n = %d\n",nexcllist);
+    int tmp = 0;
+    for (ii=0;ii<natom;ii++)
+    {
+	printf("%d ",ii);
+	for (jj=pointexcl[ii];jj<pointexcl[ii+1];jj++)
+	{
+	    printf("%d ",excllist[tmp]);
+	    tmp++;
+	}
+	printf("\n");
+    }
+    */
+}
 
 int velinit()
 {
@@ -190,6 +260,8 @@ int main (int argc, char *argv[])
     echo();
 
     velinit();
+
+    make_exclude_list();
 
 }
 
