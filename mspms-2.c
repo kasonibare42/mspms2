@@ -20,7 +20,7 @@
 /* Initiate variables */
 int init_vars()
 {
-    int ii;
+    int ii, jj;
     /* change atom weight unit from g/mol to kg/mol for future calculations */
     for (ii=0;ii<natom;ii++)
 	aw[ii] *= 0.001;
@@ -32,10 +32,59 @@ int init_vars()
 
     // calculate the degree of freedom
     nfree = 3*natom - nconstraint;
-    
+
     // cutoff square
     rcutoffsq = rcutoff*rcutoff;
     rcutoffelecsq = rcutoffelec*rcutoffelec;
+
+    // check unique for dihedrals
+    // this is for possible ring structures where 1,4 atoms can form multiple dihedrals
+    // e.g. 1-2-3-4
+    //       \5-6/
+    // 1234 and 1564
+    // The 14 pair should only be calculated once for energy/force
+    // Thats the unique check for
+    for (ii=0;ii<ndih;ii++)
+	isDih_unique[ii] = true;
+
+    for (ii=0;ii<ndih-1;ii++)
+    {
+	if (isDih_unique[ii])
+	{
+	    for (jj=ii;jj<ndih;jj++)
+	    {
+		if (isDih_unique[jj])
+		{
+		    if (dih_idx[ii][0]==dih_idx[jj][0] && dih_idx[ii][3]==dih_idx[jj][3])
+			isDih_unique[jj] = false;
+		    else if (dih_idx[ii][0]==dih_idx[jj][3] && dih_idx[ii][3]==dih_idx[jj][0])
+			isDih_unique[jj] = false;
+		}
+	    }
+	}
+    }
+
+    // check unique for angles
+    // see above comments for dihedrals
+    for (ii=0;ii<nangle;ii++)
+	isAngle_unique[ii] = true;
+
+    for (ii=0;ii<nangle-1;ii++)
+    {
+	if (isAngle_unique[ii])
+	{
+	    for (jj=ii;jj<nangle;jj++)
+	    {
+		if (isAngle_unique[jj])
+		{
+		    if (angle_idx[ii][0]==angle_idx[jj][0] && angle_idx[ii][2]==angle_idx[jj][2])
+			isAngle_unique[jj] = false;
+		    else if (angle_idx[ii][0]==angle_idx[jj][2] && angle_idx[ii][2]==angle_idx[jj][0])
+			isAngle_unique[jj] = false;
+		}
+	    }
+	}
+    }
 }
 
 /* Read in input and config files */
@@ -47,11 +96,13 @@ int readins()
 
     /* read input file */
     fpins = fopen(INPUT,"r");
-    
+
     sscanf(fgets(buffer,datalen,fpins), "%d %d", &ij, &jk);
     sscanf(fgets(buffer,datalen,fpins), "%f", &treq);
     sscanf(fgets(buffer,datalen,fpins), "%d", &nconstraint);
-    
+
+    // f0  1,4 modifier
+
 
     fclose(fpins);
 
@@ -127,7 +178,7 @@ int make_exclude_list()
     for (ii=0;ii<natom;ii++)
     {
 	pointexcl[ii] = nexcllist;
-       	// exclude bonded atoms
+	// exclude bonded atoms
 	for (jj=0;jj<nbond;jj++)
 	{
 	    if (bond_idx[jj][0] == ii)
@@ -142,7 +193,7 @@ int make_exclude_list()
 	    }
 	    assert(nexcllist<exclude_max);
 	}
-       	// exclude angled atoms
+	// exclude angled atoms
 	for (jj=0;jj<nangle;jj++)
 	{
 	    if (angle_idx[jj][0] == ii)
@@ -177,19 +228,19 @@ int make_exclude_list()
 
     // check the exclude list
     /*
-    printf("n = %d\n",nexcllist);
-    int tmp = 0;
-    for (ii=0;ii<natom;ii++)
-    {
-	printf("%d ",ii);
-	for (jj=pointexcl[ii];jj<pointexcl[ii+1];jj++)
-	{
-	    printf("%d ",excllist[tmp]);
-	    tmp++;
-	}
-	printf("\n");
-    }
-    */
+       printf("n = %d\n",nexcllist);
+       int tmp = 0;
+       for (ii=0;ii<natom;ii++)
+       {
+       printf("%d ",ii);
+       for (jj=pointexcl[ii];jj<pointexcl[ii+1];jj++)
+       {
+       printf("%d ",excllist[tmp]);
+       tmp++;
+       }
+       printf("\n");
+       }
+     */
 }
 
 int velinit()
