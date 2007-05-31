@@ -35,6 +35,7 @@ int init_vars()
     
     // cutoff square
     rcutoffsq = rcutoff*rcutoff;
+    rcutoffelecsq = rcutoffelec*rcutoffelec;
 }
 
 /* Read in input and config files */

@@ -68,7 +68,8 @@ int ij, jk;
 float treq, preq; /* input required temperature, pressure */
 float boxlx, boxly, boxlz; /* box size */
 int nconstraint; // constraint, 3 for periodic, 6 for aperiodic
-float rcutoff, rcutoffsq;
+float rcutoff, rcutoffsq, rcuton, rcutonsq;
+float rcutoffelec, rcutoffelecsq;
 
 
 float upot, ukin;
