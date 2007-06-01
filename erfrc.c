@@ -91,7 +91,7 @@ int loop_ij()
 		}
 
 		// electrostatic part
-		if (isChargeOn && rijsq<rcutoffelecsq)
+		if (isEwaldOn && rijsq<rcutoffelecsq)
 		{
 		    uij_real_temp = chargei*charge[jj]/rij;
 		    uij_real += uij_real_temp*erfc(kappa*rij); // real part ewald energy, still need 1/4*pi*epsilon0
@@ -189,7 +189,7 @@ int loop_14()
 	    } // rcutoffsq
 
 	    // electrostatic part
-	    if (isChargeOn && rijsq<rcutoffelecsq)
+	    if (isEwaldOn && rijsq<rcutoffelecsq)
 	    {
 		uij_real14_temp = charge[ii1]*charge[ii2]/rij;
 		uij_real14 += uij_real14_temp*erfc(kappa*rij); // real part ewald energy, still need 1/4*pi*epsilon0
@@ -232,6 +232,7 @@ int loop_13()
     float rxij_old, ryij_old, rzij_old;
     float temp1, temp2, temp3;
 
+    uij_excl_13 = 0.0;
     uij_vdw13img = 0.0;
     uij_real13 = 0.0;
 
@@ -249,16 +250,18 @@ int loop_13()
 	    ryij_old = ryij;
 	    rzij_old = rzij;
 
-	    if (isChargeOn) // if we need charge interactions
+	    if (isEwaldOn) // if we need charge interactions
 	    {
 		// calcualte the exculde ewald part, which use the raw distance between ii,jj
 		// so no minimum image convention here
 		rijsq = rxij*rxij + ryij*ryij + rzij*rzij;
 		rij = sqrt(rijsq);
 		temp2 = charge[ii1]*charge[ii2]/rij; // still need constant
-		uij_excl_13 += temp2;
+		uij_excl_13 += temp2; // still need constant
 		// forces
-		fij = -const_columb*temp2/rijsq;
+		fij = -const_columb*temp2/rijsq; // NOTE: the negative sign here
+		// The above negative sign is because these forces are meant to be
+		// substracted from the total forces. Not additive.
 		fxij = fij*rxij;
 		fyij = fij*ryij;
 		fzij = fij*rzij;
@@ -341,12 +344,187 @@ int loop_13()
     } // nangle loop
 
     // add into total energy
+    uexcl += uij_excl_13; // still need constant
     uvdw += uij_vdw13img; // still need 4.0
     ureal += uij_real13; // still need constant
 }
 
 int loop_12()
-{}
+{
+    int ii;
+    int ii1, ii2;
+    float rxij, ryij, rzij;
+    float rijsq, rij, r_rijsq;
+    float r_r6, r_r12, r_r12_minus_r_r6;
+    float sigmaij, epsilonij;
+    float fij, fxij, fyij, fzij;
+    float uij_vdw12img, uij_vdw12img_temp;
+    float uij_real12, uij_real12_temp;
+    float uij_excl_12;
+    float rxij_old, ryij_old, rzij_old;
+    float temp1, temp2, temp3;
+
+    uij_excl_12 = 0.0;
+    uij_vdw12img = 0.0;
+    uij_real12 = 0.0;
+
+    for (ii=0;ii<nbond;ii++)
+    {
+	ii1 = bond_idx[ii][0];
+	ii2 = bond_idx[ii][1];
+	rxij = xx[ii1] - xx[ii2];
+	ryij = yy[ii1] - yy[ii2];
+	rzij = zz[ii1] - zz[ii2];
+	// save the old positions
+	rxij_old = rxij;
+	ryij_old = ryij;
+	rzij_old = rzij;
+
+	if (isEwaldOn) // if ewald is needed
+	{
+	    // calculate the exclude ewald part, which uses the raw distance between atom
+	    // ii and jj, no minimum image convention
+	    rijsq = rxij*rxij + ryij*ryij + rzij*rzij;
+	    rij = sqrt(rijsq);
+	    temp2 = charge[ii1]*charge[ii2]/rij; // still need constant
+	    uij_excl_12 += temp2; // still need constant
+	    // forces
+	    fij = -const_columb*temp2/rijsq; // NOTE: the negative sign here, see comments for 1,3
+	    fxij = fij*rxij;
+	    fyij = fij*ryij;
+	    fzij = fij*rzij;
+	    fxl[ii1] += fxij;
+	    fyl[ii1] += fyij;
+	    fzl[ii1] += fzij;
+	    fxl[ii2] -= fxij;
+	    fyl[ii2] -= fyij;
+	    fzl[ii2] -= fzij;
+
+	    // calculate the real part of ewald summation
+	    // minimum image convetion now
+	    rxij = rxij - boxlx*rint(rxij/boxlx);
+	    ryij = ryij - boxly*rint(ryij/boxly);
+	    rzij = rzij - boxlz*rint(rzij/boxlz);
+	    rijsq = rxij*rxij + ryij*ryij + rzij*rzij;
+	    if (rijsq<rcutoffelecsq) // elec cutoff
+	    {
+		rij = sqrt(rijsq);
+		temp1 = kappa*rij;
+		temp2 = charge[ii1]*charge[ii2]/rij;
+		temp3 = temp2*erfc(temp1);
+		uij_real12 += temp3; // still need constant
+		// forces
+		fij = (temp3+temp2*2.0*temp1*exp(-temp1*temp1)/sqrt(pi))*const_columb/rijsq;
+		fxij = fij*rxij;
+		fyij = fij*ryij;
+		fzij = fij*rzij;
+		// force on atom ii
+		fxl[ii1] += fxij;
+		fyl[ii1] += fyij;
+		fzl[ii1] += fzij;
+		// force on atom jj
+		fxl[ii2] -= fxij;
+		fyl[ii2] -= fyij;
+		fzl[ii2] -= fzij;
+	    } // rcutoffelecsq
+	} // if ewald is needed
+
+	// check if 1,2 distance < 1,2' distance
+	// if it is true, no LJ needed
+	// otherwise, calculate the LJ between 1 and 2'
+	// use old rxij_old to make the check since the rxij could be modified in ewald
+	// part if ewald is on
+	if (fabs(rxij_old)>boxlx/2.0 || fabs(ryij_old)>boxly/2.0 || fabs(rzij_old)>boxlz/2.0)
+	{
+	    // minimum image convention, see more comments in 1,3 calculations
+	    rxij = rxij - boxlx*rint(rxij/boxlx);
+	    ryij = ryij - boxly*rint(ryij/boxly);
+	    rzij = rzij - boxlz*rint(rzij/boxlz);
+	    rijsq = rxij*rxij + ryij*ryij + rzij*rzij;
+	    if (rijsq<rcutoffsq) // LJ cutoff
+	    {
+		rij = sqrt(rijsq);
+		sigmaij = 0.5*(sigma[ii1]+sigma[ii2]);
+		epsilonij = sqrt(epsilon[ii1]*epsilon[ii2]);
+		r_rijsq = sigmaij*sigmaij/rijsq;
+		r_r6 = r_rijsq*r_rijsq*r_rijsq;
+		r_r12 = r_r6*r_r6;
+		r_r12_minus_r_r6 = r_r12 - r_r6;
+		uij_vdw12img_temp = epsilonij*r_r12_minus_r_r6; // still need *4.0
+		uij_vdw12img += uij_vdw12img_temp; // still need *4.0
+		// calculate LJ forces
+		fij = epsilonij*(r_r12_minus_r_r6+r_r12)/rijsq;
+		fxij = 24.0*fij*rxij;
+		fyij = 24.0*fij*ryij;
+		fzij = 24.0*fij*rzij;
+		// force on atom ii1
+		fxl[ii1] += fxij;
+		fyl[ii1] += fyij;
+		fzl[ii1] += fzij;
+		// force on atom ii2
+		fxl[ii2] -= fxij;
+		fyl[ii2] -= fyij;
+		fzl[ii2] -= fzij;
+	    } // rcutoffsq
+	} if 13 > 13'
+    } // nbond loop
+
+    // add into total energy
+    uexcl += uij_excl_12; // still need constant
+    uvdw += uij_vdw12img; // still need 4.0
+    ureal += uij_real12; // still need constant
+}
+
+int ewald_fourier_and_self()
+{
+    int kx, ky, kz;
+    int ksq;
+
+    for (kx=-KMAXX;kx<=KMAXX;kx++) // NOTE: <=
+    {
+	for (ky=-KMAXY;ky<=KMAXY;ky++) // <= 
+	{
+	    for (kz=-KMAXZ;kz<=KMAXZ;kz++) // <=
+	    {
+		ksq = kx*kx + ky*ky + kz*kz;
+		if (ksq<=KSQMAX && ksq!=0)
+		{
+		    rkx = TWOPI_LX*kx;
+		    rky = TWOPI_LY*ky;
+		    rkz = TWOPI_LZ*kz;
+		    rksq = rkx*rkx + rky*rky + rkz*rkz;
+		    kvec = exp(-Bfactor_ewald*rksq)/rksq;
+		    // calculate |rho(k)|^2 = sr*sr + si*si
+		    sr = 0.0;
+		    si = 0.0;
+		    for (ii=0;ii<natom;ii++)
+		    {
+		       	t = rkx*xx[ii] + rky*yy[ii] + rkz*zz[ii];   
+			sr = sr + charge[ii]*cos(t);
+		       	si = si + charge[ii]*sin(t);
+		    }
+		    ufourier += kvec*(sr*sr+si*si);
+		    // forces
+		    for (ii=0;ii<natom;ii++)
+		    {
+			t = rkx*xx[ii] + rky*yy[ii] + rkz*zz[ii];
+			fij = 2.0*charge[ii]*(sr*sin(t)-si*cos(t))*Vfactor_ewald*kvec*const_columb;
+			fxl[ii] += fij*rkx;
+			fyl[ii] += fij*rky;
+			fzl[ii] += fij*rkz;
+		    }
+		} // if (ksq<=KSQMAX && ksq!=0)
+	    } // KMAXZ
+	} // KMAXY
+    } // KMAXX
+    // total fourier energy part of ewald
+    ufourier = ufourier*Vfactor_ewald*const_columb;
+
+    // self interaction corrections, constant, so no forces
+    for (ii=0;ii<natom;ii++)
+	uself += charge[ii]*charge[ii];
+    uself = uself*const_columb*sqrt(kappa*kappa/pi);
+}
 
 int erfrc()
 {
@@ -355,15 +533,29 @@ int erfrc()
     // zero energies
     uvdw = 0.0;
     ureal = 0.0;
+    uexcl = 0.0;
+    ufourier = 0.0;
+    uself = 0.0;
 
     // zero forces
     for (ii=0;ii<natom;ii++)
 	fxl[ii] = fyl[ii] = fzl[ii] = 0.0;
 
-    // make different functions for ii,jj loop
-    // 1-4 loop, 1-3 loop and 1-2 loop
-
+    // i-j loop, 1-4 loop, 1-3 loop and 1-2 loop
     loop_ij();
     loop_14();
+    loop_13();
+    loop_12();
     // add 4.0 and constant to LJ and real part ewald energy
+    uvdw *= 4.0;
+    ureal *= const_columb;
+    uexcl *= const_columb;
+
+    if (isEwaldOn) // if ewald is on, calculate the fourier and self correction parts
+	ewald_fourier_and_self();
+
+    // total ewald energy
+    uewald = ureal + ufourier - uself - uexcl;
 }
+
+

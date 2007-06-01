@@ -76,7 +76,10 @@ float rcutoff, rcutoffsq, rcuton, rcutonsq;
 float rcutoffelec, rcutoffelecsq;
 float kappa; // sqrt(alpha) in ewald summation. 
 float f0; // 1,4 LJ potential modifier for OPLS, set to 1.0 for no modification or 0.5 for OPLS or 0.0 for TraPPE.
-int isChargeOn; // switch for electrostatic interaction
+int isEwaldOn; // switch for Ewald summation electrostatic interactions
+int isWolfOn; // switch of wolf method for electrostatic interactions
+int KMAXX, KMAXY, KMAXZ; // ewald parameters
+int KSQMAX; // ewald parameter
 
 
 
@@ -91,6 +94,9 @@ float uexcl; // excluding energy for ewald summation
 
 int nfree; // freedom
 float tinst; // instantaneous temperature
+
+float TWOPI_LX, TWOPI_LY, TWOPI_LZ; // ewald
+float Bfactor_ewald, Vfactor_ewald;
 
 
 

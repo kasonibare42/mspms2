@@ -68,7 +68,6 @@ int init_vars()
     // see above comments for dihedrals
     for (ii=0;ii<nangle;ii++)
 	isAngle_unique[ii] = true;
-
     for (ii=0;ii<nangle-1;ii++)
     {
 	if (isAngle_unique[ii])
@@ -84,7 +83,14 @@ int init_vars()
 		}
 	    }
 	}
-    }
+    } // end of checking unique angles
+
+    // set ewald parameters
+    Bfactor_ewald = 1.0/(4.0*kappa*kappa);
+    Vfactor_ewald = 2.0*pi/(boxlx*boxly*boxlz);
+    TWOPI_LX = 2.0*pi/boxlx;
+    TWOPI_LY = 2.0*pi/boxly;
+    TWOPI_LZ = 2.0*pi/boxlz;
 }
 
 /* Read in input and config files */
@@ -102,7 +108,8 @@ int readins()
     sscanf(fgets(buffer,datalen,fpins), "%d", &nconstraint);
 
     // f0  1,4 modifier
-    // on/off for electrostatic
+    // on/off for electrostatic isEwaldOn, isWolfOn
+    // KMAXX etc. 
 
 
     fclose(fpins);
@@ -318,6 +325,8 @@ int main (int argc, char *argv[])
     velinit();
 
     make_exclude_list();
+
+    erfrc();
 
 }
 
