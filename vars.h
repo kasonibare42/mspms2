@@ -76,6 +76,8 @@ float rcutoff, rcutoffsq, rcuton, rcutonsq;
 float rcutoffelec, rcutoffelecsq;
 float kappa; // sqrt(alpha) in ewald summation. 
 float f0; // 1,4 LJ potential modifier for OPLS, set to 1.0 for no modification or 0.5 for OPLS or 0.0 for TraPPE.
+int isChargeOn; // switch for electrostatic interaction
+
 
 
 float upot, ukin;
@@ -85,6 +87,7 @@ float uewald; // total ewald energy, refer to Frenkel and Smit, eq. 12.1.25
 float ureal; // real part of ewald, term 3 in 12.1.25
 float ufourier; // fourier part of ewald, term 1 in 12.1.25
 float uself; // self interaction correction part of ewald, term 2 in 12.1.25
+float uexcl; // excluding energy for ewald summation
 
 int nfree; // freedom
 float tinst; // instantaneous temperature

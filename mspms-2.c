@@ -102,6 +102,7 @@ int readins()
     sscanf(fgets(buffer,datalen,fpins), "%d", &nconstraint);
 
     // f0  1,4 modifier
+    // on/off for electrostatic
 
 
     fclose(fpins);
