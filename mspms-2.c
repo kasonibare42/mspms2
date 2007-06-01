@@ -106,7 +106,7 @@ int readins()
     sscanf(fgets(buffer,datalen,fpins), "%d %d", &ij, &jk);
     sscanf(fgets(buffer,datalen,fpins), "%f", &treq);
     sscanf(fgets(buffer,datalen,fpins), "%d", &nconstraint);
-
+    sscanf(fgets(buffer,datalen,fpins), "%f %f %f", &boxlx, &boxly, &boxlz);
     // f0  1,4 modifier
     // on/off for electrostatic isEwaldOn, isWolfOn
     // KMAXX etc. 

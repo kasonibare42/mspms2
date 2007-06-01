@@ -466,7 +466,7 @@ int loop_12()
 		fyl[ii2] -= fyij;
 		fzl[ii2] -= fzij;
 	    } // rcutoffsq
-	} if 13 > 13'
+	} // if 13 > 13'
     } // nbond loop
 
     // add into total energy
@@ -477,8 +477,13 @@ int loop_12()
 
 int ewald_fourier_and_self()
 {
-    int kx, ky, kz;
-    int ksq;
+    int ii;
+    int kx, ky, kz, ksq;
+    float rkx, rky, rkz, rksq;
+    float kvec;
+    float sr, si;
+    float t;
+    float fij;
 
     for (kx=-KMAXX;kx<=KMAXX;kx++) // NOTE: <=
     {
