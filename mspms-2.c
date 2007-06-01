@@ -139,8 +139,9 @@ int readins()
     assert(nangle<=nangle_max);
     for (ii=0;ii<nangle;ii++)
     {
-	fscanf(fpcfg,"%d %d %d %d %f %f\n",&angle_idx[ii][0],&angle_idx[ii][1],
-		&angle_idx[ii][2],&angle_type[ii],&Ktheta[ii],&Thetaeq[ii]);
+	fscanf(fpcfg,"%d %d %d %d %f %f %f %f %f\n",&angle_idx[ii][0],&angle_idx[ii][1],
+		&angle_idx[ii][2],&angle_type[ii],&Ktheta[ii],&Thetaeq[ii],
+		&agl_para_3[ii], &agl_para_4[ii], &agl_para_5[ii]); // these 3 parameters only for TRwater
     }
 
     // read in dihedral list

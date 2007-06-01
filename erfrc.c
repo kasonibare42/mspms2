@@ -561,6 +561,9 @@ int erfrc()
 
     // total ewald energy
     uewald = ureal + ufourier - uself - uexcl;
+
+    // total inter molecule energy
+    uinter = uvdw + uewald;
 }
 
 

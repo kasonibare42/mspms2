@@ -20,6 +20,13 @@
 #define angle_harmonic		1
 #define angle_TRwater		2  // Toukan and Rahman water potentials
 
+#define dih_none		0
+#define dih_opls_cosin		1
+#define dih_charmm		2 // charmm type dihedral potential
+
+#define imp_none		0
+#define imp_charmm		1 // charmm type improper potential
+
 #define nspecie_max	3
 #define nmole_max	1000
 #define natom_max	4000
@@ -51,6 +58,7 @@ float Kb[nbond_max], Req[nbond_max], alpha[nbond_max];
 int angle_idx[nangle_max][3];
 int angle_type[nangle_max];
 float Ktheta[nangle_max], Thetaeq[nangle_max];
+float agl_para_3[nangle_max], agl_para_4[nangle_max], agl_para_5[nangle_max];
 int isAngle_unique[nangle_max]; // make 1,3 atoms do not make mutiple angles, this is for possible ring structures
 int dih_idx[ndih_max][4];
 int dih_type[ndih_max];
@@ -84,6 +92,7 @@ int KSQMAX; // ewald parameter
 
 
 float upot, ukin;
+float uinter, uintra; // inter and intra molecular energy
 float uvdw; // van der wall energy, LJ energy
 float ubond, uangle, udih, uimp;
 float uewald; // total ewald energy, refer to Frenkel and Smit, eq. 12.1.25
