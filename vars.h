@@ -98,6 +98,7 @@ double kappa; // sqrt(alpha) in ewald summation.
 int KMAXX, KMAXY, KMAXZ; // ewald parameters
 int KSQMAX; // ewald parameter
 char coords_file[100]; // name of the coordinates file
+int isNVTnh; // use nose hoover for NVT ensemble or not
 
 
 int istep; // counter of step, current step
@@ -120,6 +121,11 @@ double TWOPI_LX, TWOPI_LY, TWOPI_LZ; // ewald
 double Bfactor_ewald, Vfactor_ewald;
 
 double roff2_minus_ron2_cube; // used for switch potential
+
+// following variables are for nose hoover method
+double Gts, Qts, vts, rts, AA;
+double dt_outer2, dt_outer4, NRT;
+double ukin_nhts, upot_nhts;
 
 
 #endif /* VARS_H */

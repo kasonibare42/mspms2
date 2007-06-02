@@ -18,6 +18,7 @@
 
 extern int erfrc();
 extern int rafrc();
+extern int nvtnh();
 
 /* Initiate variables */
 int init_vars()
@@ -51,6 +52,21 @@ int init_vars()
     deltby2 = delt/2.0;
     delts = delt/nstep_inner;
     deltsby2 = delts/2.0;
+    
+    // nose hoover
+    dt_outer2 = deltby2;
+    dt_outer4 = dt_outer2/2.0;
+    NRT = Rgas*treq*nfree;
+    Gts = 0.0;
+    vts = 0.0;
+    rts = 0.0;
+    /*
+     * Qts = Rgas*treq*nfree/Omega
+     * where Omega is a parameter related to the mass of the thermostat
+     * for this program, we read in the Qts directly.
+     */
+    ukin_nhts = 0.0;
+    upot_nhts = 0.0;
 
     // check unique for dihedrals
     // this is for possible ring structures where 1,4 atoms can form multiple dihedrals
@@ -184,6 +200,8 @@ int readins()
 	    &nstep_ave, &nstep_print, &nstep_save, &nstep_ss, &nstep_trj);
     sscanf(fgets(buffer,datalen,fpins), "%lf %d", &delt, &nstep_inner);
     sscanf(fgets(buffer,datalen,fpins), "%lf", &f0);
+    sscanf(fgets(buffer,datalen,fpins), "%d", &isNVTnh);
+    sscanf(fgets(buffer,datalen,fpins), "%lf", &Qts);
     sscanf(fgets(buffer,datalen,fpins), "%d", &isLJswitchOn);
     sscanf(fgets(buffer,datalen,fpins), "%d", &isEwaldOn);
     sscanf(fgets(buffer,datalen,fpins), "%d", &isWolfOn);
@@ -399,6 +417,8 @@ int printit()
 {
     upot = uinter + uintra;
     utot = upot + ukin;
+    // add energy of thermostat, if nose hoover is not used, they will just be zero
+    utot = utot + upot_nhts + ukin_nhts;
     fprintf(stderr,"%10d %10.4le %10.4le %10.4le\n",istep,utot,upot,ukin);
     fprintf(fplog,"%10d %10.4le %10.4le %10.4le %10.4le %10.4le %10.4le %10.4le %10.4le %10.4le %10.4le %10.4le %10.4le\n",
 	    istep,utot,upot,ukin,tinst,uinter,uintra,uvdw,ubond,uangle,udih,uimp,uewald);
@@ -409,8 +429,8 @@ int vver() // velocity verlet
     int ii, ll;
 
     // check if NVT nose hoover is needed
-    //
-    //
+    if (isNVTnh)
+       	nvtnh();
 
     for (ii=0;ii<natom;ii++)
     {
@@ -460,6 +480,8 @@ int vver() // velocity verlet
     ukin = ukin/2.0;
 
     // check for NVT nose hoover
+    if (isNVTnh)
+       	nvtnh();
 
 
     // calculate instant temperature
@@ -498,10 +520,11 @@ int main (int argc, char *argv[])
     fprintf(fpss,"%d\n\n",natom);
     int ii;
     for (ii=0;ii<natom;ii++)
-	fprintf(fpss,"C  %lf  %lf  %lf  %lf\n",xx[ii],yy[ii],zz[ii]);
+	fprintf(fpss,"C  %lf  %lf  %lf\n",xx[ii],yy[ii],zz[ii]);
 
     fclose(fpss);
 
+    fprintf(stderr,"Gts=%le   vts=%le   rts=%le   Qts=%le\n",Gts,vts,rts,Qts);
 
 }
 
