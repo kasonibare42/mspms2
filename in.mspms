@@ -1,12 +1,13 @@
 1024 768		random seeds
 298.0			Temperature
-300.0 300.0 300.0		box length, width, height
-150.0 150.0		rcutoff, rcutoffelec
+300.0 300.0 300.0	box length, width, height
+5.0 150.0 150.0	rcuton, rcutoff, rcutoffelec
 foo.xyz			intial configuration file
 1000 1			number of total steps, starting step
 1000 100 1000 100 0     number of steps for averages, print, save, snapshots, trajectory
 1.0 5			delt (fs), number of inner step
 0.0			1,4 LJ modifier (0.0 for no 14 TraPPE, 0.5 for OPLS)
+1			isLJswitchOn
 1			isEwaldOn (0-off, 1-on)
 0			isWolfOn (0-off, 1-on)
 28 20 23		KMAXX, KMAXY, KMAXZ for ewald, ~kappa*boxlength

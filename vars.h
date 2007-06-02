@@ -91,8 +91,9 @@ int nconstraint; // constraint, 3 for periodic, 6 for aperiodic
 double rcutoff, rcutoffsq, rcuton, rcutonsq;
 double rcutoffelec, rcutoffelecsq;
 double f0; // 1,4 LJ potential modifier for OPLS, set to 1.0 for no modification or 0.5 for OPLS or 0.0 for TraPPE.
-int isEwaldOn; // switch for Ewald summation electrostatic interactions
-int isWolfOn; // switch of wolf method for electrostatic interactions
+int isLJswitchOn; // use switch potential for LJ or not
+int isEwaldOn; // Ewald summation electrostatic interactions
+int isWolfOn; // wolf method for electrostatic interactions
 double kappa; // sqrt(alpha) in ewald summation. 
 int KMAXX, KMAXY, KMAXZ; // ewald parameters
 int KSQMAX; // ewald parameter
@@ -110,6 +111,7 @@ double ureal; // real part of ewald, term 3 in 12.1.25
 double ufourier; // fourier part of ewald, term 1 in 12.1.25
 double uself; // self interaction correction part of ewald, term 2 in 12.1.25
 double uexcl; // excluding energy for ewald summation
+double LJswitch; // switch factor for LJ
 
 int nfree; // freedom
 double tinst; // instantaneous temperature
@@ -117,6 +119,7 @@ double tinst; // instantaneous temperature
 double TWOPI_LX, TWOPI_LY, TWOPI_LZ; // ewald
 double Bfactor_ewald, Vfactor_ewald;
 
+double roff2_minus_ron2_cube; // used for switch potential
 
 
 #endif /* VARS_H */

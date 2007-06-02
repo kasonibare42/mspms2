@@ -67,6 +67,15 @@ int loop_ij()
 		// LJ part, also does ghost atom check
 		if (isghost[ii]!=lj_ghost && isghost[jj]!=lj_ghost && rijsq<rcutoffsq)
 		{
+		    // if switch potential for LJ is on, then calculate the switch
+		    if (isLJswitchOn)
+		    {
+			if (rijsq<rcutonsq)
+			    LJswitch = 1.0;
+			else
+			    LJswitch = (rcutoffsq-rijsq)*(rcutoffsq-rijsq)
+				*(rcutoffsq+2.0*rijsq-3.0*rcutonsq)/roff2_minus_ron2_cube;
+		    }
 		    sigmaij = 0.5*(sigmai+sigma[jj]);
 		    epsilonij = sqrt(epsiloni*epsilon[jj]);
 		    r_rijsq = sigmaij*sigmaij/rijsq;
@@ -74,12 +83,24 @@ int loop_ij()
 		    r_r12 = r_r6*r_r6;
 		    r_r12_minus_r_r6 = r_r12 - r_r6;
 		    uij_vdw_temp = epsilonij*r_r12_minus_r_r6; // still need *4.0
-		    uij_vdw += uij_vdw_temp; // still need *4.0
+		    if (isLJswitchOn) // if switch is used
+			uij_vdw += uij_vdw_temp*LJswitch; // still need 4.0
+		    else 
+			uij_vdw += uij_vdw_temp; // still need *4.0
 		    // force calculations
-		    fij = epsilonij*(r_r12_minus_r_r6+r_r12)/rijsq;
-		    fxij = 24.0*fij*rxij;
-		    fyij = 24.0*fij*ryij;
-		    fzij = 24.0*fij*rzij;
+		    if (isLJswitchOn)
+		    {
+			if (rijsq<rcutonsq)
+			    fij = 24.0*epsilonij*(r_r12_minus_r_r6+r_r12)/rijsq;
+			else
+			    fij = 24.0*epsilonij*(r_r12_minus_r_r6+r_r12)/rijsq*LJswitch // 4.0 for the real energy
+				-4.0*uij_vdw_temp*12.0*(rcutoffsq-rijsq)*(rcutonsq-rijsq)/roff2_minus_ron2_cube;
+		    }
+		    else
+		       	fij = 24.0*epsilonij*(r_r12_minus_r_r6+r_r12)/rijsq;
+		    fxij = fij*rxij;
+		    fyij = fij*ryij;
+		    fzij = fij*rzij;
 		    // force on atom ii
 		    fxi += fxij;
 		    fyi += fyij;
@@ -169,17 +190,37 @@ int loop_14()
 	    // LJ part, also check ghost atoms
 	    if (isghost[ii1]!=lj_ghost && isghost[ii2]!=lj_ghost && rijsq<rcutoffsq)
 	    {
+		if (isLJswitchOn)  // if use switch for LJ
+		{
+		    if (rijsq<rcutonsq)
+			LJswitch = 1.0;
+		    else
+			LJswitch = (rcutoffsq-rijsq)*(rcutoffsq-rijsq)
+			    *(rcutoffsq+2.0*rijsq-3.0*rcutonsq)/roff2_minus_ron2_cube;
+		}
 		r_rijsq = sigmaij*sigmaij/rijsq;
 		r_r6 = r_rijsq*r_rijsq*r_rijsq;
 		r_r12 = r_r6*r_r6;
 		r_r12_minus_r_r6 = r_r12 - r_r6;
 		uij_vdw14_temp = epsilonij*r_r12_minus_r_r6; // still need *4.0
-		uij_vdw14 += uij_vdw14_temp; // still need *4.0
+		if (isLJswitchOn)
+		    uij_vdw14 += uij_vdw14_temp*LJswitch; // still need 4.0
+		else 
+		    uij_vdw14 += uij_vdw14_temp; // still need *4.0
 		// force calculations
-		fij = epsilonij*(r_r12_minus_r_r6+r_r12)/rijsq;
-		fxij = 24.0*fij*rxij;
-		fyij = 24.0*fij*ryij;
-		fzij = 24.0*fij*rzij;
+		if (isLJswitchOn)
+		{
+		    if (rijsq<rcutonsq)
+			fij = 24.0*epsilonij*(r_r12_minus_r_r6+r_r12)/rijsq;
+		    else
+			fij = 24.0*epsilonij*(r_r12_minus_r_r6+r_r12)/rijsq*LJswitch // 4.0 for the real energy
+			    -4.0*uij_vdw14_temp*12.0*(rcutoffsq-rijsq)*(rcutonsq-rijsq)/roff2_minus_ron2_cube;
+		}
+		else 
+		    fij = 24.0*epsilonij*(r_r12_minus_r_r6+r_r12)/rijsq;
+		fxij = fij*rxij;
+		fyij = fij*ryij;
+		fzij = fij*rzij;
 		// force on atom ii1
 		fxl[ii1] += fxij;
 		fyl[ii1] += fyij;
@@ -322,6 +363,14 @@ int loop_13()
 		if (isghost[ii1]!=lj_ghost && isghost[ii2]!=lj_ghost && rijsq<rcutoffsq) // LJ cutoff
 		{
 		    rij = sqrt(rijsq);
+		    if (isLJswitchOn) // check if switch for LJ is used
+		    {
+			if (rijsq<rcutonsq)
+			    LJswitch = 1.0;
+			else
+			    LJswitch = (rcutoffsq-rijsq)*(rcutoffsq-rijsq)
+				*(rcutoffsq+2.0*rijsq-3.0*rcutonsq)/roff2_minus_ron2_cube;
+		    }
 		    sigmaij = 0.5*(sigma[ii1]+sigma[ii2]);
 		    epsilonij = sqrt(epsilon[ii1]*epsilon[ii2]);
 		    r_rijsq = sigmaij*sigmaij/rijsq;
@@ -329,12 +378,24 @@ int loop_13()
 		    r_r12 = r_r6*r_r6;
 		    r_r12_minus_r_r6 = r_r12 - r_r6;
 		    uij_vdw13img_temp = epsilonij*r_r12_minus_r_r6; // still need *4.0
-		    uij_vdw13img += uij_vdw13img_temp; // still need *4.0
+		    if (isLJswitchOn) // if switch is used
+			uij_vdw13img += uij_vdw13img_temp*LJswitch; // still need 4.0
+		    else
+		       	uij_vdw13img += uij_vdw13img_temp; // still need *4.0
 		    // calculate LJ forces
-		    fij = epsilonij*(r_r12_minus_r_r6+r_r12)/rijsq;
-		    fxij = 24.0*fij*rxij;
-		    fyij = 24.0*fij*ryij;
-		    fzij = 24.0*fij*rzij;
+		    if (isLJswitchOn)
+		    {
+			if (rijsq<rcutonsq)
+			    fij = 24.0*epsilonij*(r_r12_minus_r_r6+r_r12)/rijsq;
+			else
+			    fij = 24.0*epsilonij*(r_r12_minus_r_r6+r_r12)/rijsq*LJswitch // 4.0 for the real energy
+				-4.0*uij_vdw13img_temp*12.0*(rcutoffsq-rijsq)*(rcutonsq-rijsq)/roff2_minus_ron2_cube;
+		    }
+		    else 
+			fij = 24.0*epsilonij*(r_r12_minus_r_r6+r_r12)/rijsq;
+		    fxij = fij*rxij;
+		    fyij = fij*ryij;
+		    fzij = fij*rzij;
 		    // force on atom ii1
 		    fxl[ii1] += fxij;
 		    fyl[ii1] += fyij;
@@ -452,6 +513,15 @@ int loop_12()
 	    if (isghost[ii1]!=lj_ghost && isghost[ii2]!=lj_ghost && rijsq<rcutoffsq) // LJ cutoff
 	    {
 		rij = sqrt(rijsq);
+		// if switch potential for LJ is on, then calculate the switch
+		if (isLJswitchOn)
+		{
+		    if (rijsq<rcutonsq)
+			LJswitch = 1.0;
+		    else
+			LJswitch = (rcutoffsq-rijsq)*(rcutoffsq-rijsq)
+			    *(rcutoffsq+2.0*rijsq-3.0*rcutonsq)/roff2_minus_ron2_cube;
+		}
 		sigmaij = 0.5*(sigma[ii1]+sigma[ii2]);
 		epsilonij = sqrt(epsilon[ii1]*epsilon[ii2]);
 		r_rijsq = sigmaij*sigmaij/rijsq;
@@ -459,12 +529,24 @@ int loop_12()
 		r_r12 = r_r6*r_r6;
 		r_r12_minus_r_r6 = r_r12 - r_r6;
 		uij_vdw12img_temp = epsilonij*r_r12_minus_r_r6; // still need *4.0
-		uij_vdw12img += uij_vdw12img_temp; // still need *4.0
+		if (isLJswitchOn) // if switch is used
+		    uij_vdw12img += uij_vdw12img_temp*LJswitch; // still need 4.0
+		else 
+		    uij_vdw12img += uij_vdw12img_temp; // still need *4.0
 		// calculate LJ forces
-		fij = epsilonij*(r_r12_minus_r_r6+r_r12)/rijsq;
-		fxij = 24.0*fij*rxij;
-		fyij = 24.0*fij*ryij;
-		fzij = 24.0*fij*rzij;
+		if (isLJswitchOn)
+		{
+		    if (rijsq<rcutonsq)
+			fij = 24.0*epsilonij*(r_r12_minus_r_r6+r_r12)/rijsq;
+		    else
+			fij = 24.0*epsilonij*(r_r12_minus_r_r6+r_r12)/rijsq*LJswitch // 4.0 for the real energy
+			    -4.0*uij_vdw12img_temp*12.0*(rcutoffsq-rijsq)*(rcutonsq-rijsq)/roff2_minus_ron2_cube;
+		}
+		else 
+		    fij = 24.0*epsilonij*(r_r12_minus_r_r6+r_r12)/rijsq;
+		fxij = fij*rxij;
+		fyij = fij*ryij;
+		fzij = fij*rzij;
 		// force on atom ii1
 		fxl[ii1] += fxij;
 		fyl[ii1] += fyij;

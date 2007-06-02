@@ -41,9 +41,11 @@ int init_vars()
     // calculate the degree of freedom
     nfree = 3*natom - nconstraint;
 
-    // cutoff square
+    // cutoff related
     rcutoffsq = rcutoff*rcutoff;
     rcutoffelecsq = rcutoffelec*rcutoffelec;
+    rcutonsq = rcuton*rcuton;
+    roff2_minus_ron2_cube = (rcutoffsq-rcutonsq)*(rcutoffsq-rcutonsq)*(rcutoffsq-rcutonsq);
 
     // delt
     deltby2 = delt/2.0;
@@ -175,13 +177,14 @@ int readins()
     sscanf(fgets(buffer,datalen,fpins), "%d %d", &ij, &jk);
     sscanf(fgets(buffer,datalen,fpins), "%lf", &treq);
     sscanf(fgets(buffer,datalen,fpins), "%lf %lf %lf", &boxlx, &boxly, &boxlz);
-    sscanf(fgets(buffer,datalen,fpins), "%lf %lf", &rcutoff, &rcutoffelec);
+    sscanf(fgets(buffer,datalen,fpins), "%lf %lf %lf", &rcuton, &rcutoff, &rcutoffelec);
     sscanf(fgets(buffer,datalen,fpins), "%s", coords_file);
     sscanf(fgets(buffer,datalen,fpins), "%d %d", &nstep, &nstep_start);
     sscanf(fgets(buffer,datalen,fpins), "%d %d %d %d %d", 
 	    &nstep_ave, &nstep_print, &nstep_save, &nstep_ss, &nstep_trj);
     sscanf(fgets(buffer,datalen,fpins), "%lf %d", &delt, &nstep_inner);
     sscanf(fgets(buffer,datalen,fpins), "%lf", &f0);
+    sscanf(fgets(buffer,datalen,fpins), "%d", &isLJswitchOn);
     sscanf(fgets(buffer,datalen,fpins), "%d", &isEwaldOn);
     sscanf(fgets(buffer,datalen,fpins), "%d", &isWolfOn);
     sscanf(fgets(buffer,datalen,fpins), "%d %d %d", &KMAXX, &KMAXY, &KMAXZ);
@@ -397,7 +400,8 @@ int printit()
     upot = uinter + uintra;
     utot = upot + ukin;
     fprintf(stderr,"%10d %10.4le %10.4le %10.4le\n",istep,utot,upot,ukin);
-    fprintf(fplog,"%10d %10.4le %10.4le %10.4le %10.4le %10.4le %10.4le\n",istep,utot,upot,ukin,uvdw,uewald,uintra);
+    fprintf(fplog,"%10d %10.4le %10.4le %10.4le %10.4le %10.4le %10.4le %10.4le %10.4le %10.4le %10.4le %10.4le %10.4le\n",
+	    istep,utot,upot,ukin,tinst,uinter,uintra,uvdw,ubond,uangle,udih,uimp,uewald);
 }
 
 int vver() // velocity verlet
