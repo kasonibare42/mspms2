@@ -74,23 +74,27 @@ char sysname[200];
 FILE *fpins, *fpouts, *fpcfg;
 
 int nstep, nstep_eq, nstep_start; /* nstep_start is the starting step for continue runs */
+// steps for averages, print out, save, snapshots, trajectory
+int nstep_ave, nstep_print, nstep_save, nstep_ss, nstep_trj;
 int nstep_inner; /* inner step for multi time step */
-float dt; /* time step */
+float delt; /* time step */
+float deltby2, delts, deltsby2;
 int ij, jk;
 float treq, preq; /* input required temperature, pressure */
 float boxlx, boxly, boxlz; /* box size */
 int nconstraint; // constraint, 3 for periodic, 6 for aperiodic
 float rcutoff, rcutoffsq, rcuton, rcutonsq;
 float rcutoffelec, rcutoffelecsq;
-float kappa; // sqrt(alpha) in ewald summation. 
 float f0; // 1,4 LJ potential modifier for OPLS, set to 1.0 for no modification or 0.5 for OPLS or 0.0 for TraPPE.
 int isEwaldOn; // switch for Ewald summation electrostatic interactions
 int isWolfOn; // switch of wolf method for electrostatic interactions
+float kappa; // sqrt(alpha) in ewald summation. 
 int KMAXX, KMAXY, KMAXZ; // ewald parameters
 int KSQMAX; // ewald parameter
+char coords_file[100]; // name of the coordinates file
 
 
-
+int istep; // counter of step, current step
 float upot, ukin;
 float uinter, uintra; // inter and intra molecular energy
 float uvdw; // van der wall energy, LJ energy

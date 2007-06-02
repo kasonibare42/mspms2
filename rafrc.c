@@ -156,7 +156,11 @@ int aglfrc()
 		cost = xab*xbc + yab*ybc+ zab*zbc;
 		// angle in radian
 		theta = acos(cost);
-		sint = fmax(1.0e-8, sqrt(1.0-cost*cost)); // for 180 degree
+		sint = sqrt(1.0-cost*cost);
+		if (sint<1.0e-8)
+		    sint = 1.0e-8;
+		// not sure why fmax wont work here
+		// sint = fmaxf(0.1, sqrt(1.0-cost*cost)); // for 180 degree
 		// angle difference
 		delta_theta = theta - Thetaeq[ii];
 		uangle_temp = 0.5*Ktheta[ii]*delta_theta*delta_theta;
@@ -397,17 +401,19 @@ int rafrc()
     for (ii=0;ii<natom;ii++)
 	fxs[ii] = fys[ii] = fzs[ii] = 0.0;
 
-    if (nbond > 0)
-	bndfrc();
+    // if (nbond > 0)
+// 	bndfrc();
 
     if (nangle > 0)
 	aglfrc();
 
-    if (ndih > 0)
-	dihfrc();
+  //   if (ndih > 0)
+//	dihfrc();
 
     if (nimp > 0)
 	impfrc();
+
+    // printf("%f %f %f %f\n", ubond, uangle, udih, uimp);
 
     // total intra energy
     uintra = ubond + uangle + udih + uimp;

@@ -52,7 +52,7 @@ int loop_ij()
 	{
 	    if (isghost[jj] == all_ghost) // move to jj+1 if atom jj is full ghost atom
 		continue;
-	    if (isNotexcl) // calculate interactions if it is not exclusion pair
+	    if (isNotexcl[jj]) // calculate interactions if it is not exclusion pair
 	    {
 		rxij = xxi - xx[jj];
 		ryij = yyi - yy[jj];
@@ -64,7 +64,7 @@ int loop_ij()
 		rijsq = rxij*rxij + ryij*ryij + rzij*rzij;
 		rij = sqrt(rijsq);
 
-		// LJ part
+		// LJ part, still need ghost atom check
 		if (rijsq<rcutoffsq)
 		{
 		    sigmaij = 0.5*(sigmai+sigma[jj]);
