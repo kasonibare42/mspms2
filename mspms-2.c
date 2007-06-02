@@ -16,6 +16,8 @@
 #include "vars.h"
 #include "random.h"
 
+extern int erfrc();
+extern int rafrc();
 
 /* Initiate variables */
 int init_vars()
@@ -23,6 +25,9 @@ int init_vars()
     int ii, jj;
     FILE *fpcoords;
     char buffer[200];
+
+    // open files
+    fplog = fopen(LOGFILE,"w");
 
     /* change atom weight unit from g/mol to kg/mol for future calculations */
     for (ii=0;ii<natom;ii++)
@@ -54,7 +59,6 @@ int init_vars()
     // Thats the unique check for
     for (ii=0;ii<ndih;ii++)
 	isDih_unique[ii] = true;
-
     for (ii=0;ii<ndih-1;ii++)
     {
 	if (isDih_unique[ii])
@@ -68,6 +72,37 @@ int init_vars()
 		    else if (dih_idx[ii][0]==dih_idx[jj][3] && dih_idx[ii][3]==dih_idx[jj][0])
 			isDih_unique[jj] = false;
 		}
+	    }
+	}
+    }
+
+    // following codes make sure 14 and 13 do not share same ending pairs
+    // this is also for ring kind structures
+    for (ii=0;ii<ndih;ii++)
+    {
+	if (isDih_unique[ii])
+	{
+	    for (jj=0;jj<nangle;jj++)
+	    {
+		if (dih_idx[ii][0]==angle_idx[jj][0] && dih_idx[ii][3]==angle_idx[jj][2])
+		    isDih_unique[jj] = false;
+		else if (dih_idx[ii][0]==angle_idx[jj][2] && dih_idx[ii][3]==angle_idx[jj][0])
+		    isDih_unique[jj] = false;
+	    }
+	}
+    }
+
+    // following codes make sure 14 and 12 do not share the same ending pairs
+    for (ii=0;ii<ndih;ii++)
+    {
+	if (isDih_unique[ii])
+	{
+	    for (jj=0;jj<nbond;jj++)
+	    {
+		if (dih_idx[ii][0]==bond_idx[jj][0] && dih_idx[ii][3]==bond_idx[jj][1])
+		    isDih_unique[jj] = false;
+		else if (dih_idx[ii][0]==bond_idx[jj][1] && dih_idx[ii][3]==bond_idx[jj][0])
+		    isDih_unique[jj] = false;
 	    }
 	}
     }
@@ -93,6 +128,21 @@ int init_vars()
 	}
     } // end of checking unique angles
 
+    // following codes make sure 13 and 12 do not share the same ending pairs
+    for (ii=0;ii<nangle;ii++)
+    {
+	if (isAngle_unique[ii])
+	{
+	    for (jj=0;jj<nbond;jj++)
+	    {
+		if (angle_idx[ii][0]==bond_idx[jj][0] && angle_idx[ii][2]==bond_idx[jj][1])
+		    isAngle_unique[jj] = false;
+		else if (angle_idx[ii][0]==bond_idx[jj][1] && angle_idx[ii][2]==bond_idx[jj][0])
+		    isAngle_unique[jj] = false;
+	    }
+	}
+    }
+
     // set ewald parameters
     Bfactor_ewald = 1.0/(4.0*kappa*kappa);
     Vfactor_ewald = 2.0*pi/(boxlx*boxly*boxlz);
@@ -106,7 +156,7 @@ int init_vars()
     fscanf(fpcoords, "%[^\n]", buffer);
     for (ii=0;ii<natom;ii++)
     {
-	fscanf(fpcoords,"%s %f %f %f\n",buffer,&xx[ii],&yy[ii],&zz[ii]);
+	fscanf(fpcoords,"%s %lf %lf %lf\n",buffer,&xx[ii],&yy[ii],&zz[ii]);
     }
 
     fclose(fpcoords);
@@ -123,20 +173,20 @@ int readins()
     fpins = fopen(INPUT,"r");
 
     sscanf(fgets(buffer,datalen,fpins), "%d %d", &ij, &jk);
-    sscanf(fgets(buffer,datalen,fpins), "%f", &treq);
-    sscanf(fgets(buffer,datalen,fpins), "%f %f %f", &boxlx, &boxly, &boxlz);
-    sscanf(fgets(buffer,datalen,fpins), "%f %f", &rcutoff, &rcutoffelec);
+    sscanf(fgets(buffer,datalen,fpins), "%lf", &treq);
+    sscanf(fgets(buffer,datalen,fpins), "%lf %lf %lf", &boxlx, &boxly, &boxlz);
+    sscanf(fgets(buffer,datalen,fpins), "%lf %lf", &rcutoff, &rcutoffelec);
     sscanf(fgets(buffer,datalen,fpins), "%s", coords_file);
     sscanf(fgets(buffer,datalen,fpins), "%d %d", &nstep, &nstep_start);
     sscanf(fgets(buffer,datalen,fpins), "%d %d %d %d %d", 
 	    &nstep_ave, &nstep_print, &nstep_save, &nstep_ss, &nstep_trj);
-    sscanf(fgets(buffer,datalen,fpins), "%f %d", &delt, &nstep_inner);
-    sscanf(fgets(buffer,datalen,fpins), "%f", &f0);
+    sscanf(fgets(buffer,datalen,fpins), "%lf %d", &delt, &nstep_inner);
+    sscanf(fgets(buffer,datalen,fpins), "%lf", &f0);
     sscanf(fgets(buffer,datalen,fpins), "%d", &isEwaldOn);
     sscanf(fgets(buffer,datalen,fpins), "%d", &isWolfOn);
     sscanf(fgets(buffer,datalen,fpins), "%d %d %d", &KMAXX, &KMAXY, &KMAXZ);
     sscanf(fgets(buffer,datalen,fpins), "%d", &KSQMAX);
-    sscanf(fgets(buffer,datalen,fpins), "%f", &kappa);
+    sscanf(fgets(buffer,datalen,fpins), "%lf", &kappa);
 
     sscanf(fgets(buffer,datalen,fpins), "%d", &nconstraint);
 
@@ -153,14 +203,14 @@ int readins()
     fscanf(fpcfg, "%d atoms\n", &natom);
     assert(natom<=natom_max);
     for (ii=0;ii<natom;ii++)
-	fscanf(fpcfg,"%f %f %f %f %d %d\n",&aw[ii],&epsilon[ii],&sigma[ii],
+	fscanf(fpcfg,"%lf %lf %lf %lf %d %d\n",&aw[ii],&epsilon[ii],&sigma[ii],
 		&charge[ii],&isghost[ii],&tasostype[ii]);
 
     // read in bond list
     fscanf(fpcfg, "%d bonds\n", &nbond);
     assert(nbond<=nbond_max);
     for (ii=0;ii<nbond;ii++)
-	fscanf(fpcfg,"%d %d %d %f %f %f\n",&bond_idx[ii][0],&bond_idx[ii][1],
+	fscanf(fpcfg,"%d %d %d %lf %lf %lf\n",&bond_idx[ii][0],&bond_idx[ii][1],
 		&bond_type[ii],&Kb[ii],&Req[ii],&alpha[ii]);
 
     // read in angle list
@@ -168,7 +218,7 @@ int readins()
     assert(nangle<=nangle_max);
     for (ii=0;ii<nangle;ii++)
     {
-	fscanf(fpcfg,"%d %d %d %d %f %f %f %f %f\n",&angle_idx[ii][0],&angle_idx[ii][1],
+	fscanf(fpcfg,"%d %d %d %d %lf %lf %lf %lf %lf\n",&angle_idx[ii][0],&angle_idx[ii][1],
 		&angle_idx[ii][2],&angle_type[ii],&Ktheta[ii],&Thetaeq[ii],
 		&agl_para_3[ii], &agl_para_4[ii], &agl_para_5[ii]); // these 3 parameters only for TRwater
     }
@@ -178,7 +228,7 @@ int readins()
     assert(ndih<=ndih_max);
     for (ii=0;ii<ndih;ii++)
     {
-	fscanf(fpcfg,"%d %d %d %d %d %f %f %f %f\n",&dih_idx[ii][0],&dih_idx[ii][1],
+	fscanf(fpcfg,"%d %d %d %d %d %lf %lf %lf %lf\n",&dih_idx[ii][0],&dih_idx[ii][1],
 		&dih_idx[ii][2],&dih_idx[ii][3],&dih_type[ii],&c1[ii],&c2[ii],&c3[ii],&c4[ii]);
     }
 
@@ -196,17 +246,19 @@ int readins()
 
 int echo()
 {
-    fprintf(stderr,"natom=%d\n",natom);
-    fprintf(stderr,"nconstraint=%d\n",nconstraint);
+    /*
+       fprintf(stderr,"natom=%d\n",natom);
+       fprintf(stderr,"nconstraint=%d\n",nconstraint);
 
-    fprintf(stderr,"%s",sysname);
-    fprintf(stderr,"%d atoms.\n",natom);
-    fprintf(stderr,"%d bonds.\n",nbond);
-    fprintf(stderr,"%d angles.\n",nangle);
-    fprintf(stderr,"%d dihedrals.\n",ndih);
-    fprintf(stderr,"%d impropers.\n",nimp);
-    fprintf(stderr,"%d nonbonded pairs.\n",nnbp);
-    fprintf(stderr,"%d %d %d %d KMAX etc.\n",KMAXX,KMAXY,KMAXZ,KSQMAX);
+       fprintf(stderr,"%s",sysname);
+       fprintf(stderr,"%d atoms.\n",natom);
+       fprintf(stderr,"%d bonds.\n",nbond);
+       fprintf(stderr,"%d angles.\n",nangle);
+       fprintf(stderr,"%d dihedrals.\n",ndih);
+       fprintf(stderr,"%d impropers.\n",nimp);
+       fprintf(stderr,"%d nonbonded pairs.\n",nnbp);
+       fprintf(stderr,"%d %d %d %d KMAX etc.\n",KMAXX,KMAXY,KMAXZ,KSQMAX);
+     */
 }
 
 int make_exclude_list()
@@ -279,16 +331,16 @@ int make_exclude_list()
        }
        printf("\n");
        }
-       */
+     */
 }
 
 int velinit()
 {
     int ii, jj, kk;
-    float px, py, pz;
-    float stdvtmp, stdv;
-    float totalmass;
-    float scaling;
+    double px, py, pz;
+    double stdvtmp, stdv;
+    double totalmass;
+    double scaling;
 
     totalmass = 0.0;
     px = py = pz = 0.0;
@@ -342,7 +394,10 @@ int velinit()
 
 int printit()
 {
-    fprintf(stderr,"%d %f %f %f %f %f\n",istep,ukin,tinst,uvdw,uewald,uintra);
+    upot = uinter + uintra;
+    utot = upot + ukin;
+    fprintf(stderr,"%10d %10.4le %10.4le %10.4le\n",istep,utot,upot,ukin);
+    fprintf(fplog,"%10d %10.4le %10.4le %10.4le %10.4le %10.4le %10.4le\n",istep,utot,upot,ukin,uvdw,uewald,uintra);
 }
 
 int vver() // velocity verlet
@@ -380,9 +435,9 @@ int vver() // velocity verlet
 	// compute the pseudo velocity at delts
 	for (ii=0;ii<natom;ii++)
 	{
-	    vx[ii] += (deltby2*fxs[ii]*1.0e-5/aw[ii]);
-	    vy[ii] += (deltby2*fys[ii]*1.0e-5/aw[ii]);
-	    vz[ii] += (deltby2*fzs[ii]*1.0e-5/aw[ii]);
+	    vx[ii] += (deltsby2*fxs[ii]*1.0e-5/aw[ii]);
+	    vy[ii] += (deltsby2*fys[ii]*1.0e-5/aw[ii]);
+	    vz[ii] += (deltsby2*fzs[ii]*1.0e-5/aw[ii]);
 	}
     }
 
@@ -434,6 +489,14 @@ int main (int argc, char *argv[])
 
 	// averages, print, snapshots, movies, save
     }
+
+    fpss = fopen(SNAPSHOT,"w");
+    fprintf(fpss,"%d\n\n",natom);
+    int ii;
+    for (ii=0;ii<natom;ii++)
+	fprintf(fpss,"C  %lf  %lf  %lf  %lf\n",xx[ii],yy[ii],zz[ii]);
+
+    fclose(fpss);
 
 
 }

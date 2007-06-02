@@ -13,17 +13,17 @@
 int loop_ij()
 {
     int ii, jj, kk;
-    float xxi, yyi, zzi;
-    float fxi, fyi, fzi;
-    float rxij, ryij, rzij;
-    float rijsq, rij, r_rijsq;
-    float r_r6, r_r12, r_r12_minus_r_r6;
-    float epsiloni, sigmai, chargei;
-    float epsilonij, sigmaij;
+    double xxi, yyi, zzi;
+    double fxi, fyi, fzi;
+    double rxij, ryij, rzij;
+    double rijsq, rij, r_rijsq;
+    double r_r6, r_r12, r_r12_minus_r_r6;
+    double epsiloni, sigmai, chargei;
+    double epsilonij, sigmaij;
     int isNotexcl[natom_max];
-    float uij_vdw, uij_vdw_temp, uij_real, uij_real_temp;
-    float fij, fxij, fyij, fzij;
-    float temp1, temp2;
+    double uij_vdw, uij_vdw_temp, uij_real, uij_real_temp;
+    double fij, fxij, fyij, fzij;
+    double temp1, temp2;
 
     uij_vdw = 0.0;
     uij_real = 0.0;
@@ -64,8 +64,8 @@ int loop_ij()
 		rijsq = rxij*rxij + ryij*ryij + rzij*rzij;
 		rij = sqrt(rijsq);
 
-		// LJ part, still need ghost atom check
-		if (rijsq<rcutoffsq)
+		// LJ part, also does ghost atom check
+		if (isghost[ii]!=lj_ghost && isghost[jj]!=lj_ghost && rijsq<rcutoffsq)
 		{
 		    sigmaij = 0.5*(sigmai+sigma[jj]);
 		    epsilonij = sqrt(epsiloni*epsilon[jj]);
@@ -129,13 +129,13 @@ int loop_14()
 {
     int ii;
     int ii1, ii2;
-    float rxij, ryij, rzij;
-    float rijsq, rij, r_rijsq;
-    float r_r6, r_r12, r_r12_minus_r_r6;
-    float sigmaij, epsilonij;
-    float uij_vdw14, uij_vdw14_temp, uij_real14, uij_real14_temp;
-    float fij, fxij, fyij, fzij;
-    float temp1, temp2;
+    double rxij, ryij, rzij;
+    double rijsq, rij, r_rijsq;
+    double r_r6, r_r12, r_r12_minus_r_r6;
+    double sigmaij, epsilonij;
+    double uij_vdw14, uij_vdw14_temp, uij_real14, uij_real14_temp;
+    double fij, fxij, fyij, fzij;
+    double temp1, temp2;
 
     uij_vdw14 = 0.0;
     uij_real14 = 0.0;
@@ -146,6 +146,8 @@ int loop_14()
 	{
 	    ii1 = dih_idx[ii][0];
 	    ii2 = dih_idx[ii][3];
+	    if (isghost[ii1]==all_ghost || isghost[ii2]==all_ghost)
+		continue;
 	    rxij = xx[ii1] - xx[ii2];
 	    ryij = yy[ii1] - yy[ii2];
 	    rzij = zz[ii1] - zz[ii2];
@@ -164,8 +166,8 @@ int loop_14()
 	    rijsq = rxij*rxij + ryij*ryij + rzij*rzij;
 	    rij = sqrt(rijsq);
 
-	    // LJ part
-	    if (rijsq<rcutoffsq)
+	    // LJ part, also check ghost atoms
+	    if (isghost[ii1]!=lj_ghost && isghost[ii2]!=lj_ghost && rijsq<rcutoffsq)
 	    {
 		r_rijsq = sigmaij*sigmaij/rijsq;
 		r_r6 = r_rijsq*r_rijsq*r_rijsq;
@@ -221,16 +223,16 @@ int loop_13()
 {
     int ii;
     int ii1, ii2;
-    float rxij, ryij, rzij;
-    float rijsq, rij, r_rijsq;
-    float r_r6, r_r12, r_r12_minus_r_r6;
-    float sigmaij, epsilonij;
-    float fij, fxij, fyij, fzij;
-    float uij_vdw13img, uij_vdw13img_temp;
-    float uij_real13, uij_real13_temp;
-    float uij_excl_13;
-    float rxij_old, ryij_old, rzij_old;
-    float temp1, temp2, temp3;
+    double rxij, ryij, rzij;
+    double rijsq, rij, r_rijsq;
+    double r_r6, r_r12, r_r12_minus_r_r6;
+    double sigmaij, epsilonij;
+    double fij, fxij, fyij, fzij;
+    double uij_vdw13img, uij_vdw13img_temp;
+    double uij_real13, uij_real13_temp;
+    double uij_excl_13;
+    double rxij_old, ryij_old, rzij_old;
+    double temp1, temp2, temp3;
 
     uij_excl_13 = 0.0;
     uij_vdw13img = 0.0;
@@ -242,6 +244,8 @@ int loop_13()
 	{
 	    ii1 = angle_idx[ii][0];
 	    ii2 = angle_idx[ii][2];
+	    if (isghost[ii1]==all_ghost || isghost[ii2]==all_ghost)
+		continue;
 	    rxij = xx[ii1] - xx[ii2];
 	    ryij = yy[ii1] - yy[ii2];
 	    rzij = zz[ii1] - zz[ii2];
@@ -314,7 +318,8 @@ int loop_13()
 		ryij = ryij - boxly*rint(ryij/boxly);
 		rzij = rzij - boxlz*rint(rzij/boxlz);
 		rijsq = rxij*rxij + ryij*ryij + rzij*rzij;
-		if (rijsq<rcutoffsq) // LJ cutoff
+		// LJ part, also check ghost atoms
+		if (isghost[ii1]!=lj_ghost && isghost[ii2]!=lj_ghost && rijsq<rcutoffsq) // LJ cutoff
 		{
 		    rij = sqrt(rijsq);
 		    sigmaij = 0.5*(sigma[ii1]+sigma[ii2]);
@@ -353,16 +358,16 @@ int loop_12()
 {
     int ii;
     int ii1, ii2;
-    float rxij, ryij, rzij;
-    float rijsq, rij, r_rijsq;
-    float r_r6, r_r12, r_r12_minus_r_r6;
-    float sigmaij, epsilonij;
-    float fij, fxij, fyij, fzij;
-    float uij_vdw12img, uij_vdw12img_temp;
-    float uij_real12, uij_real12_temp;
-    float uij_excl_12;
-    float rxij_old, ryij_old, rzij_old;
-    float temp1, temp2, temp3;
+    double rxij, ryij, rzij;
+    double rijsq, rij, r_rijsq;
+    double r_r6, r_r12, r_r12_minus_r_r6;
+    double sigmaij, epsilonij;
+    double fij, fxij, fyij, fzij;
+    double uij_vdw12img, uij_vdw12img_temp;
+    double uij_real12, uij_real12_temp;
+    double uij_excl_12;
+    double rxij_old, ryij_old, rzij_old;
+    double temp1, temp2, temp3;
 
     uij_excl_12 = 0.0;
     uij_vdw12img = 0.0;
@@ -372,6 +377,8 @@ int loop_12()
     {
 	ii1 = bond_idx[ii][0];
 	ii2 = bond_idx[ii][1];
+       	if (isghost[ii1]==all_ghost || isghost[ii2]==all_ghost)
+	    continue;
 	rxij = xx[ii1] - xx[ii2];
 	ryij = yy[ii1] - yy[ii2];
 	rzij = zz[ii1] - zz[ii2];
@@ -441,7 +448,8 @@ int loop_12()
 	    ryij = ryij - boxly*rint(ryij/boxly);
 	    rzij = rzij - boxlz*rint(rzij/boxlz);
 	    rijsq = rxij*rxij + ryij*ryij + rzij*rzij;
-	    if (rijsq<rcutoffsq) // LJ cutoff
+	    // LJ part, also check ghost atoms
+	    if (isghost[ii1]!=lj_ghost && isghost[ii2]!=lj_ghost && rijsq<rcutoffsq) // LJ cutoff
 	    {
 		rij = sqrt(rijsq);
 		sigmaij = 0.5*(sigma[ii1]+sigma[ii2]);
@@ -479,11 +487,11 @@ int ewald_fourier_and_self()
 {
     int ii;
     int kx, ky, kz, ksq;
-    float rkx, rky, rkz, rksq;
-    float kvec;
-    float sr, si;
-    float t;
-    float fij;
+    double rkx, rky, rkz, rksq;
+    double kvec;
+    double sr, si;
+    double t;
+    double fij;
 
     for (kx=-KMAXX;kx<=KMAXX;kx++) // NOTE: <=
     {
@@ -565,5 +573,6 @@ int erfrc()
     // total inter molecule energy
     uinter = uvdw + uewald;
 }
+
 
 

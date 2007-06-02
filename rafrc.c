@@ -11,14 +11,14 @@ int bndfrc()
 {
     int ii;
     int ii1, ii2;
-    float rxij, ryij, rzij;
-    float rijsq, rij;
-    float delta_r;
-    float ubond_temp;
-    float fij, fxij, fyij, fzij;
-    float De;
-    float exp_term, one_minus_exp_term;
-    float rmax2;
+    double rxij, ryij, rzij;
+    double rijsq, rij;
+    double delta_r;
+    double ubond_temp;
+    double fij, fxij, fyij, fzij;
+    double De;
+    double exp_term, one_minus_exp_term;
+    double rmax2;
     // bond stretching calculations
     for (ii=0;ii<nbond;ii++)
     {
@@ -99,24 +99,24 @@ int aglfrc()
 {
     int ii;
     int iia, iib, iic;
-    float xdab, ydab, zdab, xdbc, ydbc, zdbc;
-    float rab, rrab, xab, yab, zab;
-    float rbc, rrbc, xbc, ybc, zbc;
-    float cost, theta, sint;
-    float delta_theta;
-    float uangle_temp;
-    float gamma, fxa, fya, fza, fxc, fyc, fzc;
+    double xdab, ydab, zdab, xdbc, ydbc, zdbc;
+    double rab, rrab, xab, yab, zab;
+    double rbc, rrbc, xbc, ybc, zbc;
+    double cost, theta, sint;
+    double delta_theta;
+    double uangle_temp;
+    double gamma, fxa, fya, fza, fxc, fyc, fzc;
 
-    float  vec_13_x, vec_13_y, vec_13_z;
-    float  vec_12_x, vec_12_y, vec_12_z;
-    float  vec_23_x, vec_23_y, vec_23_z;
-    float  r12, r13, r23;
-    float  delta_r1, delta_r2, delta_r3;
-    float  k_theta, k_r_theta, k_r_rprime;
-    float  u123;
-    float  frc_term_1;
-    float  frc_term_2_1, frc_term_2_2;
-    float  frc_term_3, frc_term_3_1, frc_term_3_2;
+    double  vec_13_x, vec_13_y, vec_13_z;
+    double  vec_12_x, vec_12_y, vec_12_z;
+    double  vec_23_x, vec_23_y, vec_23_z;
+    double  r12, r13, r23;
+    double  delta_r1, delta_r2, delta_r3;
+    double  k_theta, k_r_theta, k_r_rprime;
+    double  u123;
+    double  frc_term_1;
+    double  frc_term_2_1, frc_term_2_2;
+    double  frc_term_3, frc_term_3_1, frc_term_3_2;
 
 
     // angle bending calculations
@@ -157,10 +157,8 @@ int aglfrc()
 		// angle in radian
 		theta = acos(cost);
 		sint = sqrt(1.0-cost*cost);
-		if (sint<1.0e-8)
-		    sint = 1.0e-8;
-		// not sure why fmax wont work here
-		// sint = fmaxf(0.1, sqrt(1.0-cost*cost)); // for 180 degree
+		// must use c99 standard, otherwise fmax wont work
+		sint = fmax(1.0e-8, sqrt(1.0-cost*cost)); // for 180 degree
 		// angle difference
 		delta_theta = theta - Thetaeq[ii];
 		uangle_temp = 0.5*Ktheta[ii]*delta_theta*delta_theta;
@@ -252,14 +250,14 @@ int dihfrc()
 {
     int ii;
     int iia, iib, iic, iid;
-    float xdab, ydab, zdab, xdbc, ydbc, zdbc, xdcd, ydcd, zdcd;
-    float xab, yab, zab, xbc, ybc, zbc, xcd, ycd, zcd, rrbc;
-    float xac, yac, zac, pbx, pby, pbz, pb2, rpb1, rpb2;
-    float pcx, pcy, pcz, pc2, rpc1, rpc2, pbpc, cost, sint;
-    float theta, rsint, v1, v2, v3, v4, gamma;
-    float fax, fay, faz, fcx, fcy, fcz;
-    float fb1x, fb1y, fb1z, fd1x, fd1y, fd1z;
-    float vopls, dopls;
+    double xdab, ydab, zdab, xdbc, ydbc, zdbc, xdcd, ydcd, zdcd;
+    double xab, yab, zab, xbc, ybc, zbc, xcd, ycd, zcd, rrbc;
+    double xac, yac, zac, pbx, pby, pbz, pb2, rpb1, rpb2;
+    double pcx, pcy, pcz, pc2, rpc1, rpc2, pbpc, cost, sint;
+    double theta, rsint, v1, v2, v3, v4, gamma;
+    double fax, fay, faz, fcx, fcy, fcz;
+    double fb1x, fb1y, fb1z, fd1x, fd1y, fd1z;
+    double vopls, dopls;
 
     // dihedral torsion calculations
     for (ii=0;ii<ndih;ii++)
@@ -401,19 +399,19 @@ int rafrc()
     for (ii=0;ii<natom;ii++)
 	fxs[ii] = fys[ii] = fzs[ii] = 0.0;
 
-    // if (nbond > 0)
-// 	bndfrc();
+    if (nbond > 0)
+ 	bndfrc();
 
     if (nangle > 0)
 	aglfrc();
 
-  //   if (ndih > 0)
-//	dihfrc();
+    if (ndih > 0)
+	dihfrc();
 
     if (nimp > 0)
 	impfrc();
 
-    // printf("%f %f %f %f\n", ubond, uangle, udih, uimp);
+    // printf("%lf %lf %lf %lf\n", ubond, uangle, udih, uimp);
 
     // total intra energy
     uintra = ubond + uangle + udih + uimp;
