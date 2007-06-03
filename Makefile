@@ -2,7 +2,7 @@
 
 CC = gcc
 
-OBJ = mspms-2.o random.o erfrc.o rafrc.o nvtnh.o sffrc.o
+OBJ = mspms-2.o random.o erfrc.o rafrc.o nvtnh.o sffrc.o tasoswrapper.o
 BIN = mspms-2.x
 LIBS = mylibtasos/libtasos.a
 CFLAGS = -std=c99
@@ -35,3 +35,6 @@ nvtnh.o: nvtnh.c
 
 sffrc.o: sffrc.c
 	$(CC) -c sffrc.c $(CFLAGS)
+ 
+tasoswrapper.o: tasoswrapper.c
+	$(CC) -c tasoswrapper.c $(CFLAGS)

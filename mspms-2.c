@@ -71,6 +71,10 @@ int init_vars()
     ukin_nhts = 0.0;
     upot_nhts = 0.0;
 
+    // sf energy, tasos initiate part
+    if (isSFon && sf_type==nanotube_tasos)
+       	init_tasos_grid();
+
     // check unique for dihedrals
     // this is for possible ring structures where 1,4 atoms can form multiple dihedrals
     // e.g. 1-2-3-4
