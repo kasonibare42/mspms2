@@ -31,8 +31,16 @@ int init_vars()
     // initiate files
     fplog = fopen(LOGFILE,"w");
     fptrj = fopen(MOVIE,"wb");
+    fpouts = fopen(OUTPUT,"w");
 
     nframe = 0; // number of frames in trajectory file
+
+    for (ii=0;ii<num_counter_max;ii++)
+    {
+	icounter[ii] = 0;
+	for (jj=0;jj<5;jj++)
+	    accumulator[ii][jj] = 0.0;
+    }
 
     /* change atom weight unit from g/mol to kg/mol for future calculations */
     for (ii=0;ii<natom;ii++)
@@ -56,14 +64,14 @@ int init_vars()
     deltby2 = delt/2.0;
     delts = delt/nstep_inner;
     deltsby2 = delts/2.0;
-    
+
     // nose hoover
     dt_outer2 = deltby2;
     dt_outer4 = dt_outer2/2.0;
     NRT = Rgas*treq*nfree;
-    Gts = 0.0;
-    vts = 0.0;
-    rts = 0.0;
+    // Gts = 0.0;
+    // vts = 0.0;
+    // rts = 0.0;
     /*
      * Qts = Rgas*treq*nfree/Omega
      * where Omega is a parameter related to the mass of the thermostat
@@ -74,7 +82,7 @@ int init_vars()
 
     // sf energy, tasos initiate part
     if (isSFon && sf_type==nanotube_tasos)
-       	init_tasos_grid();
+	init_tasos_grid();
 
     // check unique for dihedrals
     // this is for possible ring structures where 1,4 atoms can form multiple dihedrals
@@ -189,9 +197,75 @@ int init_vars()
 
 int ending()
 {
+    fprintf(fpouts,"=========================================================\n");
+    fprintf(fpouts,"Total energy                %15.6le\n",accumulator[0][5]);
+    fprintf(fpouts,"   std. dev.                %15.4lf\n",accumulator[0][6]);
+    fprintf(fpouts,"   fluctuation              %15.4lf\n",accumulator[0][7]);
+
+    fprintf(fpouts,"Potentail energy            %15.6le\n",accumulator[1][5]);
+    fprintf(fpouts,"   std. dev.                %15.4lf\n",accumulator[1][6]);
+    fprintf(fpouts,"   fluctuation              %15.4lf\n",accumulator[1][7]);
+
+    fprintf(fpouts,"Kinetic energy              %15.6le\n",accumulator[2][5]);
+    fprintf(fpouts,"   std. dev.                %15.4lf\n",accumulator[2][6]);
+    fprintf(fpouts,"   fluctuation              %15.4lf\n",accumulator[2][7]);
+
+    fprintf(fpouts,"Inter potential energy      %15.6le\n",accumulator[3][5]);
+    fprintf(fpouts,"   std. dev.                %15.4lf\n",accumulator[3][6]);
+    fprintf(fpouts,"   fluctuation              %15.4lf\n",accumulator[3][7]);
+
+    fprintf(fpouts,"Intra potential energy      %15.6le\n",accumulator[4][5]);
+    fprintf(fpouts,"   std. dev.                %15.4lf\n",accumulator[4][6]);
+    fprintf(fpouts,"   fluctuation              %15.4lf\n",accumulator[4][7]);
+
+    fprintf(fpouts,"LJ energy                   %15.6le\n",accumulator[5][5]);
+    fprintf(fpouts,"   std. dev.                %15.4lf\n",accumulator[5][6]);
+    fprintf(fpouts,"   fluctuation              %15.4lf\n",accumulator[5][7]);
+
+    fprintf(fpouts,"Bond energy                 %15.6le\n",accumulator[6][5]);
+    fprintf(fpouts,"   std. dev.                %15.4lf\n",accumulator[6][6]);
+    fprintf(fpouts,"   fluctuation              %15.4lf\n",accumulator[6][7]);
+
+    fprintf(fpouts,"Angle energy                %15.6le\n",accumulator[7][5]);
+    fprintf(fpouts,"   std. dev.                %15.4lf\n",accumulator[7][6]);
+    fprintf(fpouts,"   fluctuation              %15.4lf\n",accumulator[7][7]);
+
+    fprintf(fpouts,"Dihedral energy             %15.6le\n",accumulator[8][5]);
+    fprintf(fpouts,"   std. dev.                %15.4lf\n",accumulator[8][6]);
+    fprintf(fpouts,"   fluctuation              %15.4lf\n",accumulator[8][7]);
+
+    fprintf(fpouts,"Improper energy             %15.6le\n",accumulator[9][5]);
+    fprintf(fpouts,"   std. dev.                %15.4lf\n",accumulator[9][6]);
+    fprintf(fpouts,"   fluctuation              %15.4lf\n",accumulator[9][7]);
+
+    fprintf(fpouts,"Ewald energy                %15.6le\n",accumulator[10][5]);
+    fprintf(fpouts,"   std. dev.                %15.4lf\n",accumulator[10][6]);
+    fprintf(fpouts,"   fluctuation              %15.4lf\n",accumulator[10][7]);
+
+    fprintf(fpouts,"Real part energy            %15.6le\n",accumulator[11][5]);
+    fprintf(fpouts,"   std. dev.                %15.4lf\n",accumulator[11][6]);
+    fprintf(fpouts,"   fluctuation              %15.4lf\n",accumulator[11][7]);
+
+    fprintf(fpouts,"Fourier part energy         %15.6le\n",accumulator[12][5]);
+    fprintf(fpouts,"   std. dev.                %15.4lf\n",accumulator[12][6]);
+    fprintf(fpouts,"   fluctuation              %15.4lf\n",accumulator[12][7]);
+
+    fprintf(fpouts,"Self part energy            %15.6le\n",accumulator[13][5]);
+    fprintf(fpouts,"   std. dev.                %15.4lf\n",accumulator[13][6]);
+    fprintf(fpouts,"   fluctuation              %15.4lf\n",accumulator[13][7]);
+
+    fprintf(fpouts,"Solid fluid energy          %15.6le\n",accumulator[14][5]);
+    fprintf(fpouts,"   std. dev.                %15.4lf\n",accumulator[14][6]);
+    fprintf(fpouts,"   fluctuation              %15.4lf\n",accumulator[14][7]);
+
+    fprintf(fpouts,"Temperature                 %15.6le\n",accumulator[15][5]);
+    fprintf(fpouts,"   std. dev.                %15.4lf\n",accumulator[15][6]);
+    fprintf(fpouts,"   fluctuation              %15.4lf\n",accumulator[15][7]);
+
     // close files
     fclose(fplog);
     fclose(fptrj);
+    fclose(fpouts);
 }
 
 /* Read in input and config files */
@@ -215,7 +289,7 @@ int readins()
     sscanf(fgets(buffer,datalen,fpins), "%lf %d", &delt, &nstep_inner);
     sscanf(fgets(buffer,datalen,fpins), "%lf", &f0);
     sscanf(fgets(buffer,datalen,fpins), "%d", &isNVTnh);
-    sscanf(fgets(buffer,datalen,fpins), "%lf", &Qts);
+    sscanf(fgets(buffer,datalen,fpins), "%lf %lf %lf %lf", &Gts, &vts, &rts, &Qts);
     sscanf(fgets(buffer,datalen,fpins), "%d", &isLJswitchOn);
     sscanf(fgets(buffer,datalen,fpins), "%d", &isEwaldOn);
     sscanf(fgets(buffer,datalen,fpins), "%d", &isWolfOn);
@@ -285,19 +359,22 @@ int readins()
 
 int echo()
 {
-    /*
-       fprintf(stderr,"natom=%d\n",natom);
-       fprintf(stderr,"nconstraint=%d\n",nconstraint);
+    fprintf(fpouts,"=========================================================\n");
+    fprintf(fpouts,"Units:\n");
+    fprintf(fpouts,"  Energy(J/mol) Temperature(K) Velocity(m/s) Distance(Angstrom)\n");
+    fprintf(fpouts,"  Force(J/Angstrom/mol)\n");
+    fprintf(fpouts,"=========================================================\n");
+    fprintf(fpouts,"natom=%d\n",natom);
+    fprintf(fpouts,"nconstraint=%d\n",nconstraint);
 
-       fprintf(stderr,"%s",sysname);
-       fprintf(stderr,"%d atoms.\n",natom);
-       fprintf(stderr,"%d bonds.\n",nbond);
-       fprintf(stderr,"%d angles.\n",nangle);
-       fprintf(stderr,"%d dihedrals.\n",ndih);
-       fprintf(stderr,"%d impropers.\n",nimp);
-       fprintf(stderr,"%d nonbonded pairs.\n",nnbp);
-       fprintf(stderr,"%d %d %d %d KMAX etc.\n",KMAXX,KMAXY,KMAXZ,KSQMAX);
-     */
+    fprintf(fpouts,"%s",sysname);
+    fprintf(fpouts,"%d atoms.\n",natom);
+    fprintf(fpouts,"%d bonds.\n",nbond);
+    fprintf(fpouts,"%d angles.\n",nangle);
+    fprintf(fpouts,"%d dihedrals.\n",ndih);
+    fprintf(fpouts,"%d impropers.\n",nimp);
+    fprintf(fpouts,"%d nonbonded pairs.\n",nnbp);
+    fprintf(fpouts,"%d %d %d %d KMAX etc.\n",KMAXX,KMAXY,KMAXZ,KSQMAX);
 }
 
 int make_exclude_list()
@@ -434,6 +511,8 @@ int velinit()
 int printit()
 {
     upot = uinter + uintra;
+    // add solid-fluid energy to the potential energy, will be zero if no usf
+    upot += usflj;
     utot = upot + ukin;
     // add energy of thermostat, if nose hoover is not used, they will just be zero
     utot = utot + upot_nhts + ukin_nhts;
@@ -448,7 +527,7 @@ int vver() // velocity verlet
 
     // check if NVT nose hoover is needed
     if (isNVTnh)
-       	nvtnh();
+	nvtnh();
 
     for (ii=0;ii<natom;ii++)
     {
@@ -499,7 +578,7 @@ int vver() // velocity verlet
 
     // check for NVT nose hoover
     if (isNVTnh)
-       	nvtnh();
+	nvtnh();
 
 
     // calculate instant temperature
@@ -529,6 +608,59 @@ int trajectory()
     fwrite(zz,sizeof(double),natom,fptrj);
 }
 
+int saveit()
+{
+    int ii;
+
+    fpsave = fopen(SAVEFILE,"wb");
+
+    fwrite(&istep,sizeof(int),1,fpsave);
+    fwrite(icounter,sizeof(int),num_counter_max,fpsave);
+    fwrite(accumulator,sizeof(double),num_counter_max,fpsave);
+    fwrite(xx,sizeof(double),natom,fpsave);
+    fwrite(yy,sizeof(double),natom,fpsave);
+    fwrite(zz,sizeof(double),natom,fpsave);
+    fwrite(vx,sizeof(double),natom,fpsave);
+    fwrite(vy,sizeof(double),natom,fpsave);
+    fwrite(vz,sizeof(double),natom,fpsave);
+
+    fclose(fpsave);
+}
+
+int averages()
+{
+    int ii;
+    double temp1;
+
+    for (ii=0;ii<num_counter_max;ii++)
+    {
+	temp1 = accumulator[ii][0]/nstep_ave;
+	accumulator[ii][2] += temp1;
+	accumulator[ii][3] += accumulator[ii][1]/nstep_ave;
+	accumulator[ii][4] += temp1*temp1;
+	// rezero
+	accumulator[ii][0] = 0.0;
+	accumulator[ii][1] = 0.0;
+    }
+    icounter[10]++; // number of average cycles
+}
+
+int calres()
+{
+    int ii;
+    double ave_of_square, ave_of_ave_square;
+    double ave, err, fluc;
+    for (ii=0;ii<num_counter_max;ii++)
+    {
+	ave = accumulator[ii][5] = accumulator[ii][2]/icounter[10]; // ave
+	ave_of_square = accumulator[ii][3]/icounter[10];
+	ave_of_ave_square = accumulator[ii][4]/icounter[10];
+	err = accumulator[ii][6] = sqrt(fabs(ave_of_ave_square-ave*ave)); // err
+	fluc = accumulator[ii][7] = sqrt(fabs(ave_of_square-ave*ave)); // fluc
+	// rezero?
+    }
+}
+
 int main (int argc, char *argv[])
 {
     readins();
@@ -551,21 +683,60 @@ int main (int argc, char *argv[])
     {
 	vver(); // velocity verlet
 
+	// accumulators
+	accumulator[0][0] += utot;
+	accumulator[0][1] += utot*utot;
+	accumulator[1][0] += upot;
+	accumulator[1][1] += upot*upot;
+	accumulator[2][0] += ukin;
+	accumulator[2][1] += ukin*upot;
+	accumulator[3][0] += uinter;
+	accumulator[3][1] += uinter*uinter;
+	accumulator[4][0] += uintra;
+	accumulator[4][1] += uintra*uintra;
+	accumulator[5][0] += uvdw;
+	accumulator[5][1] += uvdw*uvdw;
+	accumulator[6][0] += ubond;
+	accumulator[6][1] += ubond*ubond;
+	accumulator[7][0] += uangle;
+	accumulator[7][1] += uangle*uangle;
+	accumulator[8][0] += udih;
+	accumulator[8][1] += udih*udih;
+	accumulator[9][0] += uimp;
+	accumulator[9][1] += uimp*uimp;
+	accumulator[10][0] += uewald;
+	accumulator[10][1] += uewald*uewald;
+	accumulator[11][0] += ureal;
+	accumulator[11][1] += ureal*ureal;
+	accumulator[12][0] += ufourier;
+	accumulator[12][1] += ufourier*ufourier;
+	accumulator[13][0] += uself;
+	accumulator[13][1] += uself*uself;
+	accumulator[14][0] += usflj;
+	accumulator[14][1] += usflj*usflj;
+	accumulator[15][0] += tinst;
+	accumulator[15][1] += tinst*tinst;
+
 	if (istep%nstep_print == 0) printit();
 
 	if (istep%nstep_ss == 0) snapshot();
 
 	if (nstep_trj && istep%nstep_trj==0) trajectory();
 
-	// averages, print, snapshots, movies, save
+	if (istep%nstep_ave==0) averages();
+
+	if (istep%nstep_save==0) saveit();
+
     }
 
     snapshot();
 
+    calres();
+
     fprintf(stderr,"Gts=%le   vts=%le   rts=%le   Qts=%le\n",Gts,vts,rts,Qts);
     fprintf(stderr,"%d frames in the trajectory file.\n",nframe);
 
-    // clean up
+    // write out results and clean up
     ending();
 
 }

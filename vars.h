@@ -15,6 +15,7 @@
 #define lj_ghost	1
 #define all_ghost	2
 
+#define num_counter_max	30
 #define bond_none		0
 #define bond_harmonic		1
 #define bond_morse		2
@@ -135,6 +136,33 @@ double roff2_minus_ron2_cube; // used for switch potential
 double Gts, Qts, vts, rts, AA;
 double dt_outer2, dt_outer4, NRT;
 double ukin_nhts, upot_nhts;
+
+// counters and accumulators
+int icounter[num_counter_max];
+double accumulator[num_counter_max][8];
+// 0-4 for accumulator, 5-ave, 6-err, 7-fluc
+
+/*
+accumulator[0]   utot
+accumulator[1]   upot
+accumulator[2]   ukin
+accumulator[3]   uinter
+accumulator[4]   uintra
+accumulator[5]   uvdw
+accumulator[6]   ubond
+accumulator[7]   uangle
+accumulator[8]   udih
+accumulator[9]   uimp
+accumulator[10]   uewald
+accumulator[11]   ureal
+accumulator[12]   ufourier
+accumulator[13]   uself
+accumulator[14]   usflj
+accumulator[15]   tinst
+
+icounter[10]   number of average cycles
+
+*/
 
 
 #endif /* VARS_H */

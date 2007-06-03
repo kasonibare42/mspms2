@@ -4,11 +4,11 @@
 150.0 150.0 150.0	rcuton, rcutoff, rcutoffelec
 foo.xyz			intial configuration file
 1000 1			number of total steps, starting step
-1000 1 1000 100 10     number of steps for averages, print, save, snapshots, trajectory
+100 1 1000 100 10     number of steps for averages, print, save, snapshots, trajectory
 1.0 5			delt (fs), number of inner step
 0.0			1,4 LJ modifier (0.0 for no 14 TraPPE, 0.5 for OPLS)
 0			isNVTnh use nose hoover for NVT
-1.0e15			Qts reversely related to the Omega of mass
+0 0 0 1.0e15		Gts, vts, rts, Qts reversely related to the Omega of mass
 0			isLJswitchOn
 0			isEwaldOn (0-off, 1-on)
 0			isWolfOn (0-off, 1-on)
