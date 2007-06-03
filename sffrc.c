@@ -1,8 +1,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
-#include <assert.h>
 #include "vars.h"
+
+extern void cforce_atom_(int*, double*, double*, double*, double*, double*);
 
 int sffrc()
 {

@@ -19,6 +19,7 @@
 extern int erfrc();
 extern int rafrc();
 extern int nvtnh();
+extern int init_tasos_grid();
 
 /* Initiate variables */
 int init_vars()

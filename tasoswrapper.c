@@ -4,9 +4,9 @@
 #include <math.h>
 #include "vars.h"
 
-extern "C" void initpotentialgrid_(int*, double*, double*, double*, int*, int*, int*, double*);
-extern "C" void pass_grid_file_name_(char*, int*);
-extern "C" void read_grids_(int* nspecies_yang);
+extern void initpotentialgrid_(int*, double*, double*, double*, int*, int*, int*, double*);
+extern void pass_grid_file_name_(char*, int*);
+extern void read_grids_(int* nspecies_yang);
 
 int init_tasos_grid()
 {
