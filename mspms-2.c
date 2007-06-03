@@ -27,8 +27,11 @@ int init_vars()
     FILE *fpcoords;
     char buffer[200];
 
-    // open files
+    // initiate files
     fplog = fopen(LOGFILE,"w");
+    fptrj = fopen(MOVIE,"wb");
+
+    nframe = 0; // number of frames in trajectory file
 
     /* change atom weight unit from g/mol to kg/mol for future calculations */
     for (ii=0;ii<natom;ii++)
@@ -176,8 +179,14 @@ int init_vars()
     {
 	fscanf(fpcoords,"%s %lf %lf %lf\n",buffer,&xx[ii],&yy[ii],&zz[ii]);
     }
-
     fclose(fpcoords);
+}
+
+int ending()
+{
+    // close files
+    fclose(fplog);
+    fclose(fptrj);
 }
 
 /* Read in input and config files */
@@ -210,6 +219,10 @@ int readins()
     sscanf(fgets(buffer,datalen,fpins), "%lf", &kappa);
 
     sscanf(fgets(buffer,datalen,fpins), "%d", &nconstraint);
+
+    sscanf(fgets(buffer,datalen,fpins), "%d", &isSFon);
+    sscanf(fgets(buffer,datalen,fpins), "%d", &sf_type);
+
 
 
     fclose(fpins);
@@ -491,6 +504,26 @@ int vver() // velocity verlet
 
 }
 
+int snapshot()
+{
+    int ii;
+
+    fpss = fopen(SNAPSHOT,"w");
+    fprintf(fpss,"%d\n",natom);
+    fprintf(fpss,"%d %lf %lf %lf\n",istep,boxlx,boxly,boxlz);
+    for (ii=0;ii<natom;ii++)
+	fprintf(fpss,"C  %lf  %lf  %lf\n",xx[ii],yy[ii],zz[ii]);
+    fclose(fpss);
+}
+
+int trajectory()
+{
+    nframe++;
+    fwrite(xx,sizeof(double),natom,fptrj);
+    fwrite(yy,sizeof(double),natom,fptrj);
+    fwrite(zz,sizeof(double),natom,fptrj);
+}
+
 int main (int argc, char *argv[])
 {
     readins();
@@ -507,24 +540,28 @@ int main (int argc, char *argv[])
     // print initial properties
     printit();
     // make snapshots & movies
+    trajectory();
 
     for (istep=nstep_start;istep<=nstep;istep++) // NOTE: start from 1 and <=
     {
 	vver(); // velocity verlet
-	printit();
+
+	if (istep%nstep_print == 0) printit();
+
+	if (istep%nstep_ss == 0) snapshot();
+
+	if (nstep_trj && istep%nstep_trj==0) trajectory();
 
 	// averages, print, snapshots, movies, save
     }
 
-    fpss = fopen(SNAPSHOT,"w");
-    fprintf(fpss,"%d\n\n",natom);
-    int ii;
-    for (ii=0;ii<natom;ii++)
-	fprintf(fpss,"C  %lf  %lf  %lf\n",xx[ii],yy[ii],zz[ii]);
-
-    fclose(fpss);
+    snapshot();
 
     fprintf(stderr,"Gts=%le   vts=%le   rts=%le   Qts=%le\n",Gts,vts,rts,Qts);
+    fprintf(stderr,"%d frames in the trajectory file.\n",nframe);
+
+    // clean up
+    ending();
 
 }
 

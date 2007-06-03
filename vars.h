@@ -31,6 +31,10 @@
 #define imp_none		0
 #define imp_charmm		1 // charmm type improper potential
 
+#define nanotube_polynomial	1
+#define nanotube_atom_explicit	2
+#define nanotube_tasos		3
+
 #define nspecie_max	3
 #define nmole_max	1000
 #define natom_max	4000
@@ -99,6 +103,8 @@ int KMAXX, KMAXY, KMAXZ; // ewald parameters
 int KSQMAX; // ewald parameter
 char coords_file[100]; // name of the coordinates file
 int isNVTnh; // use nose hoover for NVT ensemble or not
+int isSFon; // is solid-fluid interaction on
+int sf_type; // solid-fluid type. for different nanotube potentials and future possible other materials
 
 
 int istep; // counter of step, current step
@@ -113,9 +119,12 @@ double ufourier; // fourier part of ewald, term 1 in 12.1.25
 double uself; // self interaction correction part of ewald, term 2 in 12.1.25
 double uexcl; // excluding energy for ewald summation
 double LJswitch; // switch factor for LJ
+double usflj; // solid-fluid LJ energy
 
 int nfree; // freedom
 double tinst; // instantaneous temperature
+
+int nframe; // number of frames in the trajectory file
 
 double TWOPI_LX, TWOPI_LY, TWOPI_LZ; // ewald
 double Bfactor_ewald, Vfactor_ewald;

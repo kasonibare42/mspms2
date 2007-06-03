@@ -9,6 +9,8 @@
 #include <assert.h>
 #include "vars.h"
 
+extern int sffrc();
+
 // calcualte interaction between atom ii and jj, exclude those from excluding list
 int loop_ij()
 {
@@ -648,6 +650,10 @@ int erfrc()
 
     if (isEwaldOn) // if ewald is on, calculate the fourier and self correction parts
 	ewald_fourier_and_self();
+
+    // calculate solid fluid energy if necessary
+    if (isSFon)
+	sffrc();
 
     // total ewald energy
     uewald = ureal + ufourier - uself - uexcl;

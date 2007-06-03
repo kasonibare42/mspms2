@@ -3,8 +3,8 @@
 300.0 300.0 300.0	box length, width, height
 150.0 150.0 150.0	rcuton, rcutoff, rcutoffelec
 foo.xyz			intial configuration file
-100000 1		number of total steps, starting step
-1000 100 1000 100 0     number of steps for averages, print, save, snapshots, trajectory
+1000 1			number of total steps, starting step
+1000 1 1000 100 10     number of steps for averages, print, save, snapshots, trajectory
 1.0 5			delt (fs), number of inner step
 0.0			1,4 LJ modifier (0.0 for no 14 TraPPE, 0.5 for OPLS)
 0			isNVTnh use nose hoover for NVT
@@ -16,4 +16,5 @@ foo.xyz			intial configuration file
 1500			KSQMAX Kmax^2<KSQMAX<3*kmax^2
 0.32			kappa ~4/ctofnb
 3			number of constraint
-
+0			isSFon have solid-fluid interactions?
+3			sf_type different nanotube potentials or others
