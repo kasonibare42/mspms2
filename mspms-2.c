@@ -44,10 +44,6 @@ int init_vars()
 	    accumulator[ii][jj] = 0.0;
     }
 
-    /* change atom weight unit from g/mol to kg/mol for future calculations */
-    for (ii=0;ii<natom;ii++)
-	aw[ii] *= 0.001;
-
     /* long range corrections */
 
     // initialize random number generator

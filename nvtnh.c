@@ -166,7 +166,7 @@ int vver_nh_1()
 
     double delps;
     double sumv2;
-    double err = 1.0e-8;
+    double err = 1.0e-10;
     double psn, pso;
     int	ready;
     int iter;
@@ -389,7 +389,7 @@ int vver_nh()
     double delps;
     double delpss;
     double sumv2;
-    double err = 1.0e-8;
+    double err = 1.0e-10;
     double psn, pso;
     double pssn, psso;
     int	ready;
