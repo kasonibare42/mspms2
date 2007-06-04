@@ -3,11 +3,11 @@
 300.0 300.0 300.0	box length, width, height
 150.0 150.0 150.0	rcuton, rcutoff, rcutoffelec
 foo.xyz			intial configuration file
-10000 1			number of total steps, starting step
+10000 1			number of total steps, starting option (1-new run, 2-continue run, 3-new from old)
 1000 1 1000 1000 0     number of steps for averages, print, save, snapshots, trajectory
 1.0 5			delt (fs), number of inner step (cant be zero, 1 is the minimum)
 0.0			1,4 LJ modifier (0.0 for no 14 TraPPE, 0.5 for OPLS)
-1			isNVTnh use nose hoover for NVT
+1 3			isNVTnh use nose hoover for NVT
 1e14 1e9		qq qqs (outer and inner) Nose hoover thermostat mass, qq goes to infinity -> NVE 
 0			isLJswitchOn
 1			isEwaldOn (0-off, 1-on)

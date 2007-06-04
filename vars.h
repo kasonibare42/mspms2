@@ -11,11 +11,17 @@
 
 #define true		1
 #define false		0
+
 #define not_ghost	0
 #define lj_ghost	1
 #define all_ghost	2
 
 #define num_counter_max	30
+
+#define new_run		1
+#define continue_run	2
+#define new_from_old	3
+
 #define bond_none		0
 #define bond_harmonic		1
 #define bond_morse		2
@@ -84,6 +90,7 @@ FILE *fpins, *fpouts, *fpcfg, *fplog;
 FILE *fpss, *fptrj, *fpsave;
 
 int nstep, nstep_eq, nstep_start; /* nstep_start is the starting step for continue runs */
+int fStart_option; // 1-new run, 2-continue run, 3-new from old
 // steps for averages, print out, save, snapshots, trajectory
 int nstep_ave, nstep_print, nstep_save, nstep_ss, nstep_trj;
 int nstep_inner; /* inner step for multi time step */
@@ -104,6 +111,7 @@ int KMAXX, KMAXY, KMAXZ; // ewald parameters
 int KSQMAX; // ewald parameter
 char coords_file[100]; // name of the coordinates file
 int isNVTnh; // use nose hoover for NVT ensemble or not
+int whichNH; // which nose hoover subroutine to use? usually 3 for molecule, 2 for atoms, see more details in nvtnh.c
 int isSFon; // is solid-fluid interaction on
 int sf_type; // solid-fluid type. for different nanotube potentials and future possible other materials
 

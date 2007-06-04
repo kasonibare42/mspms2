@@ -31,14 +31,17 @@ int init_tasos_grid()
 
     initpotentialgrid_(&tnuatoms, &auc, &buc, &cuc, &na, &nb, &nc, &nanotuberadius);
     fprintf(stderr,"init potential ok\n");
+    fprintf(fpouts,"init potential ok\n");
     for (ii=0;ii<tnuatoms;ii++)
     {
 	jj = ii + 1;
        	pass_grid_file_name_(szgrid[ii], &jj);
     }
     fprintf(stderr,"pass grid file name ok\n");
+    fprintf(fpouts,"pass grid file name ok\n");
     read_grids_(&nspecies_yang);
     fprintf(stderr,"read grids ok\n");
+    fprintf(fpouts,"read grids ok\n");
 
     fclose(fptasos);
 

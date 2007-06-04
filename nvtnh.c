@@ -382,7 +382,7 @@ int vver_nh_1()
 // velocity verlet with nose hoover thermostat
 // based on Frenkel and Smit's codes
 // use two thermostats for outter and inner steps
-int vver_nh()
+int vver_nh_3()
 {
     int ii, ll;
 

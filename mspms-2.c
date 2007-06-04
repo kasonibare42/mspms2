@@ -18,9 +18,9 @@
 
 extern int erfrc();
 extern int rafrc();
-extern int vver_nh();
 extern int vver_nh_1();
 extern int vver_nh_2();
+extern int vver_nh_3();
 extern int init_tasos_grid();
 
 /* Initiate variables */
@@ -29,6 +29,7 @@ int init_vars()
     int ii, jj;
     FILE *fpcoords;
     char buffer[200];
+    const int datalen = 200;
 
     // initiate files
     fplog = fopen(LOGFILE,"w");
@@ -36,6 +37,9 @@ int init_vars()
     fpouts = fopen(OUTPUT,"w");
 
     nframe = 0; // number of frames in trajectory file
+
+    // set the starting step to 1, will be changed by load it if it is continue run
+    nstep_start = 1;
 
     for (ii=0;ii<num_counter_max;ii++)
     {
@@ -197,8 +201,9 @@ int init_vars()
 
     // read in coordinates
     fpcoords = fopen(coords_file,"r");
-    fscanf(fpcoords, "%[^\n]", buffer);
-    fscanf(fpcoords, "%[^\n]", buffer);
+    // fscanf(fpcoords, "%[^\n]", buffer);
+    fgets(buffer,datalen,fpcoords);
+    fgets(buffer,datalen,fpcoords);
     for (ii=0;ii<natom;ii++)
     {
 	fscanf(fpcoords,"%s %lf %lf %lf\n",buffer,&xx[ii],&yy[ii],&zz[ii]);
@@ -294,12 +299,12 @@ int readins()
     sscanf(fgets(buffer,datalen,fpins), "%lf %lf %lf", &boxlx, &boxly, &boxlz);
     sscanf(fgets(buffer,datalen,fpins), "%lf %lf %lf", &rcuton, &rcutoff, &rcutoffelec);
     sscanf(fgets(buffer,datalen,fpins), "%s", coords_file);
-    sscanf(fgets(buffer,datalen,fpins), "%d %d", &nstep, &nstep_start);
+    sscanf(fgets(buffer,datalen,fpins), "%d %d", &nstep, &fStart_option);
     sscanf(fgets(buffer,datalen,fpins), "%d %d %d %d %d", 
 	    &nstep_ave, &nstep_print, &nstep_save, &nstep_ss, &nstep_trj);
     sscanf(fgets(buffer,datalen,fpins), "%lf %d", &delt, &nstep_inner);
     sscanf(fgets(buffer,datalen,fpins), "%lf", &f0);
-    sscanf(fgets(buffer,datalen,fpins), "%d", &isNVTnh);
+    sscanf(fgets(buffer,datalen,fpins), "%d %d", &isNVTnh, &whichNH);
     sscanf(fgets(buffer,datalen,fpins), "%lf %lf", &qq, &qqs);
     sscanf(fgets(buffer,datalen,fpins), "%d", &isLJswitchOn);
     sscanf(fgets(buffer,datalen,fpins), "%d", &isEwaldOn);
@@ -447,19 +452,19 @@ int make_exclude_list()
 
     // check the exclude list
     /*
-       printf("n = %d\n",nexcllist);
-       int tmp = 0;
-       for (ii=0;ii<natom;ii++)
-       {
-       printf("%d ",ii);
-       for (jj=pointexcl[ii];jj<pointexcl[ii+1];jj++)
-       {
-       printf("%d ",excllist[tmp]);
-       tmp++;
-       }
-       printf("\n");
-       }
-     */
+    printf("n = %d\n",nexcllist);
+    int tmp = 0;
+    for (ii=0;ii<natom;ii++)
+    {
+       	printf("%d excludes are:\n",ii);
+       	for (jj=pointexcl[ii];jj<pointexcl[ii+1];jj++)
+       	{
+	    printf("%d ",excllist[tmp]);
+	    tmp++;
+       	}
+       	printf("\n");
+    }
+    */
 }
 
 int velinit()
@@ -528,9 +533,9 @@ int printit()
     utot = upot + ukin;
     // add energy of thermostat, if nose hoover is not used, they will just be zero
     utot = utot + upot_nhts + unhts + unhtss;
-    fprintf(stderr,"%10d %10.4le %10.4le %10.4le\n",istep,utot,upot,ukin);
-    fprintf(fplog,"%10d %10.4le %10.4le %10.4le %10.4le %10.4le %10.4le %10.4le %10.4le %10.4le %10.4le %10.4le %10.4le %10.4le %10.4le\n",
-	    istep,utot,upot,ukin,tinst,uinter,uintra,uvdw,ubond,uangle,udih,uimp,uewald,unhts,unhtss);
+    fprintf(stderr,"%10d %10.4le %10.4le %10.4le %10.4le\n",istep,utot,upot,ukin,tinst);
+    fprintf(fplog,"%10d %10.4le %10.4le %10.4le %10.4le %10.4le %10.4le %10.4le %10.4le %10.4le %10.4le %10.4le %10.4le %10.4le %10.4le %10.4le\n",
+	    istep,utot,upot,ukin,tinst,uinter,uintra,uvdw,ubond,uangle,udih,uimp,uewald,usflj,unhts,unhtss);
 }
 
 int vver() // velocity verlet
@@ -685,8 +690,21 @@ int main (int argc, char *argv[])
 
     for (istep=nstep_start;istep<=nstep;istep++) // NOTE: start from 1 and <=
     {
-	if (isNVTnh)
-	    vver_nh(); // vv with nose hoover
+	if (isNVTnh) // velocity verlet with nose hoover
+	{
+	    switch (whichNH)
+	    {
+		case 1:
+		    vver_nh_1();
+		    break;
+		case 2:
+		    vver_nh_2();
+		    break;
+		case 3:
+		    vver_nh_3();
+		    break;
+	    }	
+	}
 	else 
 	    vver(); // velocity verlet
 
