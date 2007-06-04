@@ -136,6 +136,16 @@ double roff2_minus_ron2_cube; // used for switch potential
 double Gts, Qts, vts, rts, AA;
 double dt_outer2, dt_outer4, NRT;
 double ukin_nhts, upot_nhts;
+// frenkel and smit's nose hoover method
+double qq, ps, gg, ss;
+double delt_sqby2, delts_sqby2;
+double vxo[natom_max], vyo[natom_max], vzo[natom_max]; 
+double vxn[natom_max], vyn[natom_max], vzn[natom_max]; 
+double bx[natom_max], by[natom_max], bz[natom_max];
+double unhts;
+double qqs, pss, ggs, sss;
+double unhtss;
+
 
 // counters and accumulators
 int icounter[num_counter_max];

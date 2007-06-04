@@ -18,7 +18,9 @@
 
 extern int erfrc();
 extern int rafrc();
-extern int nvtnh();
+extern int vver_nh();
+extern int vver_nh_1();
+extern int vver_nh_2();
 extern int init_tasos_grid();
 
 /* Initiate variables */
@@ -66,9 +68,13 @@ int init_vars()
     deltsby2 = delts/2.0;
 
     // nose hoover
-    dt_outer2 = deltby2;
-    dt_outer4 = dt_outer2/2.0;
-    NRT = Rgas*treq*nfree;
+    // following for Dr. Maginn's nose hoover
+    // they are not used anymore
+    // dt_outer2 = deltby2;
+    // dt_outer4 = dt_outer2/2.0;
+    // ukin_nhts = 0.0;
+    // upot_nhts = 0.0;
+    // NRT = Rgas*treq*nfree;
     // Gts = 0.0;
     // vts = 0.0;
     // rts = 0.0;
@@ -77,8 +83,17 @@ int init_vars()
      * where Omega is a parameter related to the mass of the thermostat
      * for this program, we read in the Qts directly.
      */
-    ukin_nhts = 0.0;
-    upot_nhts = 0.0;
+    delt_sqby2 = delt*delt/2.0;
+    delts_sqby2 = delts*delts/2.0;
+    unhts = 0.0;
+    gg = nfree; // need double check
+    ss = 0.0;
+    ps = 0.0;
+    ggs = nfree;
+    sss = 0.0;
+    pss = 0.0;
+    unhtss = 0.0;
+
 
     // sf energy, tasos initiate part
     if (isSFon && sf_type==nanotube_tasos)
@@ -289,7 +304,7 @@ int readins()
     sscanf(fgets(buffer,datalen,fpins), "%lf %d", &delt, &nstep_inner);
     sscanf(fgets(buffer,datalen,fpins), "%lf", &f0);
     sscanf(fgets(buffer,datalen,fpins), "%d", &isNVTnh);
-    sscanf(fgets(buffer,datalen,fpins), "%lf %lf %lf %lf", &Gts, &vts, &rts, &Qts);
+    sscanf(fgets(buffer,datalen,fpins), "%lf %lf", &qq, &qqs);
     sscanf(fgets(buffer,datalen,fpins), "%d", &isLJswitchOn);
     sscanf(fgets(buffer,datalen,fpins), "%d", &isEwaldOn);
     sscanf(fgets(buffer,datalen,fpins), "%d", &isWolfOn);
@@ -375,6 +390,7 @@ int echo()
     fprintf(fpouts,"%d impropers.\n",nimp);
     fprintf(fpouts,"%d nonbonded pairs.\n",nnbp);
     fprintf(fpouts,"%d %d %d %d KMAX etc.\n",KMAXX,KMAXY,KMAXZ,KSQMAX);
+    fprintf(fpouts,"qq = %le\n",qq);
 }
 
 int make_exclude_list()
@@ -515,19 +531,15 @@ int printit()
     upot += usflj;
     utot = upot + ukin;
     // add energy of thermostat, if nose hoover is not used, they will just be zero
-    utot = utot + upot_nhts + ukin_nhts;
+    utot = utot + upot_nhts + unhts + unhtss;
     fprintf(stderr,"%10d %10.4le %10.4le %10.4le\n",istep,utot,upot,ukin);
-    fprintf(fplog,"%10d %10.4le %10.4le %10.4le %10.4le %10.4le %10.4le %10.4le %10.4le %10.4le %10.4le %10.4le %10.4le\n",
-	    istep,utot,upot,ukin,tinst,uinter,uintra,uvdw,ubond,uangle,udih,uimp,uewald);
+    fprintf(fplog,"%10d %10.4le %10.4le %10.4le %10.4le %10.4le %10.4le %10.4le %10.4le %10.4le %10.4le %10.4le %10.4le %10.4le %10.4le\n",
+	    istep,utot,upot,ukin,tinst,uinter,uintra,uvdw,ubond,uangle,udih,uimp,uewald,unhts,unhtss);
 }
 
 int vver() // velocity verlet
 {
     int ii, ll;
-
-    // check if NVT nose hoover is needed
-    if (isNVTnh)
-	nvtnh();
 
     for (ii=0;ii<natom;ii++)
     {
@@ -576,16 +588,8 @@ int vver() // velocity verlet
     }
     ukin = ukin/2.0;
 
-    // check for NVT nose hoover
-    if (isNVTnh)
-	nvtnh();
-
-
     // calculate instant temperature
     tinst = 2.0*ukin*rRgas/nfree;
-
-
-
 }
 
 int snapshot()
@@ -614,15 +618,16 @@ int saveit()
 
     fpsave = fopen(SAVEFILE,"wb");
 
-    fwrite(&istep,sizeof(int),1,fpsave);
-    fwrite(icounter,sizeof(int),num_counter_max,fpsave);
-    fwrite(accumulator,sizeof(double),num_counter_max,fpsave);
     fwrite(xx,sizeof(double),natom,fpsave);
     fwrite(yy,sizeof(double),natom,fpsave);
     fwrite(zz,sizeof(double),natom,fpsave);
     fwrite(vx,sizeof(double),natom,fpsave);
     fwrite(vy,sizeof(double),natom,fpsave);
     fwrite(vz,sizeof(double),natom,fpsave);
+
+    fwrite(&istep,sizeof(int),1,fpsave);
+    fwrite(icounter,sizeof(int),num_counter_max,fpsave);
+    fwrite(accumulator,sizeof(double),num_counter_max,fpsave);
 
     fclose(fpsave);
 }
@@ -671,6 +676,9 @@ int main (int argc, char *argv[])
     // start of the MD simulation
     // initialize velocities
     velinit(); 
+    
+    // loadit();
+
     // calculate total energies
     erfrc(); 
     rafrc();
@@ -681,7 +689,10 @@ int main (int argc, char *argv[])
 
     for (istep=nstep_start;istep<=nstep;istep++) // NOTE: start from 1 and <=
     {
-	vver(); // velocity verlet
+	if (isNVTnh)
+	    vver_nh(); // vv with nose hoover
+	else 
+	    vver(); // velocity verlet
 
 	// accumulators
 	accumulator[0][0] += utot;
@@ -719,7 +730,7 @@ int main (int argc, char *argv[])
 
 	if (istep%nstep_print == 0) printit();
 
-	if (istep%nstep_ss == 0) snapshot();
+	if (nstep_ss && istep%nstep_ss == 0) snapshot();
 
 	if (nstep_trj && istep%nstep_trj==0) trajectory();
 
@@ -733,7 +744,6 @@ int main (int argc, char *argv[])
 
     calres();
 
-    fprintf(stderr,"Gts=%le   vts=%le   rts=%le   Qts=%le\n",Gts,vts,rts,Qts);
     fprintf(stderr,"%d frames in the trajectory file.\n",nframe);
 
     // write out results and clean up
