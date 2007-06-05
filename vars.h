@@ -8,6 +8,7 @@
 #define SNAPSHOT	"ss.mspms"
 #define MOVIE		"trj.mspms"
 #define SAVEFILE	"sav.mspms"
+#define LOADFILE	"old.mspms"
 
 #define true		1
 #define false		0
@@ -88,7 +89,7 @@ int pointexcl[natom_max+1]; // the index of exclude list starts and ends
 char sysname[200];
 
 FILE *fpins, *fpouts, *fpcfg, *fplog;
-FILE *fpss, *fptrj, *fpsave;
+FILE *fpss, *fptrj, *fpsave, *fpload;
 
 int nstep, nstep_eq, nstep_start; /* nstep_start is the starting step for continue runs */
 int fStart_option; // 1-new run, 2-continue run, 3-new from old

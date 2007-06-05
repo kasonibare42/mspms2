@@ -650,6 +650,34 @@ int saveit()
     fclose(fpsave);
 }
 
+int loadit()
+{
+    int ii;
+    fpload = fopen(LOADFILE,"rb");
+
+    fread(xx,sizeof(double),natom,fpload);
+    fread(yy,sizeof(double),natom,fpload);
+    fread(zz,sizeof(double),natom,fpload);
+    fread(vx,sizeof(double),natom,fpload);
+    fread(vy,sizeof(double),natom,fpload);
+    fread(vz,sizeof(double),natom,fpload);
+
+    fread(&qq,sizeof(double),1,fpload);
+    fread(&ps,sizeof(double),1,fpload);
+    fread(&gg,sizeof(double),1,fpload);
+    fread(&ss,sizeof(double),1,fpload);
+    fread(&qqs,sizeof(double),1,fpload);
+    fread(&pss,sizeof(double),1,fpload);
+    fread(&ggs,sizeof(double),1,fpload);
+    fread(&sss,sizeof(double),1,fpload);
+
+    fread(&istep,sizeof(int),1,fpload);
+    fread(icounter,sizeof(int),num_counter_max,fpload);
+    fread(accumulator,sizeof(double),num_counter_max,fpload);
+
+    fclose(fpload);
+}
+
 int averages()
 {
     int ii;
@@ -695,7 +723,7 @@ int main (int argc, char *argv[])
     // initialize velocities
     velinit(); 
     
-    // loadit();
+    if (fStart_option!=new_run) loadit(); // if not new run, load from old file
 
     // calculate total energies
     erfrc(); 
