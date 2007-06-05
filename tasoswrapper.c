@@ -17,7 +17,7 @@ int init_tasos_grid()
     int	na, nb, nc;
     int	nspecies_yang;
     int tnuatoms;
-    char szgrid[12][80]; // assuming only 12 types of grids
+    char szgrid[12][200]; // assuming only 12 types of grids
     FILE *fptasos;
 
     fptasos = fopen("tasos.mspms","r");
@@ -36,6 +36,7 @@ int init_tasos_grid()
     {
 	jj = ii + 1;
        	pass_grid_file_name_(szgrid[ii], &jj);
+	fprintf(stderr,"%s\n",szgrid[ii]);
     }
     fprintf(stderr,"pass grid file name ok\n");
     fprintf(fpouts,"pass grid file name ok\n");

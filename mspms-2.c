@@ -5,6 +5,9 @@
  * No class and other complex data structures.
  * Use common names for input files. So the every job must
  * have its own working directory.
+ * 
+ * 
+ * Written by Yang Wang 2007
  */
 
 #include <stdio.h>
@@ -35,6 +38,8 @@ int init_vars()
     fplog = fopen(LOGFILE,"w");
     fptrj = fopen(MOVIE,"wb");
     fpouts = fopen(OUTPUT,"w");
+
+    fprintf(fpouts,"Initializing simulation ...\n");
 
     nframe = 0; // number of frames in trajectory file
 
@@ -803,7 +808,7 @@ int main (int argc, char *argv[])
 
     calres();
 
-    fprintf(fplog,"%d frames in the trajectory file.\n",nframe);
+    fprintf(fpouts,"%d frames in the trajectory file.\n",nframe);
 
     // write out results and clean up
     ending();

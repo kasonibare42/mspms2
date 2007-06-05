@@ -694,7 +694,6 @@ int wolf_con()
     int ii;
     for (ii=0;ii<natom;ii++)
     {
-	// need taskid and proc_count?
 	uwolf_con = uwolf_con + charge[ii]*charge[ii];
     }
     uwolf_con = uwolf_con*const_columb*(kappa/sqrt(pi)+erfc(kappa*rcutoffelec)/(2.0*rcutoffelec));
@@ -750,7 +749,7 @@ int erfrc()
     // add up everything
     // they should be zero if they are not used
     // so, can NOT turn ewald and wolf both on 
-    uinter = uvdw + uewald + uwolf + usflj;
+    uinter = uvdw + uewald + uwolf;// + usflj;
 }
 
 
