@@ -199,6 +199,14 @@ int init_vars()
     TWOPI_LY = 2.0*pi/boxly;
     TWOPI_LZ = 2.0*pi/boxlz;
 
+    // set wolf parameters
+    wolfvcon1 = -erfc(kappa*rcutoffelec)/rcutoffelec;
+    wolfvcon2 = erfc(kappa*rcutoffelec)/rcutoffelecsq 
+	+ 2.0*kappa*exp(-(kappa*rcutoffelec)*(kappa*rcutoffelec))/(sqrt(pi)*rcutoff);
+    wolffcon1 = 2.0*kappa/sqrt(pi);
+    wolffcon2 = -wolfvcon2;
+
+
     // read in coordinates
     fpcoords = fopen(coords_file,"r");
     // fscanf(fpcoords, "%[^\n]", buffer);
@@ -332,7 +340,7 @@ int readins()
     fscanf(fpcfg, "%d atoms\n", &natom);
     assert(natom<=natom_max);
     for (ii=0;ii<natom;ii++)
-	fscanf(fpcfg,"%lf %lf %lf %lf %d %d\n",&aw[ii],&epsilon[ii],&sigma[ii],
+	fscanf(fpcfg,"%lf %lf %s %lf %lf %lf %lf %d %d\n",&atomid,&moleid,atomname[ii],&aw[ii],&epsilon[ii],&sigma[ii],
 		&charge[ii],&isghost[ii],&tasostype[ii]);
 
     // read in bond list
@@ -626,6 +634,15 @@ int saveit()
     fwrite(vy,sizeof(double),natom,fpsave);
     fwrite(vz,sizeof(double),natom,fpsave);
 
+    fwrite(&qq,sizeof(double),1,fpsave);
+    fwrite(&ps,sizeof(double),1,fpsave);
+    fwrite(&gg,sizeof(double),1,fpsave);
+    fwrite(&ss,sizeof(double),1,fpsave);
+    fwrite(&qqs,sizeof(double),1,fpsave);
+    fwrite(&pss,sizeof(double),1,fpsave);
+    fwrite(&ggs,sizeof(double),1,fpsave);
+    fwrite(&sss,sizeof(double),1,fpsave);
+
     fwrite(&istep,sizeof(int),1,fpsave);
     fwrite(icounter,sizeof(int),num_counter_max,fpsave);
     fwrite(accumulator,sizeof(double),num_counter_max,fpsave);
@@ -758,7 +775,7 @@ int main (int argc, char *argv[])
 
     calres();
 
-    fprintf(stderr,"%d frames in the trajectory file.\n",nframe);
+    fprintf(fplog,"%d frames in the trajectory file.\n",nframe);
 
     // write out results and clean up
     ending();

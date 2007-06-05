@@ -24,6 +24,7 @@ int loop_ij()
     double epsilonij, sigmaij;
     int isNotexcl[natom_max];
     double uij_vdw, uij_vdw_temp, uij_real, uij_real_temp;
+    double uij_wolf_temp;
     double fij, fxij, fyij, fzij;
     double temp1, temp2;
 
@@ -99,7 +100,7 @@ int loop_ij()
 				-4.0*uij_vdw_temp*12.0*(rcutoffsq-rijsq)*(rcutonsq-rijsq)/roff2_minus_ron2_cube;
 		    }
 		    else
-		       	fij = 24.0*epsilonij*(r_r12_minus_r_r6+r_r12)/rijsq;
+			fij = 24.0*epsilonij*(r_r12_minus_r_r6+r_r12)/rijsq;
 		    fxij = fij*rxij;
 		    fyij = fij*ryij;
 		    fzij = fij*rzij;
@@ -135,7 +136,26 @@ int loop_ij()
 		    fzl[jj] -= fzij;
 		} // is Charge On check and rcutoffelecsq check
 
-
+		// wolf method for electrostatic
+		if (isWolfOn && rijsq<rcutoffelecsq)
+		{
+		    uwolf_real = uwolf_real 
+			+ chargei*charge[jj]*(erfc(kappa*rij)/rij + wolfvcon1 + wolfvcon2*(rij-rcutoffelec));
+		    uij_wolf_temp = chargei*charge[jj]/rij;
+		    fij = const_columb*uij_wolf_temp
+			*(erfc(kappa*rij)/rijsq + wolffcon1*exp(-(kappa*rij)*(kappa*rij))/rij + wolffcon2);
+		    fxij = fij*rxij;
+		    fyij = fij*ryij;
+		    fzij = fij*rzij;
+		    // force on atom ii
+		    fxi += fxij;
+		    fyi += fyij;
+		    fzi += fzij;
+		    // force on atom jj
+		    fxl[jj] -= fxij;
+		    fyl[jj] -= fyij;
+		    fzl[jj] -= fzij;
+		}
 	    } // end of excluding list
 	} // end of atom jj
 	fxl[ii] = fxi;
@@ -157,6 +177,7 @@ int loop_14()
     double r_r6, r_r12, r_r12_minus_r_r6;
     double sigmaij, epsilonij;
     double uij_vdw14, uij_vdw14_temp, uij_real14, uij_real14_temp;
+    double uij_wolf14_temp;
     double fij, fxij, fyij, fzij;
     double temp1, temp2;
 
@@ -254,6 +275,30 @@ int loop_14()
 		fyl[ii2] -= fyij;
 		fzl[ii2] -= fzij;
 	    } // is charge on check and rcutoffelecsq
+
+	    // wolf method for electrostatic
+	    if (isWolfOn && rijsq<rcutoffelecsq)
+	    {
+		uwolf_real = uwolf_real
+		    + charge[ii1]*charge[ii2]*(erfc(kappa*rij)/rij + wolfvcon1 + wolfvcon2*(rij-rcutoffelec));
+		// need + some scale factor here
+		uij_wolf14_temp = charge[ii1]*charge[ii2]/rij;
+		fij = const_columb*uij_wolf14_temp
+		    *(erfc(kappa*rij)/rijsq + wolffcon1*exp(-(kappa*rij)*(kappa*rij))/rij + wolffcon2);
+		// need + some scale factor here 
+		fxij = fij*rxij;
+		fyij = fij*ryij;
+		fzij = fij*rzij;
+		// force on atom ii
+		fxl[ii1] += fxij;
+		fyl[ii1] += fyij;
+		fzl[ii1] += fzij;
+		// force on atom jj
+		fxl[ii2] -= fxij;
+		fyl[ii2] -= fyij;
+		fzl[ii2] -= fzij;
+	    }
+
 	} // unique 1,4 pair check
     } // loop through dihedrals
 
@@ -297,7 +342,7 @@ int loop_13()
 	    ryij_old = ryij;
 	    rzij_old = rzij;
 
-	    if (isEwaldOn) // if we need charge interactions
+	    if (isEwaldOn || isWolfOn) // if we need charge interactions
 	    {
 		// calcualte the exculde ewald part, which use the raw distance between ii,jj
 		// so no minimum image convention here
@@ -331,9 +376,19 @@ int loop_13()
 		    temp1 = kappa*rij;
 		    temp2 = charge[ii1]*charge[ii2]/rij;
 		    temp3 = temp2*erfc(temp1);
-		    uij_real13 += temp3; // still need constant
-		    // forces
-		    fij = (temp3+temp2*2.0*temp1*exp(-temp1*temp1)/sqrt(pi))*const_columb/rijsq;
+		    if (isEwaldOn)
+		    {
+			uij_real13 += temp3; // still need constant
+			// forces
+			fij = (temp3+temp2*2.0*temp1*exp(-temp1*temp1)/sqrt(pi))*const_columb/rijsq;
+		    }
+		    else if (isWolfOn)
+		    {
+			uwolf_real = uwolf_real
+			    + charge[ii1]*charge[ii2]*(erfc(temp1)/rij + wolfvcon1 + wolfvcon2*(rij-rcutoffelec));
+			fij = const_columb*temp2*(erfc(temp1)/rijsq + wolffcon1*exp(-temp1*temp1)/rij + wolffcon2);
+
+		    }
 		    fxij = fij*rxij;
 		    fyij = fij*ryij;
 		    fzij = fij*rzij;
@@ -346,7 +401,8 @@ int loop_13()
 		    fyl[ii2] -= fyij;
 		    fzl[ii2] -= fzij;
 		} // rcutoffelecsq 
-	    } // is Charge On
+	    } // is Ewald or Wolf Charge On
+
 
 	    // check if 1,3 distance < 1,3' distance
 	    // if it is true, no LJ between 1,3 needed
@@ -383,7 +439,7 @@ int loop_13()
 		    if (isLJswitchOn) // if switch is used
 			uij_vdw13img += uij_vdw13img_temp*LJswitch; // still need 4.0
 		    else
-		       	uij_vdw13img += uij_vdw13img_temp; // still need *4.0
+			uij_vdw13img += uij_vdw13img_temp; // still need *4.0
 		    // calculate LJ forces
 		    if (isLJswitchOn)
 		    {
@@ -440,7 +496,7 @@ int loop_12()
     {
 	ii1 = bond_idx[ii][0];
 	ii2 = bond_idx[ii][1];
-       	if (isghost[ii1]==all_ghost || isghost[ii2]==all_ghost)
+	if (isghost[ii1]==all_ghost || isghost[ii2]==all_ghost)
 	    continue;
 	rxij = xx[ii1] - xx[ii2];
 	ryij = yy[ii1] - yy[ii2];
@@ -450,7 +506,7 @@ int loop_12()
 	ryij_old = ryij;
 	rzij_old = rzij;
 
-	if (isEwaldOn) // if ewald is needed
+	if (isEwaldOn || isWolfOn) // if ewald is needed
 	{
 	    // calculate the exclude ewald part, which uses the raw distance between atom
 	    // ii and jj, no minimum image convention
@@ -482,9 +538,18 @@ int loop_12()
 		temp1 = kappa*rij;
 		temp2 = charge[ii1]*charge[ii2]/rij;
 		temp3 = temp2*erfc(temp1);
-		uij_real12 += temp3; // still need constant
-		// forces
-		fij = (temp3+temp2*2.0*temp1*exp(-temp1*temp1)/sqrt(pi))*const_columb/rijsq;
+		if (isEwaldOn)
+		{
+		    uij_real12 += temp3; // still need constant
+		    // forces
+		    fij = (temp3+temp2*2.0*temp1*exp(-temp1*temp1)/sqrt(pi))*const_columb/rijsq;
+		}
+		else if (isWolfOn)
+		{
+		    uwolf_real = uwolf_real
+			+ charge[ii1]*charge[ii2]*(erfc(temp1)/rij + wolfvcon1 + wolfvcon2*(rij-rcutoffelec));
+		    fij = const_columb*temp2*(erfc(temp1)/rijsq + wolffcon1*exp(-temp1*temp1)/rij + wolffcon2);
+		}
 		fxij = fij*rxij;
 		fyij = fij*ryij;
 		fzij = fij*rzij;
@@ -497,7 +562,8 @@ int loop_12()
 		fyl[ii2] -= fyij;
 		fzl[ii2] -= fzij;
 	    } // rcutoffelecsq
-	} // if ewald is needed
+	} // if ewald or wolf is needed
+
 
 	// check if 1,2 distance < 1,2' distance
 	// if it is true, no LJ needed
@@ -596,9 +662,9 @@ int ewald_fourier_and_self()
 		    si = 0.0;
 		    for (ii=0;ii<natom;ii++)
 		    {
-		       	t = rkx*xx[ii] + rky*yy[ii] + rkz*zz[ii];   
+			t = rkx*xx[ii] + rky*yy[ii] + rkz*zz[ii];   
 			sr = sr + charge[ii]*cos(t);
-		       	si = si + charge[ii]*sin(t);
+			si = si + charge[ii]*sin(t);
 		    }
 		    ufourier += kvec*(sr*sr+si*si);
 		    // forces
@@ -623,6 +689,21 @@ int ewald_fourier_and_self()
     uself = uself*const_columb*sqrt(kappa*kappa/pi);
 }
 
+int wolf_con()
+{
+    int ii;
+    for (ii=0;ii<natom;ii++)
+    {
+	// need taskid and proc_count?
+	uwolf_con = uwolf_con + charge[ii]*charge[ii];
+    }
+    uwolf_con = uwolf_con*const_columb*(kappa/sqrt(pi)+erfc(kappa*rcutoffelec)/(2.0*rcutoffelec));
+    uwolf_real = uwolf_real*const_columb;
+    // uexcl already got 4.0 factor in erfrc function
+    uwolf = uwolf_real - uwolf_con - uexcl;
+
+}
+
 int erfrc()
 {
     int ii;
@@ -633,6 +714,10 @@ int erfrc()
     uexcl = 0.0;
     ufourier = 0.0;
     uself = 0.0;
+    uwolf = 0.0;
+    uwolf_real = 0.0;
+    uwolf_con = 0.0;
+    usflj = 0.0;
 
     // zero forces
     for (ii=0;ii<natom;ii++)
@@ -649,17 +734,23 @@ int erfrc()
     uexcl *= const_columb;
 
     if (isEwaldOn) // if ewald is on, calculate the fourier and self correction parts
-	ewald_fourier_and_self();
+    {
+	ewald_fourier_and_self(); 
+	// total ewald energy
+       	uewald = ureal + ufourier - uself - uexcl;
+    }
+    else if (isWolfOn) // if wolf is on
+	wolf_con();
 
     // calculate solid fluid energy if necessary
     if (isSFon)
 	sffrc();
 
-    // total ewald energy
-    uewald = ureal + ufourier - uself - uexcl;
-
     // total inter molecule energy
-    uinter = uvdw + uewald;
+    // add up everything
+    // they should be zero if they are not used
+    // so, can NOT turn ewald and wolf both on 
+    uinter = uvdw + uewald + uwolf + usflj;
 }
 
 

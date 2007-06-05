@@ -65,6 +65,7 @@ double fxs[natom_max], fys[natom_max], fzs[natom_max]; /* intra force */
 double aw[natom_max], epsilon[natom_max], sigma[natom_max], charge[natom_max]; /* atom weight etc. */
 int isghost[natom_max]; /* flag of ghost atom, including ghost LJ or ghost electrostatic */
 int tasostype[natom_max]; /* atom type for tasos interpolation */
+char atomname[natom_max][5];
 
 int nbond, nangle, ndih, nimp, nnbp;
 int bond_idx[nbond_max][2];
@@ -114,6 +115,8 @@ int isNVTnh; // use nose hoover for NVT ensemble or not
 int whichNH; // which nose hoover subroutine to use? usually 3 for molecule, 2 for atoms, see more details in nvtnh.c
 int isSFon; // is solid-fluid interaction on
 int sf_type; // solid-fluid type. for different nanotube potentials and future possible other materials
+int atomid, moleid;
+char atomname[natom_max][5];
 
 
 int istep; // counter of step, current step
@@ -137,6 +140,10 @@ int nframe; // number of frames in the trajectory file
 
 double TWOPI_LX, TWOPI_LY, TWOPI_LZ; // ewald
 double Bfactor_ewald, Vfactor_ewald;
+
+// variables for wolf method
+double uwolf, uwolf_real, uwolf_con;
+double wolfvcon1, wolfvcon2, wolffcon1, wolffcon2;
 
 double roff2_minus_ron2_cube; // used for switch potential
 
