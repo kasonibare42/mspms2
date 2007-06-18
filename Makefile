@@ -4,8 +4,8 @@ CC = gcc
 
 OBJ = mspms-2.o random.o erfrc.o rafrc.o nvtnh.o sffrc.o 
 BIN = mspms-2.x
-LIBS = mylibtasos/libtasos.a /usr/local/lib/libgfortran.a
-#LIBS = mylibtasos/libtasos.a /usr/lib/gcc/i386-redhat-linux/4.1.2/libgfortran.a
+#LIBS = mylibtasos/libtasos.a /usr/local/lib/libgfortran.a
+LIBS = mylibtasos/libtasos.a /usr/lib/gcc/i386-redhat-linux/4.1.2/libgfortran.a
 CFLAGS = -std=c99
 RM = rm -f
 

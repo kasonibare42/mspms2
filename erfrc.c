@@ -990,7 +990,7 @@ int wolf_con()
     }
     uwolf_con = uwolf_con*const_columb*(kappa/sqrt(pi)+erfc(kappa*rcutoffelec)/(2.0*rcutoffelec));
     uwolf_real = uwolf_real*const_columb;
-    // uexcl already got 4.0 factor in erfrc function
+    // uexcl already got constant factor in erfrc function
     uwolf = uwolf_real - uwolf_con - uexcl;
 
 }

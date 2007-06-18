@@ -85,6 +85,8 @@ int init_my_interp()
     double uclx_chk, ucly_chk, uclz_chk;
     double temp;
 
+    fprintf(stderr,"Warning: this solid-fluid interpolation method is not fully tested.\n");
+    fprintf(fpouts,"Warning: this solid-fluid interpolation method is not fully tested.\n");
     fprintf(stderr,"Reading input data for myinterp...\n");
     fprintf(fpouts,"Reading input data for myinterp...\n");
 
