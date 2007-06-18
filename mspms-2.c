@@ -28,6 +28,7 @@ extern int init_sf_hypergeo();
 extern int init_sf_atom_explicit();
 extern int init_tasos_grid();
 extern int init_my_interp();
+extern int end_my_interp();
 
 
 /* Initiate variables */
@@ -388,6 +389,8 @@ int ending()
 		free(dFzy[ii]);
 		free(dFzz[ii]);
 	    }
+	    // free the matrix things
+	    end_my_interp();
 	}
     }
 
@@ -897,6 +900,7 @@ int opening()
     fprintf(fpouts,"WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWYANG\n");
 }
 
+extern int get_values_from_grid(double, double, double, int, double*, double*);
 int main (int argc, char *argv[])
 {
     opening();

@@ -4,12 +4,22 @@
 #include <assert.h>
 #include <string.h>
 #include <ctype.h>
+#include <gsl/gsl_linalg.h>
 #include "vars.h"
 
 extern void cforce_atom_(int*, double*, double*, double*, double*, double*);
 extern void initpotentialgrid_(int*, double*, double*, double*, int*, int*, int*, double*);
 extern void pass_grid_file_name_(char*, int*);
 extern void read_grids_(int* nspecies_yang);
+
+double amatrix[1024], amatrix_backup[1024];
+double interp_vector[32];
+double bvector[32];
+gsl_vector *work; // = gsl_vector_alloc(32);
+gsl_vector *Svector; //  = gsl_vector_alloc(32);
+gsl_vector *xvector; // = gsl_vector_alloc(32);
+gsl_matrix *Vmatrix; // = gsl_matrix_alloc(32,32);
+gsl_matrix *Xmatrix;
 
 // initialize and reading the tasos grids
 int init_tasos_grid()
@@ -85,8 +95,16 @@ int init_my_interp()
     double uclx_chk, ucly_chk, uclz_chk;
     double temp;
 
+    work = gsl_vector_alloc(32);
+    Svector = gsl_vector_alloc(32);
+    xvector = gsl_vector_alloc(32);
+    Vmatrix = gsl_matrix_alloc(32,32);
+    Xmatrix = gsl_matrix_alloc(32,32);
+
     fprintf(stderr,"Warning: this solid-fluid interpolation method is not fully tested.\n");
     fprintf(fpouts,"Warning: this solid-fluid interpolation method is not fully tested.\n");
+    fprintf(stderr,"Warning: the algorithm is not efficient.\n");
+    fprintf(fpouts,"Warning: the algorithm is not efficient.\n");
     fprintf(stderr,"Reading input data for myinterp...\n");
     fprintf(fpouts,"Reading input data for myinterp...\n");
 
@@ -228,7 +246,15 @@ int init_my_interp()
     exit(1);
 }
 
-/*
+int end_my_interp()
+{
+    gsl_vector_free(work);
+    gsl_vector_free(Svector);
+    gsl_vector_free(xvector);
+    gsl_matrix_free(Vmatrix);
+    gsl_matrix_free(Xmatrix);
+}
+
 int Amatrix_ele_assign_value(double *line, double x, double y, double z)
 {
     double x2, y2, z2;
@@ -405,24 +431,24 @@ int Amatrix_ele_assign_dz(double *line, double x, double y, double z)
     line[30] = x*y2;
     line[31] = 2*x*y*z;
 }
-*/
 
 
 
-// use cubic hermite interpolation for energy and force calculations
-/*
- *         H---------G
- *        /         /|
- *       E---------F |
- *       | |       | |
- *  z(v) | D-      | C
- *       |/        |/   y(u)
- *       A---------B
- *
- *          x(t)
- */
 int get_values_from_grid(double fxx,double fyy, double fzz, int type, double *usf, double *fsf)
 {
+    // use cubic hermite interpolation for energy and force calculations
+    /*
+     *         H---------G
+     *        /         /|
+     *       E---------F |
+     *       | |       | |
+     *  z(v) | D-      | C
+     *       |/        |/   y(u)
+     *       A---------B
+     *
+     *          x(t)
+     */
+    /*
     // values at the 8 corners
     double Avalue, Bvalue, Cvalue, Dvalue;
     double Evalue, Fvalue, Gvalue, Hvalue;
@@ -450,17 +476,17 @@ int get_values_from_grid(double fxx,double fyy, double fzz, int type, double *us
     double h00z, h10z, h01z, h11z;
     // interpolated values at 12 boarders
     double H1, // A-B
-	   H2, // A-D
-	   H3, // A-E
-	   H4, // D-C
-	   H5, // D-H
-	   H6, // B-C
-	   H7, // B-F
-	   H8, // C-G
-	   H9, // E-F
-	   H10, // E-H
-	   H11, // H-G
-	   H12; // F-G
+    H2, // A-D
+    H3, // A-E
+    H4, // D-C
+    H5, // D-H
+    H6, // B-C
+    H7, // B-F
+    H8, // C-G
+    H9, // E-F
+    H10, // E-H
+    H11, // H-G
+    H12; // F-G
     // factors for the 12 interpolated values
     double f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, f12;
     // final interpolate value
@@ -489,7 +515,7 @@ int get_values_from_grid(double fxx,double fyy, double fzz, int type, double *us
     fzz = fzz - zmax*rint(fzz/zmax);
     // make sure its in the primal box
     if (fzz<0)
-	fzz = zmax + fzz;
+    fzz = zmax + fzz;
     vz = modf((fzz-zmin)/grid_itvl_z,&tempidx);
     iAz = (int)tempidx;
     tx2 = tx*tx;
@@ -733,7 +759,7 @@ int get_values_from_grid(double fxx,double fyy, double fzz, int type, double *us
     // final value 
     PP = (H1*f1+H2*f2+H3*f3+H4*f4+H5*f5+H6*f6+H7*f7+H8*f8+H9*f9+H10*f10+H11*f11+H12*f12)/3.0;
     fsf[1] = PP;
-    
+
     // fz
     // calculate the 12 intermediate interpolations
     H1 = h00x*(-Adz) + h10x*Adzx + h01x*(-Bdz) + h11x*Bdzx; // A-B
@@ -751,70 +777,71 @@ int get_values_from_grid(double fxx,double fyy, double fzz, int type, double *us
     // final value 
     PP = (H1*f1+H2*f2+H3*f3+H4*f4+H5*f5+H6*f6+H7*f7+H8*f8+H9*f9+H10*f10+H11*f11+H12*f12)/3.0;
     fsf[2] = PP;
-    
-    /*
-    printf("xx=%lf  yy=%lf  zz=%lf\n",fxx,fyy,fzz);
-    printf("iAx=%d  iAy=%d  iAz=%d\n",iAx,iAy,iAz);
-    printf("Aidx=%d  Eidx=%d  Hidx=%d\n",Aidx,Eidx,Hidx);
 
-    printf("Ax=%lf  Ay=%lf  Az=%lf\n",Ax,Ay,Az);
-    printf("Bx=%lf  By=%lf  Bz=%lf\n",Bx,By,Bz);
-    printf("Cx=%lf  Cy=%lf  Cz=%lf\n",Cx,Cy,Cz);
-    printf("Dx=%lf  Dy=%lf  Dz=%lf\n",Dx,Dy,Dz);
-    printf("Ex=%lf  Ey=%lf  Ez=%lf\n",Ex,Ey,Ez);
-    printf("Fx=%lf  Fy=%lf  Fz=%lf\n",Fx,Fy,Fz);
-    printf("Gx=%lf  Gy=%lf  Gz=%lf\n",Gx,Gy,Gz);
-    printf("Hx=%lf  Hy=%lf  Hz=%lf\n",Hx,Hy,Hz);
-
-    printf("A=%lf B=%lf C=%lf D=%lf E=%lf F=%lf G=%lf H=%lf\n",
-	    Avalue,Bvalue,Cvalue,Dvalue,Evalue,Fvalue,Gvalue,Hvalue);
-
-    printf("Adx=%lf Ady=%lf Adz=%lf\n",Adx,Ady,Adz);
-    printf("Bdx=%lf Bdy=%lf Bdz=%lf\n",Bdx,Bdy,Bdz);
-    printf("Cdx=%lf Cdy=%lf Cdz=%lf\n",Cdx,Cdy,Cdz);
-    printf("Ddx=%lf Ddy=%lf Ddz=%lf\n",Ddx,Ddy,Ddz);
-    printf("Edx=%lf Edy=%lf Edz=%lf\n",Edx,Edy,Edz);
-    printf("Fdx=%lf Fdy=%lf Fdz=%lf\n",Fdx,Fdy,Fdz);
-    printf("Gdx=%lf Gdy=%lf Gdz=%lf\n",Gdx,Gdy,Gdz);
-    printf("Hdx=%lf Hdy=%lf Hdz=%lf\n",Hdx,Hdy,Hdz);
-
-    printf("\n");
-    printf("Adxx=%lf Adxy=%lf Adxz=%lf\n",Adxx,Adxy,Adxz);
-    printf("Adyx=%lf Adyy=%lf Adyz=%lf\n",Adyx,Adyy,Adyz);
-    printf("Adzx=%lf Adzy=%lf Adzz=%lf\n",Adzx,Adzy,Adzz);
-    printf("Bdxx=%lf Bdxy=%lf Bdxz=%lf\n",Bdxx,Bdxy,Bdxz);
-    printf("Bdyx=%lf Bdyy=%lf Bdyz=%lf\n",Bdyx,Bdyy,Bdyz);
-    printf("Bdzx=%lf Bdzy=%lf Bdzz=%lf\n",Bdzx,Bdzy,Bdzz);
-    printf("Cdxx=%lf Cdxy=%lf Cdxz=%lf\n",Cdxx,Cdxy,Cdxz);
-    printf("Cdyx=%lf Cdyy=%lf Cdyz=%lf\n",Cdyx,Cdyy,Cdyz);
-    printf("Cdzx=%lf Cdzy=%lf Cdzz=%lf\n",Cdzx,Cdzy,Cdzz);
-    printf("Ddxx=%lf Ddxy=%lf Ddxz=%lf\n",Ddxx,Ddxy,Ddxz);
-    printf("Ddyx=%lf Ddyy=%lf Ddyz=%lf\n",Ddyx,Ddyy,Ddyz);
-    printf("Ddzx=%lf Ddzy=%lf Ddzz=%lf\n",Ddzx,Ddzy,Ddzz);
-    printf("Edxx=%lf Edxy=%lf Edxz=%lf\n",Edxx,Edxy,Edxz);
-    printf("Edyx=%lf Edyy=%lf Edyz=%lf\n",Edyx,Edyy,Edyz);
-    printf("Edzx=%lf Edzy=%lf Edzz=%lf\n",Edzx,Edzy,Edzz);
-    printf("Fdxx=%lf Fdxy=%lf Fdxz=%lf\n",Fdxx,Fdxy,Fdxz);
-    printf("Fdyx=%lf Fdyy=%lf Fdyz=%lf\n",Fdyx,Fdyy,Fdyz);
-    printf("Fdzx=%lf Fdzy=%lf Fdzz=%lf\n",Fdzx,Fdzy,Fdzz);
-    printf("Gdxx=%lf Gdxy=%lf Gdxz=%lf\n",Gdxx,Gdxy,Gdxz);
-    printf("Gdyx=%lf Gdyy=%lf Gdyz=%lf\n",Gdyx,Gdyy,Gdyz);
-    printf("Gdzx=%lf Gdzy=%lf Gdzz=%lf\n",Gdzx,Gdzy,Gdzz);
-    printf("Hdxx=%lf Hdxy=%lf Hdxz=%lf\n",Hdxx,Hdxy,Hdxz);
-    printf("Hdyx=%lf Hdyy=%lf Hdyz=%lf\n",Hdyx,Hdyy,Hdyz);
-    printf("Hdzx=%lf Hdzy=%lf Hdzz=%lf\n",Hdzx,Hdzy,Hdzz);
-
-    printf("\nH1=%lf H2=%lf H3=%lf H4=%lf H5=%lf H6=%lf H7=%lf H8=%lf H9=%lf H10=%lf H11=%lf H12=%lf\n",
-	    H1,H2,H3,H4,H5,H6,H7,H8,H9,H10,H11,H12);
-    printf("f1=%lf f2=%lf f3=%lf f4=%lf f5=%lf f6=%lf f7=%lf f8=%lf f9=%lf f10=%lf f11=%lf f12=%lf\n",
-	    f1,f2,f3,f4,f5,f6,f7,f8,f9,f10,f11,f12);
-
-    printf("usf=%lf\n",*usf);
-    printf("fx=%lf   fy=%lf   fz=%lf\n",fsf[0],fsf[1],fsf[2]);
-
-    exit(1);
     */
 
+	/*
+	   printf("xx=%lf  yy=%lf  zz=%lf\n",fxx,fyy,fzz);
+	   printf("iAx=%d  iAy=%d  iAz=%d\n",iAx,iAy,iAz);
+	   printf("Aidx=%d  Eidx=%d  Hidx=%d\n",Aidx,Eidx,Hidx);
+
+	   printf("Ax=%lf  Ay=%lf  Az=%lf\n",Ax,Ay,Az);
+	   printf("Bx=%lf  By=%lf  Bz=%lf\n",Bx,By,Bz);
+	   printf("Cx=%lf  Cy=%lf  Cz=%lf\n",Cx,Cy,Cz);
+	   printf("Dx=%lf  Dy=%lf  Dz=%lf\n",Dx,Dy,Dz);
+	   printf("Ex=%lf  Ey=%lf  Ez=%lf\n",Ex,Ey,Ez);
+	   printf("Fx=%lf  Fy=%lf  Fz=%lf\n",Fx,Fy,Fz);
+	   printf("Gx=%lf  Gy=%lf  Gz=%lf\n",Gx,Gy,Gz);
+	   printf("Hx=%lf  Hy=%lf  Hz=%lf\n",Hx,Hy,Hz);
+
+	   printf("A=%lf B=%lf C=%lf D=%lf E=%lf F=%lf G=%lf H=%lf\n",
+	   Avalue,Bvalue,Cvalue,Dvalue,Evalue,Fvalue,Gvalue,Hvalue);
+
+	   printf("Adx=%lf Ady=%lf Adz=%lf\n",Adx,Ady,Adz);
+	   printf("Bdx=%lf Bdy=%lf Bdz=%lf\n",Bdx,Bdy,Bdz);
+	   printf("Cdx=%lf Cdy=%lf Cdz=%lf\n",Cdx,Cdy,Cdz);
+	   printf("Ddx=%lf Ddy=%lf Ddz=%lf\n",Ddx,Ddy,Ddz);
+	   printf("Edx=%lf Edy=%lf Edz=%lf\n",Edx,Edy,Edz);
+	   printf("Fdx=%lf Fdy=%lf Fdz=%lf\n",Fdx,Fdy,Fdz);
+	   printf("Gdx=%lf Gdy=%lf Gdz=%lf\n",Gdx,Gdy,Gdz);
+	   printf("Hdx=%lf Hdy=%lf Hdz=%lf\n",Hdx,Hdy,Hdz);
+
+	   printf("\n");
+	   printf("Adxx=%lf Adxy=%lf Adxz=%lf\n",Adxx,Adxy,Adxz);
+	   printf("Adyx=%lf Adyy=%lf Adyz=%lf\n",Adyx,Adyy,Adyz);
+	   printf("Adzx=%lf Adzy=%lf Adzz=%lf\n",Adzx,Adzy,Adzz);
+	   printf("Bdxx=%lf Bdxy=%lf Bdxz=%lf\n",Bdxx,Bdxy,Bdxz);
+	   printf("Bdyx=%lf Bdyy=%lf Bdyz=%lf\n",Bdyx,Bdyy,Bdyz);
+	   printf("Bdzx=%lf Bdzy=%lf Bdzz=%lf\n",Bdzx,Bdzy,Bdzz);
+	   printf("Cdxx=%lf Cdxy=%lf Cdxz=%lf\n",Cdxx,Cdxy,Cdxz);
+	   printf("Cdyx=%lf Cdyy=%lf Cdyz=%lf\n",Cdyx,Cdyy,Cdyz);
+	   printf("Cdzx=%lf Cdzy=%lf Cdzz=%lf\n",Cdzx,Cdzy,Cdzz);
+	   printf("Ddxx=%lf Ddxy=%lf Ddxz=%lf\n",Ddxx,Ddxy,Ddxz);
+	   printf("Ddyx=%lf Ddyy=%lf Ddyz=%lf\n",Ddyx,Ddyy,Ddyz);
+	   printf("Ddzx=%lf Ddzy=%lf Ddzz=%lf\n",Ddzx,Ddzy,Ddzz);
+	   printf("Edxx=%lf Edxy=%lf Edxz=%lf\n",Edxx,Edxy,Edxz);
+	   printf("Edyx=%lf Edyy=%lf Edyz=%lf\n",Edyx,Edyy,Edyz);
+	   printf("Edzx=%lf Edzy=%lf Edzz=%lf\n",Edzx,Edzy,Edzz);
+	   printf("Fdxx=%lf Fdxy=%lf Fdxz=%lf\n",Fdxx,Fdxy,Fdxz);
+	   printf("Fdyx=%lf Fdyy=%lf Fdyz=%lf\n",Fdyx,Fdyy,Fdyz);
+	   printf("Fdzx=%lf Fdzy=%lf Fdzz=%lf\n",Fdzx,Fdzy,Fdzz);
+	   printf("Gdxx=%lf Gdxy=%lf Gdxz=%lf\n",Gdxx,Gdxy,Gdxz);
+	   printf("Gdyx=%lf Gdyy=%lf Gdyz=%lf\n",Gdyx,Gdyy,Gdyz);
+	   printf("Gdzx=%lf Gdzy=%lf Gdzz=%lf\n",Gdzx,Gdzy,Gdzz);
+	   printf("Hdxx=%lf Hdxy=%lf Hdxz=%lf\n",Hdxx,Hdxy,Hdxz);
+	   printf("Hdyx=%lf Hdyy=%lf Hdyz=%lf\n",Hdyx,Hdyy,Hdyz);
+	   printf("Hdzx=%lf Hdzy=%lf Hdzz=%lf\n",Hdzx,Hdzy,Hdzz);
+
+	   printf("\nH1=%lf H2=%lf H3=%lf H4=%lf H5=%lf H6=%lf H7=%lf H8=%lf H9=%lf H10=%lf H11=%lf H12=%lf\n",
+	   H1,H2,H3,H4,H5,H6,H7,H8,H9,H10,H11,H12);
+	   printf("f1=%lf f2=%lf f3=%lf f4=%lf f5=%lf f6=%lf f7=%lf f8=%lf f9=%lf f10=%lf f11=%lf f12=%lf\n",
+	   f1,f2,f3,f4,f5,f6,f7,f8,f9,f10,f11,f12);
+
+	   printf("usf=%lf\n",*usf);
+	   printf("fx=%lf   fy=%lf   fz=%lf\n",fsf[0],fsf[1],fsf[2]);
+
+	   exit(1);
+	   */
 
 
 
@@ -824,7 +851,7 @@ int get_values_from_grid(double fxx,double fyy, double fzz, int type, double *us
 
 
 
-    /*
+
     // values at the 8 corners
     double Avalue, Bvalue, Cvalue, Dvalue;
     double Evalue, Fvalue, Gvalue, Hvalue;
@@ -862,13 +889,25 @@ int get_values_from_grid(double fxx,double fyy, double fzz, int type, double *us
     double Gx, Gy, Gz;
     double Hx, Hy, Hz;
 
-    int ii, sms; // used for solving matrix
+    int ii;
+
+    // double amatrix[1024], amatrix_backup[1024];
+    // gsl_vector *work = gsl_vector_alloc(32);
+    // gsl_vector *Svector = gsl_vector_alloc(32);
+    // gsl_vector *xvector = gsl_vector_alloc(32);
+    // gsl_matrix *Vmatrix = gsl_matrix_alloc(32,32);
+    // double interp_vector[32];
+    // double bvector[32];
+
+    // printf("xx=%lf  yy=%lf  zz=%lf\n",fxx,fyy,fzz);
 
     // calculate the index of corner A
     iAx = (int)((fxx-xmin)/grid_itvl_x);
     iAy = (int)((fyy-ymin)/grid_itvl_y);
     // periodical for z direction
     fzz = fzz - zmax*rint(fzz/zmax);
+    // make sure its in the primal box
+    if (fzz<0) fzz=zmax+fzz;
     iAz = (int)((fzz-zmin)/grid_itvl_z);
 
 
@@ -894,10 +933,11 @@ int get_values_from_grid(double fxx,double fyy, double fzz, int type, double *us
     Gidx = (iAx+1)*ngrid_y*ngrid_z + (iAy+1)*ngrid_z + (iAz+1);
     Hidx = iAx*ngrid_y*ngrid_z + (iAy+1)*ngrid_z + (iAz+1);
 
+    // printf("xx=%lf  yy=%lf  zz=%lf\n",fxx,fyy,fzz);
+    // printf("iAx=%d  iAy=%d  iAz=%d\n",iAx,iAy,iAz);
+    // printf("Aidx=%d  Eidx=%d  Hidx=%d\n",Aidx,Eidx,Hidx);
+
     // make sure its within the boundary
-    printf("xx=%lf  yy=%lf  zz=%lf\n",fxx,fyy,fzz);
-    printf("iAx=%d  iAy=%d  iAz=%d\n",iAx,iAy,iAz);
-    printf("Aidx=%d  Eidx=%d  Hidx=%d\n",Aidx,Eidx,Hidx);
     assert(Hidx<ngrid_total);
 
     // get the values
@@ -936,7 +976,89 @@ int get_values_from_grid(double fxx,double fyy, double fzz, int type, double *us
     Hdy = dEy[type][Hidx];
     Hdz = dEz[type][Hidx];
 
+    // get 2nd order derivaties
+    Adxx = dFxx[type][Aidx];
+    Adxy = dFxy[type][Aidx];
+    Adxz = dFxz[type][Aidx];
+    Adyx = dFyx[type][Aidx];
+    Adyy = dFyy[type][Aidx];
+    Adyz = dFyz[type][Aidx];
+    Adzx = dFzx[type][Aidx];
+    Adzy = dFzy[type][Aidx];
+    Adzz = dFzz[type][Aidx];
 
+    Bdxx = dFxx[type][Bidx];
+    Bdxy = dFxy[type][Bidx];
+    Bdxz = dFxz[type][Bidx];
+    Bdyx = dFyx[type][Bidx];
+    Bdyy = dFyy[type][Bidx];
+    Bdyz = dFyz[type][Bidx];
+    Bdzx = dFzx[type][Bidx];
+    Bdzy = dFzy[type][Bidx];
+    Bdzz = dFzz[type][Bidx];
+
+    Cdxx = dFxx[type][Cidx];
+    Cdxy = dFxy[type][Cidx];
+    Cdxz = dFxz[type][Cidx];
+    Cdyx = dFyx[type][Cidx];
+    Cdyy = dFyy[type][Cidx];
+    Cdyz = dFyz[type][Cidx];
+    Cdzx = dFzx[type][Cidx];
+    Cdzy = dFzy[type][Cidx];
+    Cdzz = dFzz[type][Cidx];
+
+    Ddxx = dFxx[type][Didx];
+    Ddxy = dFxy[type][Didx];
+    Ddxz = dFxz[type][Didx];
+    Ddyx = dFyx[type][Didx];
+    Ddyy = dFyy[type][Didx];
+    Ddyz = dFyz[type][Didx];
+    Ddzx = dFzx[type][Didx];
+    Ddzy = dFzy[type][Didx];
+    Ddzz = dFzz[type][Didx];
+
+    Edxx = dFxx[type][Eidx];
+    Edxy = dFxy[type][Eidx];
+    Edxz = dFxz[type][Eidx];
+    Edyx = dFyx[type][Eidx];
+    Edyy = dFyy[type][Eidx];
+    Edyz = dFyz[type][Eidx];
+    Edzx = dFzx[type][Eidx];
+    Edzy = dFzy[type][Eidx];
+    Edzz = dFzz[type][Eidx];
+
+    Fdxx = dFxx[type][Fidx];
+    Fdxy = dFxy[type][Fidx];
+    Fdxz = dFxz[type][Fidx];
+    Fdyx = dFyx[type][Fidx];
+    Fdyy = dFyy[type][Fidx];
+    Fdyz = dFyz[type][Fidx];
+    Fdzx = dFzx[type][Fidx];
+    Fdzy = dFzy[type][Fidx];
+    Fdzz = dFzz[type][Fidx];
+
+    Gdxx = dFxx[type][Gidx];
+    Gdxy = dFxy[type][Gidx];
+    Gdxz = dFxz[type][Gidx];
+    Gdyx = dFyx[type][Gidx];
+    Gdyy = dFyy[type][Gidx];
+    Gdyz = dFyz[type][Gidx];
+    Gdzx = dFzx[type][Gidx];
+    Gdzy = dFzy[type][Gidx];
+    Gdzz = dFzz[type][Gidx];
+
+    Hdxx = dFxx[type][Hidx];
+    Hdxy = dFxy[type][Hidx];
+    Hdxz = dFxz[type][Hidx];
+    Hdyx = dFyx[type][Hidx];
+    Hdyy = dFyy[type][Hidx];
+    Hdyz = dFyz[type][Hidx];
+    Hdzx = dFzx[type][Hidx];
+    Hdzy = dFzy[type][Hidx];
+    Hdzz = dFzz[type][Hidx];
+
+
+    /*
     Ax=3; Ay=3; Az=3;
     Bx=3.2; By=3; Bz=3;
     Cx=3.2; Cy=3.2; Cz=3;
@@ -945,65 +1067,94 @@ int get_values_from_grid(double fxx,double fyy, double fzz, int type, double *us
     Fx=3.2; Fy=3; Fz=3.2;
     Gx=3.2; Gy=3.2; Gz=3.2;
     Hx=3; Hy=3.2; Hz=3.2;
-
     fxx=3.1; fyy=3.1; fzz=3.1;
+    */
 
-    Avalue = 27.000000;
-    Bvalue = 28.240000;
-    Cvalue = 29.480000;
-    Dvalue = 28.240000;
-    Evalue = 28.240000;
-    Fvalue = 29.480000;
-    Gvalue = 30.720000;
-    Hvalue = 29.480000;
-    
-    Adx=6.00000000; Ady=6.00000000; Adz=6.00000000;
-    Bdx=6.40000000; Bdy=6.00000000; Bdz=6.00000000;
-    Cdx=6.40000000; Cdy=6.40000000; Cdz=6.00000000;
-    Ddx=6.00000000; Ddy=6.40000000; Ddz=6.00000000;
-    Edx=6.00000000; Edy=6.00000000; Edz=6.40000000;
-    Fdx=6.40000000; Fdy=6.00000000; Fdz=6.40000000;
-    Gdx=6.40000000; Gdy=6.40000000; Gdz=6.40000000;
-    Hdx=6.00000000; Hdy=6.40000000; Hdz=6.40000000;
+    /*
+       Avalue = 27.000000;
+       Bvalue = 28.240000;
+       Cvalue = 29.480000;
+       Dvalue = 28.240000;
+       Evalue = 28.240000;
+       Fvalue = 29.480000;
+       Gvalue = 30.720000;
+       Hvalue = 29.480000;
 
-
-
-
-    Avalue = -165.1804;
-    Bvalue = -146.5216;
-    Cvalue = -130.3909;
-    Dvalue = -146.5216;
-    Evalue = -146.5216;
-    Fvalue = -130.3909;
-    Gvalue = -116.4187;
-    Hvalue = -130.3909;
-    
-    Adx=97.0547788; Ady=97.0547788; Adz=97.0547788;
-    Bdx=103.525097; Bdy=97.0547788; Bdz=97.0547788;
-    Cdx=103.525097; Cdy=103.525097; Cdz=97.0547788;
-    Ddx=97.0547788; Ddy=103.525097; Ddz=97.0547788;
-    Edx=97.0547788; Edy=97.0547788; Edz=103.525097;
-    Fdx=103.525097; Fdy=97.0547788; Fdz=103.525097;
-    Gdx=103.525097; Gdy=103.525097; Gdz=103.525097;
-    Hdx=97.0547788; Hdy=103.525097; Hdz=103.525097;
+       Adx=6.00000000; Ady=6.00000000; Adz=6.00000000;
+       Bdx=6.40000000; Bdy=6.00000000; Bdz=6.00000000;
+       Cdx=6.40000000; Cdy=6.40000000; Cdz=6.00000000;
+       Ddx=6.00000000; Ddy=6.40000000; Ddz=6.00000000;
+       Edx=6.00000000; Edy=6.00000000; Edz=6.40000000;
+       Fdx=6.40000000; Fdy=6.00000000; Fdz=6.40000000;
+       Gdx=6.40000000; Gdy=6.40000000; Gdz=6.40000000;
+       Hdx=6.00000000; Hdy=6.40000000; Hdz=6.40000000;
+       */
 
 
 
-    printf("Ax=%lf  Ay=%lf  Az=%lf\n",Ax,Ay,Az);
+    /*
+       Avalue = -165.1804;
+       Bvalue = -146.5216;
+       Cvalue = -130.3909;
+       Dvalue = -146.5216;
+       Evalue = -146.5216;
+       Fvalue = -130.3909;
+       Gvalue = -116.4187;
+       Hvalue = -130.3909;
 
-    printf("A=%lf B=%lf C=%lf D=%lf E=%lf F=%lf G=%lf H=%lf\n",
-	    Avalue,Bvalue,Cvalue,Dvalue,Evalue,Fvalue,Gvalue,Hvalue);
+       Adx=97.0547788; Ady=97.0547788; Adz=97.0547788;
+       Bdx=103.525097; Bdy=97.0547788; Bdz=97.0547788;
+       Cdx=103.525097; Cdy=103.525097; Cdz=97.0547788;
+       Ddx=97.0547788; Ddy=103.525097; Ddz=97.0547788;
+       Edx=97.0547788; Edy=97.0547788; Edz=103.525097;
+       Fdx=103.525097; Fdy=97.0547788; Fdz=103.525097;
+       Gdx=103.525097; Gdy=103.525097; Gdz=103.525097;
+       Hdx=97.0547788; Hdy=103.525097; Hdz=103.525097;
+       */
 
-    printf("Adx=%lf Ady=%lf Adz=%lf\n",Adx,Ady,Adz);
-    printf("Bdx=%lf Bdy=%lf Bdz=%lf\n",Bdx,Bdy,Bdz);
-    printf("Cdx=%lf Cdy=%lf Cdz=%lf\n",Cdx,Cdy,Cdz);
-    printf("Ddx=%lf Ddy=%lf Ddz=%lf\n",Ddx,Ddy,Ddz);
-    printf("Edx=%lf Edy=%lf Edz=%lf\n",Edx,Edy,Edz);
-    printf("Fdx=%lf Fdy=%lf Fdz=%lf\n",Fdx,Fdy,Fdz);
-    printf("Gdx=%lf Gdy=%lf Gdz=%lf\n",Gdx,Gdy,Gdz);
-    printf("Hdx=%lf Hdy=%lf Hdz=%lf\n",Hdx,Hdy,Hdz);
 
-    // get the 2nd order derivaties
+
+    /*
+       printf("Ax=%lf  Ay=%lf  Az=%lf\n",Ax,Ay,Az);
+
+       printf("A=%lf B=%lf C=%lf D=%lf E=%lf F=%lf G=%lf H=%lf\n",
+       Avalue,Bvalue,Cvalue,Dvalue,Evalue,Fvalue,Gvalue,Hvalue);
+
+       printf("Adx=%lf Ady=%lf Adz=%lf\n",Adx,Ady,Adz);
+       printf("Bdx=%lf Bdy=%lf Bdz=%lf\n",Bdx,Bdy,Bdz);
+       printf("Cdx=%lf Cdy=%lf Cdz=%lf\n",Cdx,Cdy,Cdz);
+       printf("Ddx=%lf Ddy=%lf Ddz=%lf\n",Ddx,Ddy,Ddz);
+       printf("Edx=%lf Edy=%lf Edz=%lf\n",Edx,Edy,Edz);
+       printf("Fdx=%lf Fdy=%lf Fdz=%lf\n",Fdx,Fdy,Fdz);
+       printf("Gdx=%lf Gdy=%lf Gdz=%lf\n",Gdx,Gdy,Gdz);
+       printf("Hdx=%lf Hdy=%lf Hdz=%lf\n",Hdx,Hdy,Hdz);
+
+	   printf("\n");
+	   printf("Adxx=%lf Adxy=%lf Adxz=%lf\n",Adxx,Adxy,Adxz);
+	   printf("Adyx=%lf Adyy=%lf Adyz=%lf\n",Adyx,Adyy,Adyz);
+	   printf("Adzx=%lf Adzy=%lf Adzz=%lf\n",Adzx,Adzy,Adzz);
+	   printf("Bdxx=%lf Bdxy=%lf Bdxz=%lf\n",Bdxx,Bdxy,Bdxz);
+	   printf("Bdyx=%lf Bdyy=%lf Bdyz=%lf\n",Bdyx,Bdyy,Bdyz);
+	   printf("Bdzx=%lf Bdzy=%lf Bdzz=%lf\n",Bdzx,Bdzy,Bdzz);
+	   printf("Cdxx=%lf Cdxy=%lf Cdxz=%lf\n",Cdxx,Cdxy,Cdxz);
+	   printf("Cdyx=%lf Cdyy=%lf Cdyz=%lf\n",Cdyx,Cdyy,Cdyz);
+	   printf("Cdzx=%lf Cdzy=%lf Cdzz=%lf\n",Cdzx,Cdzy,Cdzz);
+	   printf("Ddxx=%lf Ddxy=%lf Ddxz=%lf\n",Ddxx,Ddxy,Ddxz);
+	   printf("Ddyx=%lf Ddyy=%lf Ddyz=%lf\n",Ddyx,Ddyy,Ddyz);
+	   printf("Ddzx=%lf Ddzy=%lf Ddzz=%lf\n",Ddzx,Ddzy,Ddzz);
+	   printf("Edxx=%lf Edxy=%lf Edxz=%lf\n",Edxx,Edxy,Edxz);
+	   printf("Edyx=%lf Edyy=%lf Edyz=%lf\n",Edyx,Edyy,Edyz);
+	   printf("Edzx=%lf Edzy=%lf Edzz=%lf\n",Edzx,Edzy,Edzz);
+	   printf("Fdxx=%lf Fdxy=%lf Fdxz=%lf\n",Fdxx,Fdxy,Fdxz);
+	   printf("Fdyx=%lf Fdyy=%lf Fdyz=%lf\n",Fdyx,Fdyy,Fdyz);
+	   printf("Fdzx=%lf Fdzy=%lf Fdzz=%lf\n",Fdzx,Fdzy,Fdzz);
+	   printf("Gdxx=%lf Gdxy=%lf Gdxz=%lf\n",Gdxx,Gdxy,Gdxz);
+	   printf("Gdyx=%lf Gdyy=%lf Gdyz=%lf\n",Gdyx,Gdyy,Gdyz);
+	   printf("Gdzx=%lf Gdzy=%lf Gdzz=%lf\n",Gdzx,Gdzy,Gdzz);
+	   printf("Hdxx=%lf Hdxy=%lf Hdxz=%lf\n",Hdxx,Hdxy,Hdxz);
+	   printf("Hdyx=%lf Hdyy=%lf Hdyz=%lf\n",Hdyx,Hdyy,Hdyz);
+	   printf("Hdzx=%lf Hdzy=%lf Hdzz=%lf\n",Hdzx,Hdzy,Hdzz);
+	   */
 
 
     // calcualte the element values in matrix A
@@ -1046,18 +1197,31 @@ int get_values_from_grid(double fxx,double fyy, double fzz, int type, double *us
     Amatrix_ele_assign_dz(amatrix+960,Gx,Gy,Gz);
     Amatrix_ele_assign_dz(amatrix+992,Hx,Hy,Hz);
 
-    int jj;
-    for (ii=0;ii<32;ii++)
-    {
-	for (jj=0;jj<32;jj++)
-	{
-	    printf("%7.3lf ",amatrix[ii*32+jj]);
-	}
-	printf("\n");
-    }
+    // set the backup matrix since the SVD function will change A's value
+    for (ii=0;ii<1024;ii++) amatrix_backup[ii] = amatrix[ii];
 
-    // assign data to b vector
+    // assign the value of the interpolation vector at x,y,z
+    Amatrix_ele_assign_value(interp_vector,fxx,fyy,fzz);
+
+    // printf("interp =\n"); for (ii=0;ii<32;ii++) printf("%lf\n",interp_vector[ii]);
+
+
+    /*
+       int jj;
+       for (ii=0;ii<32;ii++)
+       {
+       for (jj=0;jj<32;jj++)
+       {
+       printf("%7.4lf ",amatrix[ii*32+jj]);
+       }
+       printf("\n");
+       }
+       */
+
+    // assign data to b vector for energy
     // ordered as A-H, value, dx, dy, dz
+    // This is the only thing that needs to be changed
+    // for energy and force interpolations
     bvector[0] = Avalue;
     bvector[1] = Bvalue;
     bvector[2] = Cvalue;
@@ -1091,31 +1255,259 @@ int get_values_from_grid(double fxx,double fyy, double fzz, int type, double *us
     bvector[30] = Gdz;
     bvector[31] = Hdz;
 
-    for (ii=0;ii<32;ii++)
-	printf("%lf\n",bvector[ii]);
+    // printf("b = \n"); for (ii=0;ii<32;ii++) printf("%lf\n",bvector[ii]);
 
-    gsl_matrix_view m
+    // create matrix view object for amatrix
+    gsl_matrix_view Umatrix
 	= gsl_matrix_view_array(amatrix, 32, 32);
 
+    // create vector view object for bvector
     gsl_vector_view b
 	= gsl_vector_view_array(bvector, 32);
 
-    gsl_linalg_LU_decomp(&m.matrix, pvector, &sms);
+    // singular value decomposition
+    // gsl_linalg_SV_decomp(&Umatrix.matrix, Vmatrix, Svector, work);
+    gsl_linalg_SV_decomp_mod(&Umatrix.matrix, Xmatrix, Vmatrix, Svector, work);
+    // modified Golub-Reinsch algorithm, faster for M>>N
 
-    gsl_linalg_LU_solve(&m.matrix, pvector, &b.vector, xvector);
+    // printf("s = \n"); gsl_vector_fprintf(stdout,Svector,"%lf");
 
-    Amatrix_ele_assign_value(interp_vector,fxx,fyy,fzz);
+    // set the trivial values of svector to exactly 0.0 to avoild 
+    // numerical accuracy problem. very important!
+    for (ii=0;ii<32;ii++)
+    {
+	if (Svector->data[ii] <1.0e-8)
+	    Svector->data[ii] = 0.0;
+    }
 
+    // printf("s = \n"); gsl_vector_fprintf(stdout,Svector,"%lf");
+
+    // solve the equation of Ax=b using singular vectors
+    // minimizing least squares
+    gsl_linalg_SV_solve(&Umatrix.matrix, Vmatrix, Svector, &b.vector, xvector);
+
+    // calculate the value at the interpolatin position
     PP = 0.0;
     for (ii=0;ii<32;ii++)
 	PP += interp_vector[ii]*xvector->data[ii];
+    // assign the value
+    *usf = PP;
 
-    // printf("x = \n");
-    // gsl_vector_fprintf(stdout,xvector,"%g");
 
-    printf("PP=%lf\n",PP);
-    exit(1);
-    */
+    // ---------------- fx -------------------
+    // assign values to bvector for fx
+    // ordered as A-H, value, dx, dy, dz
+    // This is the only thing that needs to be changed
+    // for energy and force interpolations
+    bvector[0] = -Adx;
+    bvector[1] = -Bdx;
+    bvector[2] = -Cdx;
+    bvector[3] = -Ddx;
+    bvector[4] = -Edx;
+    bvector[5] = -Fdx;
+    bvector[6] = -Gdx;
+    bvector[7] = -Hdx;
+    bvector[8] = Adxx;
+    bvector[9] = Bdxx;
+    bvector[10] = Cdxx;
+    bvector[11] = Ddxx;
+    bvector[12] = Edxx;
+    bvector[13] = Fdxx;
+    bvector[14] = Gdxx;
+    bvector[15] = Hdxx;
+    bvector[16] = Adxy;
+    bvector[17] = Bdxy;
+    bvector[18] = Cdxy;
+    bvector[19] = Ddxy;
+    bvector[20] = Edxy;
+    bvector[21] = Fdxy;
+    bvector[22] = Gdxy;
+    bvector[23] = Hdxy;
+    bvector[24] = Adxz;
+    bvector[25] = Bdxz;
+    bvector[26] = Cdxz;
+    bvector[27] = Ddxz;
+    bvector[28] = Edxz;
+    bvector[29] = Fdxz;
+    bvector[30] = Gdxz;
+    bvector[31] = Hdxz;
+
+    // printf("b = \n"); for (ii=0;ii<32;ii++) printf("%lf\n",bvector[ii]);
+
+    // set the amatrix to the old values for next SVD 
+    for (ii=0;ii<1024;ii++) amatrix[ii] = amatrix_backup[ii];
+
+    // singular value decomposition
+    // gsl_linalg_SV_decomp(&Umatrix.matrix, Vmatrix, Svector, work);
+    gsl_linalg_SV_decomp_mod(&Umatrix.matrix, Xmatrix, Vmatrix, Svector, work);
+
+    // printf("s = \n"); gsl_vector_fprintf(stdout,Svector,"%lf");
+
+    // set the trivial values of svector to exactly 0.0 to avoild 
+    // numerical accuracy problem. very important!
+    for (ii=0;ii<32;ii++)
+    {
+	if (Svector->data[ii] <1.0e-8)
+	    Svector->data[ii] = 0.0;
+    }
+
+    // solve the equation of Ax=b using singular vectors
+    // minimizing least squares
+    gsl_linalg_SV_solve(&Umatrix.matrix, Vmatrix, Svector, &b.vector, xvector);
+    
+    // calculate the value at the interpolatin position
+    PP = 0.0;
+    for (ii=0;ii<32;ii++)
+	PP += interp_vector[ii]*xvector->data[ii];
+    // assign the value to fx
+    fsf[0] = PP;
+    // printf("fx = %lf\n",PP);
+
+    // --------------- fy ----------------
+    // assign values to bvector for fx
+    // ordered as A-H, value, dx, dy, dz
+    // This is the only thing that needs to be changed
+    // for energy and force interpolations
+    bvector[0] = -Ady;
+    bvector[1] = -Bdy;
+    bvector[2] = -Cdy;
+    bvector[3] = -Ddy;
+    bvector[4] = -Edy;
+    bvector[5] = -Fdy;
+    bvector[6] = -Gdy;
+    bvector[7] = -Hdy;
+    bvector[8] = Adyx;
+    bvector[9] = Bdyx;
+    bvector[10] = Cdyx;
+    bvector[11] = Ddyx;
+    bvector[12] = Edyx;
+    bvector[13] = Fdyx;
+    bvector[14] = Gdyx;
+    bvector[15] = Hdyx;
+    bvector[16] = Adyy;
+    bvector[17] = Bdyy;
+    bvector[18] = Cdyy;
+    bvector[19] = Ddyy;
+    bvector[20] = Edyy;
+    bvector[21] = Fdyy;
+    bvector[22] = Gdyy;
+    bvector[23] = Hdyy;
+    bvector[24] = Adyz;
+    bvector[25] = Bdyz;
+    bvector[26] = Cdyz;
+    bvector[27] = Ddyz;
+    bvector[28] = Edyz;
+    bvector[29] = Fdyz;
+    bvector[30] = Gdyz;
+    bvector[31] = Hdyz;
+
+    // set the amatrix to the old values for next SVD 
+    for (ii=0;ii<1024;ii++) amatrix[ii] = amatrix_backup[ii];
+
+    // singular value decomposition
+    // gsl_linalg_SV_decomp(&Umatrix.matrix, Vmatrix, Svector, work);
+    gsl_linalg_SV_decomp_mod(&Umatrix.matrix, Xmatrix, Vmatrix, Svector, work);
+
+    // set the trivial values of svector to exactly 0.0 to avoild 
+    // numerical accuracy problem. very important!
+    for (ii=0;ii<32;ii++)
+    {
+	if (Svector->data[ii] <1.0e-8)
+	    Svector->data[ii] = 0.0;
+    }
+
+    // solve the equation of Ax=b using singular vectors
+    // minimizing least squares
+    gsl_linalg_SV_solve(&Umatrix.matrix, Vmatrix, Svector, &b.vector, xvector);
+    
+    // calculate the value at the interpolatin position
+    PP = 0.0;
+    for (ii=0;ii<32;ii++)
+	PP += interp_vector[ii]*xvector->data[ii];
+    // assign the value to fy
+    fsf[1] = PP;
+    // printf("fy = %lf\n",PP);
+
+    // --------------- fz ----------------------
+    // assign values to bvector for fx
+    // ordered as A-H, value, dx, dy, dz
+    // This is the only thing that needs to be changed
+    // for energy and force interpolations
+    bvector[0] = -Adz;
+    bvector[1] = -Bdz;
+    bvector[2] = -Cdz;
+    bvector[3] = -Ddz;
+    bvector[4] = -Edz;
+    bvector[5] = -Fdz;
+    bvector[6] = -Gdz;
+    bvector[7] = -Hdz;
+    bvector[8] = Adzx;
+    bvector[9] = Bdzx;
+    bvector[10] = Cdzx;
+    bvector[11] = Ddzx;
+    bvector[12] = Edzx;
+    bvector[13] = Fdzx;
+    bvector[14] = Gdzx;
+    bvector[15] = Hdzx;
+    bvector[16] = Adzy;
+    bvector[17] = Bdzy;
+    bvector[18] = Cdzy;
+    bvector[19] = Ddzy;
+    bvector[20] = Edzy;
+    bvector[21] = Fdzy;
+    bvector[22] = Gdzy;
+    bvector[23] = Hdzy;
+    bvector[24] = Adzz;
+    bvector[25] = Bdzz;
+    bvector[26] = Cdzz;
+    bvector[27] = Ddzz;
+    bvector[28] = Edzz;
+    bvector[29] = Fdzz;
+    bvector[30] = Gdzz;
+    bvector[31] = Hdzz;
+
+    // set the amatrix to the old values for next SVD 
+    for (ii=0;ii<1024;ii++) amatrix[ii] = amatrix_backup[ii];
+
+    // singular value decomposition
+    // gsl_linalg_SV_decomp(&Umatrix.matrix, Vmatrix, Svector, work);
+    gsl_linalg_SV_decomp_mod(&Umatrix.matrix, Xmatrix, Vmatrix, Svector, work);
+
+    // set the trivial values of svector to exactly 0.0 to avoild 
+    // numerical accuracy problem. very important!
+    for (ii=0;ii<32;ii++)
+    {
+	if (Svector->data[ii] <1.0e-8)
+	    Svector->data[ii] = 0.0;
+    }
+
+    // solve the equation of Ax=b using singular vectors
+    // minimizing least squares
+    gsl_linalg_SV_solve(&Umatrix.matrix, Vmatrix, Svector, &b.vector, xvector);
+    
+    // calculate the value at the interpolatin position
+    PP = 0.0;
+    for (ii=0;ii<32;ii++)
+	PP += interp_vector[ii]*xvector->data[ii];
+    // assign the value to fz
+    fsf[2] = PP;
+    // printf("fz = %lf\n",PP);
+
+
+
+
+
+
+
+    /*
+       printf("x = \n");
+       gsl_vector_fprintf(stdout,xvector,"%8.1f");
+
+       printf("PP=%lf\n",PP);
+       */
+
+
+
 
 
 
