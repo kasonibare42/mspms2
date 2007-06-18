@@ -2,9 +2,10 @@
 
 CC = gcc
 
-OBJ = mspms-2.o random.o erfrc.o rafrc.o nvtnh.o sffrc.o tasoswrapper.o
+OBJ = mspms-2.o random.o erfrc.o rafrc.o nvtnh.o sffrc.o 
 BIN = mspms-2.x
-LIBS = mylibtasos/libtasos.a
+LIBS = mylibtasos/libtasos.a /usr/local/lib/libgfortran.a
+#LIBS = mylibtasos/libtasos.a /usr/lib/gcc/i386-redhat-linux/4.1.2/libgfortran.a
 CFLAGS = -std=c99
 RM = rm -f
 
@@ -16,7 +17,7 @@ clean: clean-custom
 	${RM} $(OBJ) $(BIN)
 
 $(BIN): $(OBJ)
-	$(CC) $(OBJ) -o mspms-2.x $(LIBS) $(CFLAGS) -lm -lgfortran
+	$(CC) -static $(OBJ) -o mspms-2.x $(LIBS) $(CFLAGS) -O2 -lgfortran -lgsl -lgslcblas -lm
 
 mspms-2.o: mspms-2.c
 	$(CC) -c mspms-2.c $(CFLAGS)
@@ -36,5 +37,3 @@ nvtnh.o: nvtnh.c
 sffrc.o: sffrc.c
 	$(CC) -c sffrc.c $(CFLAGS)
  
-tasoswrapper.o: tasoswrapper.c
-	$(CC) -c tasoswrapper.c $(CFLAGS)

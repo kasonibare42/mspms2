@@ -1,6 +1,6 @@
-13.56 13.56 4.919 6.78		x,y,z,radius
-1 1 60				number of unit cell in x,y,z
-2				number of species
-2				total number of unique atoms
-MDCnT10x10-CH3.grid		grid file of unique atom 1
-MDCnT10x10-CH2.grid		grid file of unique atom 2
+13.56 13.56 4.919 6.78                 x,y,z,radius
+1 1 60                                 number of unit cell in x,y,z
+2                                      number of species
+2                                      total number of unique atoms
+MDCnT10x10-CH3.grid                    grid file of unique atom 1
+MDCnT10x10-CH2.grid                    grid file of unique atom 2

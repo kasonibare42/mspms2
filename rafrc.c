@@ -1,6 +1,6 @@
 /* Calculate intra energies and forces
    include bond, angle, dihedral, impropers
- */
+   */
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
@@ -205,7 +205,7 @@ int aglfrc()
 		delta_r2 = r23 - agl_para_5[ii]; // O-H stretch
 
 		k_theta = Ktheta[ii];
-	       	k_r_theta = Thetaeq[ii];
+		k_r_theta = Thetaeq[ii];
 		k_r_rprime = agl_para_3[ii];
 		u123 = 0.5*k_theta*delta_r3*delta_r3 + k_r_theta*delta_r3*(delta_r1+delta_r2) + k_r_rprime*delta_r1*delta_r2;
 		uangle = uangle + u123;
@@ -258,6 +258,17 @@ int dihfrc()
     double fax, fay, faz, fcx, fcy, fcz;
     double fb1x, fb1y, fb1z, fd1x, fd1y, fd1z;
     double vopls, dopls;
+
+    int ii1, ii2, ii3, ii4;
+    double kphi, nperiod, delta0;
+    double rxjk, ryjk, rzjk, rxij, ryij, rzij;
+    double rxjl, ryjl, rzjl, rxik, ryik, rzik;
+    double rxkl, rykl, rzkl;
+    double aa1, bb1, cc1;
+    double aa2, bb2, cc2;
+    double temp, temp1, temp2, temp3;
+    double phi, alpha_temp;
+    double fij;
 
     // dihedral torsion calculations
     for (ii=0;ii<ndih;ii++)
@@ -374,7 +385,111 @@ int dihfrc()
 		fys[iid] +=  fd1y;
 		fzs[iid] +=  fd1z;
 		break;
-	    case dih_charmm: // future implementation
+	    case dih_charmm: // future implementation 
+		// modified from Shi Wei's code
+		// NOT tested.
+		// calculate the dihedral angle energy udih
+		// Note that add count_dih_multiple due to multiple matching parameters of the 
+		// dihedral angle part
+		// a-b-c-d  is i-j-k-l is 1-2-3-4
+		// c1 is kphi, c2 is nperiod, c3 is delta0;
+		kphi = c1[ii];
+		nperiod = c2[ii];
+		delta0 = c3[ii]; 
+		// ** the following calculate the angle i-j-k-l 
+		// ** between i-j-k plane and j-k-l plane
+		if (fabs(kphi) >= 1e-5)
+		{
+		    ii1 = iia;
+		    ii2 = iib;
+		    ii3 = iic;
+		    ii4 = iid;
+		    rxjk = xx[ii3] - xx[ii2];
+		    ryjk = yy[ii3] - yy[ii2];
+		    rzjk = zz[ii3] - zz[ii2];
+		    rxij = xx[ii1] - xx[ii2];
+		    ryij = yy[ii1] - yy[ii2];
+		    rzij = zz[ii1] - zz[ii2];
+		    // ** calculate a1,b1,c1 for the vector in x, y , and z direction.
+		    // ** This vector is perpendicular to the plane of i-j-K and obtained from
+		    // ** the cross product of jk and ij, ie. jk*ji
+		    // ** rotate from jk vector to ji vector
+		    aa1 = ryjk*rzij - rzjk*ryij;
+		    bb1 = rzjk*rxij - rxjk*rzij;
+		    cc1 = rxjk*ryij - rxij*ryjk;
+		    rxjl = xx[ii4] - xx[ii2];
+		    ryjl = yy[ii4] - yy[ii2];
+		    rzjl = zz[ii4] - zz[ii2];
+		    // ** calculate a2,b2, and c2 in x, y, z direction
+		    // ** this vector is the cross product of jl*jk 
+		    // ** rotate from jl to jk
+		    aa2 = ryjl*rzjk - rzjl*ryjk;
+		    bb2 = rzjl*rxjk - rxjl*rzjk;
+		    cc2 = rxjl*ryjk - rxjk*ryjl;
+		    temp1 = sqrt(aa1*aa1+bb1*bb1+cc1*cc1);
+		    temp2 = sqrt(aa2*aa2+bb2*bb2+cc2*cc2);
+		    temp3 = (aa1*aa2+bb1*bb2+cc1*cc2);
+		    phi = temp3/(temp1*temp2);
+		    alpha_temp = phi;
+		    // ** the angle between the two planes is below
+		    phi = 180.0 - (acos(phi)*180.0/pi);
+		    udih = udih + kphi*(1+cos((nperiod*phi-delta0)/180*pi));
+		    // ** calculate forces due to dihedral angle part
+		    // ** the following make sure that it is not divided by 0, if it is, it can
+		    // ** be reduced from 0/0 by mathematical tricks. Note that the 
+		    // ** delta0(ii) is eother 0 or 180 from the parameter data file.  
+		    if (fabs(sin(phi*pi/180)) <= 1e-10)
+		    { 
+			// write(*,*) ii
+			// write(*,*) ii1,ii2,ii3,ii4
+			// write(*,*) 'alpha=',acosd(alpha_temp)
+			temp=-nperiod*nperiod*kphi*cos((nperiod*phi-delta0)*pi/180)/alpha_temp;
+		    }
+		    else	
+		    {
+			temp = nperiod*kphi*sin((nperiod*phi-delta0)*pi/180)/sin(phi*pi/180);
+		    }
+		    // ** calculate forces on atom 1
+		    fij = temp/(temp2*temp1*temp1);
+		    fxs[ii1] = fxs[ii1] 
+			+ fij*((bb2*rzjk-cc2*ryjk)*temp1-temp3/temp1*(bb1*rzjk-cc1*ryjk));
+		    fys[ii1] = fys[ii1] 
+			+ fij*((-aa2*rzjk+cc2*rxjk)*temp1-temp3/temp1*(-aa1*rzjk+cc1*rxjk));
+		    fzs[ii1] = fzs[ii1]
+			+ fij*((aa2*ryjk-bb2*rxjk)*temp1-temp3/temp1*(aa1*ryjk-bb1*rxjk));
+		    // ** calculate forces on atom 2
+		    fij = temp/(temp1*temp1*temp2*temp2);
+		    rxik = xx[ii1] - xx[ii3];
+		    ryik = yy[ii1] - yy[ii3];
+		    rzik = zz[ii1] - zz[ii3];
+		    rxkl = xx[ii4] - xx[ii3];
+		    rykl = yy[ii4] - yy[ii3];
+		    rzkl = zz[ii4] - zz[ii3];
+		    fxs[ii2] = fxs[ii2]
+			+ fij*((bb2*rzik-bb1*rzkl-cc2*ryik+cc1*rykl)*temp1*temp2
+				-temp3*(temp2/temp1*(bb1*rzik-cc1*ryik)+temp1/temp2*(-bb2*rzkl+cc2*rykl)));
+		    fys[ii2] = fys[ii2]
+			+ fij*((-aa2*rzik+aa1*rzkl+cc2*rxik-cc1*rxkl)*temp1*temp2
+				-temp3*(temp2/temp1*(-aa1*rzik+cc1*rxik)+temp1/temp2*(aa2*rzkl-cc2*rxkl)));
+		    fzs[ii2] = fzs[ii2]
+			+ fij*((aa2*ryik-aa1*rykl-bb2*rxik+bb1*rxkl)*temp1*temp2
+				-temp3*(temp2/temp1*(aa1*ryik-bb1*rxik)+temp1/temp2*(-aa2*rykl+bb2*rxkl)));
+		    // ** calculate the forces on atom 3
+		    fxs[ii3] = fxs[ii3] 
+			+ fij*((-bb2*rzij+bb1*rzjl+cc2*ryij-cc1*ryjl)*temp1*temp2
+				-temp3*(temp2/temp1*(-bb1*rzij+cc1*ryij)+temp1/temp2*(bb2*rzjl-cc2*ryjl)));
+		    fys[ii3] = fys[ii3]
+			+ fij*((aa2*rzij-aa1*rzjl-cc2*rxij+cc1*rxjl)*temp1*temp2
+				-temp3*(temp2/temp1*(aa1*rzij-cc1*rxij)+temp1/temp2*(-aa2*rzjl+cc2*rxjl)));
+		    fzs[ii3]=fzs[ii3]
+			+ fij*((-aa2*ryij+aa1*ryjl+bb2*rxij-bb1*rxjl)*temp1*temp2
+				-temp3*(temp2/temp1*(-aa1*ryij+bb1*rxij)+temp1/temp2*(aa2*ryjl-bb2*rxjl)));
+		    // ** calculate the forces on atom 4
+		    fij = temp/(temp1*temp2*temp2);
+		    fxs[ii4] = fxs[ii4] + fij*((-bb1*rzjk+cc1*ryjk)*temp2-temp3/temp2*(-bb2*rzjk+cc2*ryjk));
+		    fys[ii4] = fys[ii4] + fij*((aa1*rzjk-cc1*rxjk)*temp2-temp3/temp2*(aa2*rzjk-cc2*rxjk));
+		    fzs[ii4] = fzs[ii4] + fij*((-aa1*ryjk+bb1*rxjk)*temp2-temp3/temp2*(-aa2*ryjk+bb2*rxjk));
+		}
 		break;
 	    default:
 		printf("unknown dihedral type.\n");
@@ -384,7 +499,166 @@ int dihfrc()
 }
 
 int impfrc() // improper energy/force calculations
-{}
+{
+    int ii;
+    int ii1, ii2, ii3, ii4;
+    double rxjk, ryjk, rzjk;
+    double rxij, ryij, rzij;
+    double rxjl, ryjl, rzjl;
+    double rxik, ryik, rzik;
+    double rxkl, rykl, rzkl;
+    double aa1, bb1, cc1;
+    double aa2, bb2, cc2;
+    double temp, temp1, temp2, temp3;
+    double phi, alpha_temp;
+    double fij;
+
+    for (ii=0;ii<nimp;ii++)
+    {
+	switch (imp_type[ii])
+	{
+	    case imp_none:
+		break;
+	    case imp_charmm:
+		// following code is modified from shi wei's program
+		// NOT tested.
+		if (fabs(komega[ii]) >= 1e-5)
+		{
+		    // ** the following calculate the angle i-j-k-l (A-B-C-D) 
+		    // ** where A is the centeral atom B, C, and D are bound to
+		    // ** improper angle is defined as the angle between 
+		    // ** the planes defined by ABC (ijk) and BCD (jkl) 
+		    // ** between i-j-k plane and j-k-l plane
+		    ii1 = imp_idx[ii][0];
+		    ii2 = imp_idx[ii][1];
+		    ii3 = imp_idx[ii][2];
+		    ii4 = imp_idx[ii][3];
+		    rxjk = xx[ii3]-xx[ii2];
+		    ryjk = yy[ii3]-yy[ii2];
+		    rzjk = zz[ii3]-zz[ii2];
+		    rxij = xx[ii1]-xx[ii2];
+		    ryij = yy[ii1]-yy[ii2];
+		    rzij = zz[ii1]-zz[ii2];
+		    // ** calculate a1,b1,c1 for the vector in x, y , and z direction.
+		    // ** This vector is perpendicular to the plane of i-j-K and obtained from
+		    // ** the cross product of jk and ij, ie. jk*ji
+		    // ** rotate from jk vector to ji vector
+		    aa1 = ryjk*rzij-rzjk*ryij;
+		    bb1 = rzjk*rxij-rxjk*rzij;
+		    cc1 = rxjk*ryij-rxij*ryjk;
+		    rxjl = xx[ii4]-xx[ii2];
+		    ryjl = yy[ii4]-yy[ii2];
+		    rzjl = zz[ii4]-zz[ii2];
+		    // ** calculate a2,b2, and c2 in x, y, z direction
+		    // ** this vector is the cross product of jl*jk 
+		    // ** rotate from jl to jk
+		    aa2 = ryjl*rzjk-rzjl*ryjk;
+		    bb2 = rzjl*rxjk-rxjl*rzjk;
+		    cc2 = rxjl*ryjk-rxjk*ryjl;
+		    temp1 = sqrt(aa1*aa1+bb1*bb1+cc1*cc1);
+		    temp2 = sqrt(aa2*aa2+bb2*bb2+cc2*cc2);
+		    temp3 = (aa1*aa2+bb1*bb2+cc1*cc2);
+		    phi = temp3/(temp1*temp2);
+		    alpha_temp = phi;
+		    // ** the angle between the two planes is below
+		    phi = 180 - (acos(phi)*180/pi);
+		    uimp = uimp + komega[ii]*(phi-omega0[ii])*(phi-omega0[ii]);
+		    // ** the following is used to avoid dividing by 0
+		    // ** note that omega0[ii] is either 0 or 180 from the database
+		    // ** parameter file for improper
+		    if ((fabs(omega0[ii]) <= 1e-5) && (fabs(acos(alpha_temp)*180/pi) <= 1e-20))
+		    {
+			fprintf(stderr,"omega0 %lf and angle %lf do not match\n",omega0[ii],acos(alpha_temp)*180/pi);
+			fprintf(fpouts,"omega0 %lf and angle %lf do not match\n",omega0[ii],acos(alpha_temp)*180/pi);
+			exit(1);
+		    }
+		    if ((fabs(omega0[ii]-180) <= 1e-5) && (fabs(acos(alpha_temp)*180/pi-180) <= 1e-20))
+		    {
+			fprintf(stderr,"omega0 %lf and angle %lf do not match\n",omega0[ii],acos(alpha_temp)*180/pi);
+			fprintf(fpouts,"omega0 %lf and angle %lf do not match\n",omega0[ii],acos(alpha_temp)*180/pi);
+			exit(1);
+		    }
+
+		    // ** calculate the forces due to improper 
+		    // ** the following is extremely important to use the 
+		    // ** mathematics tricks
+		    if ((fabs(omega0[ii]) <= 1e-5) && (fabs(acos(alpha_temp)*180/pi-180) <= 1e-20))
+		    {
+			fprintf(stderr,"index=%d  %d-%d-%d-%d\n",ii,ii1,ii2,ii3,ii4);
+			fprintf(stderr,"alpha=%lf\n",acos(alpha_temp)*180/pi);
+			fprintf(fpouts,"index=%d  %d-%d-%d-%d\n",ii,ii1,ii2,ii3,ii4);
+			fprintf(fpouts,"alpha=%lf\n",acos(alpha_temp)*180/pi);
+			temp = 2.0*komega[ii]/alpha_temp;
+			exit(1);
+		    }
+		    else if ((fabs(omega0[ii]-180) <= 1e-5) && (fabs(acos(alpha_temp)*180/pi) <= 1e-20))
+		    {
+			fprintf(stderr,"index=%d  %d-%d-%d-%d\n",ii,ii1,ii2,ii3,ii4);
+			fprintf(stderr,"alpha=%lf\n",acos(alpha_temp)*180/pi);
+			fprintf(fpouts,"index=%d  %d-%d-%d-%d\n",ii,ii1,ii2,ii3,ii4);
+			fprintf(fpouts,"alpha=%lf\n",acos(alpha_temp)*180/pi);
+			temp = 2.0*komega[ii]/alpha_temp;
+			exit(1);
+		    }
+		    else
+		    {
+			temp = -2.0*komega[ii]*(phi-omega0[ii])*pi/180/sin(phi*pi/180);
+		    }
+		    // ** calculate forces on atom 1
+		    fij = temp/(temp2*temp1*temp1);
+		    fxs[ii1] = fxs[ii1] + fij*((bb2*rzjk-cc2*ryjk)*temp1-temp3/temp1*(bb1*rzjk-cc1*ryjk));
+		    fys[ii1] = fys[ii1] + fij*((-aa2*rzjk+cc2*rxjk)*temp1-temp3/temp1*(-aa1*rzjk+cc1*rxjk));
+		    fzs[ii1] = fzs[ii1] + fij*((aa2*ryjk-bb2*rxjk)*temp1-temp3/temp1*(aa1*ryjk-bb1*rxjk));
+		    // ** calculate forces on atom 2
+		    fij = temp/(temp1*temp1*temp2*temp2);
+		    rxik = xx[ii1]-xx[ii3];
+		    ryik = yy[ii1]-yy[ii3];
+		    rzik = zz[ii1]-zz[ii3];
+		    rxkl = xx[ii4]-xx[ii3];
+		    rykl = yy[ii4]-yy[ii3];
+		    rzkl = zz[ii4]-zz[ii3];
+		    fxs[ii2] = fxs[ii2]
+			+fij*((bb2*rzik-bb1*rzkl-cc2*ryik+cc1*rykl)*temp1*temp2
+				-temp3*(temp2/temp1*(bb1*rzik-cc1*ryik)+temp1/temp2*(-bb2*rzkl+cc2*rykl)));
+		    fys[ii2] = fys[ii2]
+			+fij*((-aa2*rzik+aa1*rzkl+cc2*rxik-cc1*rxkl)*temp1*temp2
+				-temp3*(temp2/temp1*(-aa1*rzik+cc1*rxik)+temp1/temp2*(aa2*rzkl-cc2*rxkl)));
+		    fzs[ii2] = fzs[ii2]
+			+fij*((aa2*ryik-aa1*rykl-bb2*rxik+bb1*rxkl)*temp1*temp2
+				-temp3*(temp2/temp1*(aa1*ryik-bb1*rxik)+temp1/temp2*(-aa2*rykl+bb2*rxkl)));
+		    // ** calculate the forces on atom 3
+		    fxs[ii3] = fxs[ii3]
+			+fij*((-bb2*rzij+bb1*rzjl+cc2*ryij-cc1*ryjl)*temp1*temp2
+				-temp3*(temp2/temp1*(-bb1*rzij+cc1*ryij)+temp1/temp2*(bb2*rzjl-cc2*ryjl)));
+		    fys[ii3] = fys[ii3]
+			+fij*((aa2*rzij-aa1*rzjl-cc2*rxij+cc1*rxjl)*temp1*temp2
+				-temp3*(temp2/temp1*(aa1*rzij-cc1*rxij)+temp1/temp2*(-aa2*rzjl+cc2*rxjl)));
+		    fzs[ii3] = fzs[ii3]
+			+fij*((-aa2*ryij+aa1*ryjl+bb2*rxij-bb1*rxjl)*temp1*temp2
+				-temp3*(temp2/temp1*(-aa1*ryij+bb1*rxij)+temp1/temp2*(aa2*ryjl-bb2*rxjl)));
+		    // ** calculate the forces on atom 4
+		    fij = temp/(temp1*temp2*temp2);
+		    fxs[ii4]=fxs[ii4] + fij*((-bb1*rzjk+cc1*ryjk)*temp2-temp3/temp2*(-bb2*rzjk+cc2*ryjk));
+		    fys[ii4]=fys[ii4] + fij*((aa1*rzjk-cc1*rxjk)*temp2-temp3/temp2*(aa2*rzjk-cc2*rxjk));
+		    fzs[ii4]=fzs[ii4] + fij*((-aa1*ryjk+bb1*rxjk)*temp2-temp3/temp2*(-aa2*ryjk+bb2*rxjk));
+		} // if (fabs(komega[ii]) >= 1e-5)
+		break;
+	    default:
+	       	printf("Error: unknown improper type.\n"); 
+		exit(1); 
+	} // switch for improper types
+    }  // loop through all impropers
+
+    if (imp_type[ii]==imp_charmm)
+       	uimp = uimp*(pi/180)*(pi/180);
+}
+
+
+
+
+
+
+
 
 int rafrc()
 {
@@ -400,7 +674,7 @@ int rafrc()
 	fxs[ii] = fys[ii] = fzs[ii] = 0.0;
 
     if (nbond > 0)
- 	bndfrc();
+	bndfrc();
 
     if (nangle > 0)
 	aglfrc();

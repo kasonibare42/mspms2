@@ -2,14 +2,83 @@
    These include different atoms on the same molecule (exclude 1-2,1-3,1-4)
    1-4 will be still be calculated after
    and atoms on different molecules.
- */
+   */
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
 #include <assert.h>
+#include <gsl/gsl_sf_gamma.h>
+#include <gsl/gsl_math.h>
+#include <gsl/gsl_deriv.h>
 #include "vars.h"
 
 extern int sffrc();
+
+double deriv_inc_gamma(double x, void *params)
+{
+    return gsl_sf_gamma_inc(0.0,x);
+}
+
+// calculate the center of mass for all the molecules
+// and the inner coordinates
+int cal_com_and_inner_coords()
+{
+    int ii,jj;
+
+    for (ii=0;ii<nmole;ii++)
+    {
+	mole_xx[ii] = 0.0;
+	mole_yy[ii] = 0.0;
+	mole_zz[ii] = 0.0;
+	// calculate the center of mass
+	for (jj=mole_first_atom_idx[ii];jj<mole_first_atom_idx[ii+1];jj++)
+	{
+	    mole_xx[ii] += xx[jj]*aw[jj];
+	    mole_yy[ii] += yy[jj]*aw[jj];
+	    mole_zz[ii] += zz[jj]*aw[jj];
+	}
+	mole_xx[ii] /= mw[ii];
+	mole_yy[ii] /= mw[ii];
+	mole_zz[ii] /= mw[ii];
+	// calculate the relative position of the atoms to the center of mass
+	for (jj=mole_first_atom_idx[ii];jj<mole_first_atom_idx[ii+1];jj++)
+	{
+	    ex[jj] = xx[jj] - mole_xx[ii];
+	    fy[jj] = yy[jj] - mole_yy[ii];
+	    gz[jj] = zz[jj] - mole_zz[ii];
+	}
+    }
+}
+
+// calculate the atom position according to the PBC'd center of mass
+// the coordinates are saved to ex, fy, gz
+int reconstruct_coords_from_com()
+{
+    int ii, jj;
+    
+    for (ii=0;ii<nmole;ii++)
+    {
+	for (jj=mole_first_atom_idx[ii];jj<mole_first_atom_idx[ii+1];jj++)
+	{
+	    ex[jj] = ex[jj] + mole_xx[ii];
+	    fy[jj] = fy[jj] + mole_yy[ii];
+	    gz[jj] = gz[jj] + mole_zz[ii];
+	}
+    }
+}
+
+// calculate the PBC'd atom coordinates
+// the new coordinates are saved in ex,fy,gz
+int cal_coords_PBC()
+{
+    int ii;
+    for (ii=0;ii<natom;ii++);
+    {
+	ex[ii] = xx[ii] - boxlx*rint(xx[ii]/boxlx);
+       	fy[ii] = yy[ii] - boxlx*rint(yy[ii]/boxlx);
+       	gz[ii] = zz[ii] - boxlx*rint(zz[ii]/boxlx);
+    }
+}
 
 // calcualte interaction between atom ii and jj, exclude those from excluding list
 int loop_ij()
@@ -27,9 +96,16 @@ int loop_ij()
     double uij_wolf_temp;
     double fij, fxij, fyij, fzij;
     double temp1, temp2;
+    double rhoklsq, kapparhokl_sq;
+    double uij_Gz0; // 1D ewald
+    gsl_function FF;
+
+    FF.function = &deriv_inc_gamma;
+    FF.params = 0;
 
     uij_vdw = 0.0;
     uij_real = 0.0;
+    uij_Gz0 = 0.0;
 
     // atom ii
     for (ii=0;ii<natom-1;ii++)
@@ -60,6 +136,40 @@ int loop_ij()
 		rxij = xxi - xx[jj];
 		ryij = yyi - yy[jj];
 		rzij = zzi - zz[jj];
+
+		// calculate Gz=0 term for 1D ewald summation
+		// this has to be done before the minimum image convention
+		// not sure if cutoff check should be applied
+		// If the cutoff is larger than the size in x,y dimension,
+		// this should be no problem
+		if (isEwaldOn && fEwald_Dim==ewald_1D)
+		{
+		    rhoklsq = rxij*rxij + ryij*ryij;
+		    if (rhoklsq>parallel_to_z_err) 
+		    {
+			kapparhokl_sq = kappasq*rhoklsq;
+			temp1 = Euler_const + gsl_sf_gamma_inc(0.0,kapparhokl_sq) + log(kapparhokl_sq);
+			uij_Gz0 = uij_Gz0 -chargei*charge[jj]*temp1;
+			// forces
+			// derivative of incomplete gamma function
+			// use numerical differential
+			// This may not be a good way to do it
+			// temp1 is the value, temp2 is the absolute std. err.
+			double tt = gsl_sf_gamma_inc(0.0,kapparhokl_sq);
+			gsl_deriv_central(&FF,kapparhokl_sq,1.0e-8,&temp1,&temp2);
+			temp2 = kappasq*temp1 + 1.0/rhoklsq;
+			fij = chargei*charge[jj]*temp2*const_columb/boxlz;
+			fxij = fij*rxij;
+			fyij = fij*ryij;
+			// force on atom ii
+			fxi += fxij;
+			fyi += fyij;
+			// force on atom jj
+			fxl[jj] -= fxij;
+			fyl[jj] -= fyij;
+		    } // if rhoklsq != 0.0 (>1.0e-10)
+		} // if 1D ewald is used
+
 		// minimum image convention
 		rxij = rxij - boxlx*rint(rxij/boxlx);
 		ryij = ryij - boxly*rint(ryij/boxly);
@@ -165,6 +275,7 @@ int loop_ij()
 
     uvdw += uij_vdw; // still need 4.0
     ureal += uij_real; // still neeed constant
+    uGz0 += uij_Gz0/(2.0*boxlz); // still need constant
 }
 
 // calculate the interactions between dihedral ending atom 1 and 4
@@ -180,9 +291,16 @@ int loop_14()
     double uij_wolf14_temp;
     double fij, fxij, fyij, fzij;
     double temp1, temp2;
+    double rhoklsq, kapparhokl_sq;
+    double uij_Gz0; // 1D ewald
+    gsl_function FF;
+
+    FF.function = &deriv_inc_gamma;
+    FF.params = 0;
 
     uij_vdw14 = 0.0;
     uij_real14 = 0.0;
+    uij_Gz0 = 0.0;
 
     for (ii=0;ii<ndih;ii++)
     {
@@ -195,6 +313,35 @@ int loop_14()
 	    rxij = xx[ii1] - xx[ii2];
 	    ryij = yy[ii1] - yy[ii2];
 	    rzij = zz[ii1] - zz[ii2];
+
+	    // Gz=0 term for 1D ewald
+	    if (isEwaldOn && fEwald_Dim==ewald_1D)
+	    {
+		rhoklsq = rxij*rxij + ryij*ryij;
+		if (rhoklsq>parallel_to_z_err)
+		{
+		    kapparhokl_sq = kappasq*rhoklsq;
+		    temp1 = Euler_const + gsl_sf_gamma_inc(0.0,kapparhokl_sq) + log(kapparhokl_sq);
+		    uij_Gz0 = uij_Gz0 -charge[ii1]*charge[ii2]*temp1;
+		    // forces
+		    // derivative of incomplete gamma function
+		    // use numerical differential
+		    // This may not be a good way to do it
+		    // temp1 is the value, temp2 is the absolute std. err.
+		    gsl_deriv_central(&FF,kapparhokl_sq,1.0e-8,&temp1,&temp2);
+		    temp2 = kappasq*temp1 + 1.0/rhoklsq;
+		    fij = charge[ii1]*charge[ii2]*temp2*const_columb/boxlz;
+		    fxij = fij*rxij;
+		    fyij = fij*ryij;
+		    // force on atom ii1
+		    fxl[ii1] += fxij;
+		    fyl[ii1] += fyij;
+		    // force on atom ii2
+		    fxl[ii2] -= fxij;
+		    fyl[ii2] -= fyij;
+		} // if rhoklsq != 0.0 (>1.0e-10)
+	    } // if 1D ewald is used
+
 	    // check for necessary 1,4 parameter modifiers
 	    // and calculate the corresponding sigmaij and epsilonij;
 	    // OPLS modifier
@@ -305,6 +452,7 @@ int loop_14()
     // add into total energy
     uvdw += uij_vdw14; // still need 4.0
     ureal += uij_real14; // still need constant
+    uGz0 += uij_Gz0/(2.0*boxlz); // still need constant
 }
 
 int loop_13()
@@ -321,10 +469,17 @@ int loop_13()
     double uij_excl_13;
     double rxij_old, ryij_old, rzij_old;
     double temp1, temp2, temp3;
+    double rhoklsq, kapparhokl_sq;
+    double uij_Gz0; // 1D ewald
+    gsl_function FF;
+
+    FF.function = &deriv_inc_gamma;
+    FF.params = 0;
 
     uij_excl_13 = 0.0;
     uij_vdw13img = 0.0;
     uij_real13 = 0.0;
+    uij_Gz0 = 0.0;
 
     for (ii=0;ii<nangle;ii++)
     {
@@ -337,6 +492,36 @@ int loop_13()
 	    rxij = xx[ii1] - xx[ii2];
 	    ryij = yy[ii1] - yy[ii2];
 	    rzij = zz[ii1] - zz[ii2];
+
+	    // Gz=0 term for 1D ewald
+	    if (isEwaldOn && fEwald_Dim==ewald_1D)
+	    {
+		rhoklsq = rxij*rxij + ryij*ryij;
+		if (rhoklsq>parallel_to_z_err)
+		{
+		    kapparhokl_sq = kappasq*rhoklsq;
+		    temp1 = Euler_const + gsl_sf_gamma_inc(0.0,kapparhokl_sq) + log(kapparhokl_sq);
+		    uij_Gz0 = uij_Gz0 -charge[ii1]*charge[ii2]*temp1;
+		    // forces
+		    // derivative of incomplete gamma function
+		    // use numerical differential
+		    // This may not be a good way to do it
+		    // temp1 is the value, temp2 is the absolute std. err.
+		    gsl_deriv_central(&FF,kapparhokl_sq,1.0e-8,&temp1,&temp2);
+		    temp2 = kappasq*temp1 + 1.0/rhoklsq;
+		    fij = charge[ii1]*charge[ii2]*temp2*const_columb/boxlz;
+		    fxij = fij*rxij;
+		    fyij = fij*ryij;
+		    // force on atom ii1
+		    fxl[ii1] += fxij;
+		    fyl[ii1] += fyij;
+		    // force on atom ii2
+		    fxl[ii2] -= fxij;
+		    fyl[ii2] -= fyij;
+		} // if rhoklsq != 0.0 (>1.0e-10)
+	    } // if 1D ewald is used
+
+
 	    // save the old positions
 	    rxij_old = rxij;
 	    ryij_old = ryij;
@@ -471,6 +656,7 @@ int loop_13()
     uexcl += uij_excl_13; // still need constant
     uvdw += uij_vdw13img; // still need 4.0
     ureal += uij_real13; // still need constant
+    uGz0 += uij_Gz0/(2.0*boxlz);
 }
 
 int loop_12()
@@ -487,10 +673,17 @@ int loop_12()
     double uij_excl_12;
     double rxij_old, ryij_old, rzij_old;
     double temp1, temp2, temp3;
+    double rhoklsq, kapparhokl_sq;
+    double uij_Gz0; // 1D ewald
+    gsl_function FF;
+
+    FF.function = &deriv_inc_gamma;
+    FF.params = 0;
 
     uij_excl_12 = 0.0;
     uij_vdw12img = 0.0;
     uij_real12 = 0.0;
+    uij_Gz0 = 0.0;
 
     for (ii=0;ii<nbond;ii++)
     {
@@ -501,6 +694,35 @@ int loop_12()
 	rxij = xx[ii1] - xx[ii2];
 	ryij = yy[ii1] - yy[ii2];
 	rzij = zz[ii1] - zz[ii2];
+
+	// Gz=0 term for 1D ewald
+	if (isEwaldOn && fEwald_Dim==ewald_1D)
+	{
+	    rhoklsq = rxij*rxij + ryij*ryij;
+	    if (rhoklsq>parallel_to_z_err)
+	    {
+		kapparhokl_sq = kappasq*rhoklsq;
+		temp1 = Euler_const + gsl_sf_gamma_inc(0.0,kapparhokl_sq) + log(kapparhokl_sq);
+		uij_Gz0 = uij_Gz0 -charge[ii1]*charge[ii2]*temp1;
+		// forces
+		// derivative of incomplete gamma function
+		// use numerical differential
+		// This may not be a good way to do it
+		// temp1 is the value, temp2 is the absolute std. err.
+		gsl_deriv_central(&FF,kapparhokl_sq,1.0e-8,&temp1,&temp2);
+		temp2 = kappasq*temp1 + 1.0/rhoklsq;
+		fij = charge[ii1]*charge[ii2]*temp2*const_columb/boxlz;
+		fxij = fij*rxij;
+		fyij = fij*ryij;
+		// force on atom ii1
+		fxl[ii1] += fxij;
+		fyl[ii1] += fyij;
+		// force on atom ii2
+		fxl[ii2] -= fxij;
+		fyl[ii2] -= fyij;
+	    } // if rhoklsq != 0.0 (>1.0e-10)
+	} // if 1D ewald is used
+
 	// save the old positions
 	rxij_old = rxij;
 	ryij_old = ryij;
@@ -631,6 +853,7 @@ int loop_12()
     uexcl += uij_excl_12; // still need constant
     uvdw += uij_vdw12img; // still need 4.0
     ureal += uij_real12; // still need constant
+    uGz0 += uij_Gz0/(2.0*boxlz);
 }
 
 int ewald_fourier_and_self()
@@ -649,6 +872,10 @@ int ewald_fourier_and_self()
 	{
 	    for (kz=-KMAXZ;kz<=KMAXZ;kz++) // <=
 	    {
+		// check for 1D ewald summation
+		// skip all Gz=0 terms
+		if (fEwald_Dim==ewald_1D && kz==0)
+		    continue;
 		ksq = kx*kx + ky*ky + kz*kz;
 		if (ksq<=KSQMAX && ksq!=0)
 		{
@@ -660,8 +887,13 @@ int ewald_fourier_and_self()
 		    // calculate |rho(k)|^2 = sr*sr + si*si
 		    sr = 0.0;
 		    si = 0.0;
+		    // energy
 		    for (ii=0;ii<natom;ii++)
 		    {
+			// the x,y,z coordinates dont have to be PBC'd
+			// before doing the calculation since the existence of the TWOPI_L
+			// factor will make the cos, sin functions have the same results
+			// with periodical system
 			t = rkx*xx[ii] + rky*yy[ii] + rkz*zz[ii];   
 			sr = sr + charge[ii]*cos(t);
 			si = si + charge[ii]*sin(t);
@@ -680,6 +912,8 @@ int ewald_fourier_and_self()
 	    } // KMAXZ
 	} // KMAXY
     } // KMAXX
+
+
     // total fourier energy part of ewald
     ufourier = ufourier*Vfactor_ewald*const_columb;
 
@@ -687,6 +921,64 @@ int ewald_fourier_and_self()
     for (ii=0;ii<natom;ii++)
 	uself += charge[ii]*charge[ii];
     uself = uself*const_columb*sqrt(kappa*kappa/pi);
+}
+
+int ewald_vaccum()
+{
+    int ii;
+    double xxpri, yypri, zzpri; // PBC coords into primal box
+    double qrx, qry, qrz;
+    double chargei;
+    double fij;
+    // double charge_sum;
+
+    // the atoms have to be grouped adjacent to their respective molecular
+    // centers of mass before performing this sum
+    // Because any molecules straddling a periodic boundary will cause
+    // the total dipole moment of the cell to be greatly exaggerated.
+    // -------------------------
+    // calculate the center of mass and relative positions
+    cal_com_and_inner_coords();
+    // calcuate the new molecular center of mass using PBC
+    for (ii=0;ii<nmole;ii++)
+    {
+	mole_xx[ii] = mole_xx[ii] - boxlx*rint(mole_xx[ii]/boxlx);
+	mole_yy[ii] = mole_yy[ii] - boxly*rint(mole_yy[ii]/boxly);
+	mole_zz[ii] = mole_zz[ii] - boxlz*rint(mole_zz[ii]/boxlz);
+    }
+    // calculate the new positions to the PBC'd center of mass
+    reconstruct_coords_from_com();
+
+    // charge_sum = 0.0;
+    qrx = qry = qrz = 0.0;
+    for (ii=0;ii<natom;ii++)
+    {
+	// use the reconstructed coordinates for this calculations
+	// the reconstructed coordinates make sure that the
+	// molecular center of mass are in the primal simulation
+	// box and the atoms in one molecule are grouped together
+	xxpri = ex[ii];
+	yypri = fy[ii];
+	zzpri = gz[ii];
+
+	chargei = charge[ii];
+	qrx = qrx + chargei*xxpri;
+	qry = qry + chargei*yypri;
+	qrz = qrz + chargei*zzpri;
+
+	// charge_sum += chargei;
+    }
+    // energy
+    uvaccum = qrx*qrx + qry*qry + qrz*qrz; // still need constant
+    uvaccum = uvaccum*twopi_over_3v*const_columb;
+
+    // forces
+    // charge_sum should be exactly zero for a charge netural system
+    // hence, the force should be zero
+    // fij = -2.0*twopi_over_3v*const_columb*charge_sum;
+    // fxl[ii] += fij*qrx;
+    // fyl[ii] += fij*qry;
+    // fzl[ii] += fij*qrz;
 }
 
 int wolf_con()
@@ -717,6 +1009,8 @@ int erfrc()
     uwolf_real = 0.0;
     uwolf_con = 0.0;
     usflj = 0.0;
+    uvaccum = 0.0;
+    uGz0 = 0.0;
 
     // zero forces
     for (ii=0;ii<natom;ii++)
@@ -735,8 +1029,22 @@ int erfrc()
     if (isEwaldOn) // if ewald is on, calculate the fourier and self correction parts
     {
 	ewald_fourier_and_self(); 
-	// total ewald energy
-       	uewald = ureal + ufourier - uself - uexcl;
+	// total 3D ewald energy with tinfoil boundary condition
+	uewald = ureal + ufourier - uself - uexcl;
+
+	// calculate vaccum boundary condition
+	// energy/force term is needed
+	if (fEwald_BC == ewald_bc_vaccum)
+	{
+	    ewald_vaccum();
+	    uewald += uvaccum; // add into total ewald energy
+	}
+	// if 1D ewald is used
+	if (fEwald_Dim==ewald_1D)
+	{
+	    uGz0 *= const_columb;
+	    uewald += uGz0; // add Gz=0 term into total ewald energy for 1D ewald
+	}
     }
     else if (isWolfOn) // if wolf is on
 	wolf_con();
@@ -749,7 +1057,7 @@ int erfrc()
     // add up everything
     // they should be zero if they are not used
     // so, can NOT turn ewald and wolf both on 
-    uinter = uvdw + uewald + uwolf;// + usflj;
+    uinter = uvdw + uewald + uwolf + usflj;
 }
 
 

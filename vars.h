@@ -4,6 +4,7 @@
 #define INPUT		"in.mspms"
 #define OUTPUT		"out.mspms"
 #define CONFIG		"cfg.mspms"
+#define COORDSIN	"xyz.mspms"
 #define LOGFILE		"log.mspms"
 #define SNAPSHOT	"ss.mspms"
 #define MOVIE		"trj.mspms"
@@ -39,9 +40,20 @@
 #define imp_none		0
 #define imp_charmm		1 // charmm type improper potential
 
-#define nanotube_polynomial	1
+#define nanotube_hypergeo  	1
 #define nanotube_atom_explicit	2
 #define nanotube_tasos		3
+#define nanotube_my_interp	4 // my interpolation grid
+
+#define ewald_bc_tinfoil	1
+#define ewald_bc_vaccum		2
+
+#define ewald_1D		1
+#define ewald_2D		2
+#define ewald_3D		3
+
+#define solid_hetero		0  // solid type, e.g. mof?
+#define solid_uniform		1 // e.g. nanotoubes
 
 #define nspecie_max	3
 #define nmole_max	1000
@@ -52,14 +64,26 @@
 #define nimp_max	2000
 #define nnbp_max	2000
 #define exclude_max	4000
+
+#define nunique_atom_max	5 // number of unqiue atoms for grid interpolation
+
 #define Rgas		8.314472 /* J/mol/K */
 #define rRgas		0.120272219 /* reciprocal of Rgas */
 #define const_columb	1389355.1051  // unit is J/mol. Na*(1.602177e-19)^2/4/PI/epsilon0/(1.0e-10)
 #define pi		3.141592653589793
+#define Euler_const	0.577215665
+#define parallel_to_z_err		1.0e-6
+#define c3_pisq_theta 	11.3105666436484 // 3*pi^2*theta, assume the same charge density as graphite, theta=0.382 A^-2
 
 
 int nspecie, nmole, natom; /* total number of molecules, atoms, species */
+int mole_first_atom_idx[nmole_max+1]; // index of the first atom in a molecule
+int atom_to_mole_idx[natom_max]; // the index of the molecule which the atom is belong to
+double mole_xx[nmole_max], mole_yy[nmole_max], mole_zz[nmole_max];
+double mw[nmole_max]; // molecule weight
 double xx[natom_max], yy[natom_max], zz[natom_max]; /* position */
+// inner coordinates relative to the center of mass, also used for PBC reconstruction of the molecule
+double ex[natom_max], fy[natom_max], gz[natom_max]; 
 double vx[natom_max], vy[natom_max], vz[natom_max]; /* velocity */
 double fxl[natom_max], fyl[natom_max], fzl[natom_max]; /* inter force */
 double fxs[natom_max], fys[natom_max], fzs[natom_max]; /* intra force */
@@ -67,6 +91,16 @@ double aw[natom_max], epsilon[natom_max], sigma[natom_max], charge[natom_max]; /
 int isghost[natom_max]; /* flag of ghost atom, including ghost LJ or ghost electrostatic */
 int tasostype[natom_max]; /* atom type for tasos interpolation */
 char atomname[natom_max][5];
+
+// for atom explicit solid (nanotubes)
+int solid_natom;
+double *solid_xx, *solid_yy, *solid_zz;
+int fSolid_type; // 0-heterogeneous; 1-uniform (e.g. nanotubes); 
+double *solid_sigma, *solid_epsilon, *solid_charge;
+
+// for hypergeometric nanotubes
+int ntube;
+double *hgntc_xx, *hgntc_yy, *hgnt_radius; // (h)yper(g)eometric (n)ano(t)ube (c)enter
 
 int nbond, nangle, ndih, nimp, nnbp;
 int bond_idx[nbond_max][2];
@@ -82,6 +116,8 @@ int dih_type[ndih_max];
 double c1[ndih_max], c2[ndih_max], c3[ndih_max], c4[ndih_max];
 int isDih_unique[ndih_max]; // make sure 1,4 atoms do not make mutiple dihedrals, this is for possible ring structures
 int imp_idx[nimp_max][4];
+int imp_type[nimp_max];
+double komega[nimp_max], omega0[nimp_max];
 int nbp_idx[nnbp_max][2];
 int excllist[exclude_max];
 int pointexcl[natom_max+1]; // the index of exclude list starts and ends
@@ -107,8 +143,10 @@ double rcutoffelec, rcutoffelecsq;
 double f0; // 1,4 LJ potential modifier for OPLS, set to 1.0 for no modification or 0.5 for OPLS or 0.0 for TraPPE.
 int isLJswitchOn; // use switch potential for LJ or not
 int isEwaldOn; // Ewald summation electrostatic interactions
+int fEwald_BC; // flag of boundary condition for ewald summation. 1-tinfoil; 2-vaccum
+int fEwald_Dim; // flag of Ewald method dimension. 1, 2 or 3 dimension.
 int isWolfOn; // wolf method for electrostatic interactions
-double kappa; // sqrt(alpha) in ewald summation. 
+double kappa, kappasq; // sqrt(alpha) in ewald summation. 
 int KMAXX, KMAXY, KMAXZ; // ewald parameters
 int KSQMAX; // ewald parameter
 char coords_file[100]; // name of the coordinates file
@@ -116,7 +154,6 @@ int isNVTnh; // use nose hoover for NVT ensemble or not
 int whichNH; // which nose hoover subroutine to use? usually 3 for molecule, 2 for atoms, see more details in nvtnh.c
 int isSFon; // is solid-fluid interaction on
 int sf_type; // solid-fluid type. for different nanotube potentials and future possible other materials
-int atomid, moleid;
 char atomname[natom_max][5];
 
 
@@ -131,6 +168,8 @@ double ureal; // real part of ewald, term 3 in 12.1.25
 double ufourier; // fourier part of ewald, term 1 in 12.1.25
 double uself; // self interaction correction part of ewald, term 2 in 12.1.25
 double uexcl; // excluding energy for ewald summation
+double uvaccum; // vaccum boundary for ewald
+double uGz0; // 1D ewald Gz=0 term
 double LJswitch; // switch factor for LJ
 double usflj; // solid-fluid LJ energy
 
@@ -141,6 +180,7 @@ int nframe; // number of frames in the trajectory file
 
 double TWOPI_LX, TWOPI_LY, TWOPI_LZ; // ewald
 double Bfactor_ewald, Vfactor_ewald;
+double twopi_over_3v; // constant for vaccum boundary
 
 // variables for wolf method
 double uwolf, uwolf_real, uwolf_con;
@@ -162,6 +202,17 @@ double unhts;
 double qqs, pss, ggs, sss;
 double unhtss;
 
+// my interpolations
+double *Ene[nunique_atom_max]; 
+double *dEx[nunique_atom_max], *dEy[nunique_atom_max], *dEz[nunique_atom_max];
+double *dFxx[nunique_atom_max], *dFxy[nunique_atom_max], *dFxz[nunique_atom_max];
+double *dFyx[nunique_atom_max], *dFyy[nunique_atom_max], *dFyz[nunique_atom_max];
+double *dFzx[nunique_atom_max], *dFzy[nunique_atom_max], *dFzz[nunique_atom_max];
+double uclx, ucly, uclz;
+double grid_itvl_x, grid_itvl_y, grid_itvl_z;;
+int ngrid_x, ngrid_y, ngrid_z, ngrid_total;
+double xcenter, ycenter, zcenter;
+double xmin, xmax, ymin, ymax, zmin, zmax;
 
 // counters and accumulators
 int icounter[num_counter_max];
@@ -185,6 +236,7 @@ accumulator[12]   ufourier
 accumulator[13]   uself
 accumulator[14]   usflj
 accumulator[15]   tinst
+accumulator[16]   uvaccum
 
 icounter[10]   number of average cycles
 

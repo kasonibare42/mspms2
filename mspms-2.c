@@ -24,7 +24,11 @@ extern int rafrc();
 extern int vver_nh_1();
 extern int vver_nh_2();
 extern int vver_nh_3();
+extern int init_sf_hypergeo();
+extern int init_sf_atom_explicit();
 extern int init_tasos_grid();
+extern int init_my_interp();
+
 
 /* Initiate variables */
 int init_vars()
@@ -35,11 +39,19 @@ int init_vars()
     const int datalen = 200;
 
     // initiate files
+    // output file is initialized already at the very beginning of the run
     fplog = fopen(LOGFILE,"w");
     fptrj = fopen(MOVIE,"wb");
-    fpouts = fopen(OUTPUT,"w");
 
-    fprintf(fpouts,"Initializing simulation ...\n");
+    fprintf(stderr,"Initializing variables...\n");
+    fprintf(fpouts,"Initializing variables...\n");
+    for (ii=0;ii<nmole;ii++)
+    {
+	mw[ii] = 0.0;
+	for (jj=mole_first_atom_idx[ii];jj<mole_first_atom_idx[ii+1];jj++)
+	    mw[ii] += aw[jj];
+	// fprintf(fpouts,"molecule %d: %d-%d :  mw=%lf\n",ii,mole_first_atom_idx[ii],mole_first_atom_idx[ii+1],mw[ii]);
+    }
 
     nframe = 0; // number of frames in trajectory file
 
@@ -99,10 +111,18 @@ int init_vars()
     pss = 0.0;
     unhtss = 0.0;
 
-
     // sf energy, tasos initiate part
-    if (isSFon && sf_type==nanotube_tasos)
-	init_tasos_grid();
+    if (isSFon)
+    {
+	if (sf_type==nanotube_hypergeo)
+	    init_sf_hypergeo();
+	else if (sf_type==nanotube_atom_explicit)
+	    init_sf_atom_explicit();
+	else if (sf_type==nanotube_tasos)
+	    init_tasos_grid();
+	else if (sf_type==nanotube_my_interp)
+	    init_my_interp();
+    }
 
     // check unique for dihedrals
     // this is for possible ring structures where 1,4 atoms can form multiple dihedrals
@@ -117,14 +137,20 @@ int init_vars()
     {
 	if (isDih_unique[ii])
 	{
-	    for (jj=ii;jj<ndih;jj++)
+	    for (jj=ii+1;jj<ndih;jj++)
 	    {
 		if (isDih_unique[jj])
 		{
 		    if (dih_idx[ii][0]==dih_idx[jj][0] && dih_idx[ii][3]==dih_idx[jj][3])
+		    {
 			isDih_unique[jj] = false;
+			fprintf(fpouts,"Dihedral %d and dihedral %d have the same ending pairs.\n",ii,jj);
+		    }
 		    else if (dih_idx[ii][0]==dih_idx[jj][3] && dih_idx[ii][3]==dih_idx[jj][0])
+		    {
 			isDih_unique[jj] = false;
+			fprintf(fpouts,"Dihedral %d and dihedral %d have the same ending pairs.\n",ii,jj);
+		    }
 		}
 	    }
 	}
@@ -139,9 +165,15 @@ int init_vars()
 	    for (jj=0;jj<nangle;jj++)
 	    {
 		if (dih_idx[ii][0]==angle_idx[jj][0] && dih_idx[ii][3]==angle_idx[jj][2])
-		    isDih_unique[jj] = false;
+		{
+		    isDih_unique[jj] = false; 
+		    fprintf(fpouts,"Dihedral %d and angle %d have the same ending pairs.\n",ii,jj);
+		}
 		else if (dih_idx[ii][0]==angle_idx[jj][2] && dih_idx[ii][3]==angle_idx[jj][0])
+		{
 		    isDih_unique[jj] = false;
+		    fprintf(fpouts,"Dihedral %d and angle %d have the same ending pairs.\n",ii,jj);
+		}
 	    }
 	}
     }
@@ -154,9 +186,15 @@ int init_vars()
 	    for (jj=0;jj<nbond;jj++)
 	    {
 		if (dih_idx[ii][0]==bond_idx[jj][0] && dih_idx[ii][3]==bond_idx[jj][1])
+		{
 		    isDih_unique[jj] = false;
+		    fprintf(fpouts,"Dihedral %d and bond %d have the same ending pairs.\n",ii,jj);
+		}
 		else if (dih_idx[ii][0]==bond_idx[jj][1] && dih_idx[ii][3]==bond_idx[jj][0])
+		{
 		    isDih_unique[jj] = false;
+		    fprintf(fpouts,"Dihedral %d and bond %d have the same ending pairs.\n",ii,jj);
+		}
 	    }
 	}
     }
@@ -169,14 +207,20 @@ int init_vars()
     {
 	if (isAngle_unique[ii])
 	{
-	    for (jj=ii;jj<nangle;jj++)
+	    for (jj=ii+1;jj<nangle;jj++)
 	    {
 		if (isAngle_unique[jj])
 		{
 		    if (angle_idx[ii][0]==angle_idx[jj][0] && angle_idx[ii][2]==angle_idx[jj][2])
+		    {
 			isAngle_unique[jj] = false;
+			fprintf(fpouts,"Angle %d and angle %d have the same ending pairs.\n",ii,jj);
+		    }
 		    else if (angle_idx[ii][0]==angle_idx[jj][2] && angle_idx[ii][2]==angle_idx[jj][0])
+		    {
 			isAngle_unique[jj] = false;
+			fprintf(fpouts,"Angle %d and angle %d have the same ending pairs.\n",ii,jj);
+		    }
 		}
 	    }
 	}
@@ -190,30 +234,39 @@ int init_vars()
 	    for (jj=0;jj<nbond;jj++)
 	    {
 		if (angle_idx[ii][0]==bond_idx[jj][0] && angle_idx[ii][2]==bond_idx[jj][1])
+		{
 		    isAngle_unique[jj] = false;
+		    fprintf(fpouts,"Angle %d and bond %d have the same ending pairs.\n",ii,jj);
+		}
 		else if (angle_idx[ii][0]==bond_idx[jj][1] && angle_idx[ii][2]==bond_idx[jj][0])
+		{
 		    isAngle_unique[jj] = false;
+		    fprintf(fpouts,"Angle %d and bond %d have the same ending pairs.\n",ii,jj);
+		}
 	    }
 	}
     }
 
     // set ewald parameters
+    kappasq = kappa*kappa;
     Bfactor_ewald = 1.0/(4.0*kappa*kappa);
     Vfactor_ewald = 2.0*pi/(boxlx*boxly*boxlz);
     TWOPI_LX = 2.0*pi/boxlx;
     TWOPI_LY = 2.0*pi/boxly;
     TWOPI_LZ = 2.0*pi/boxlz;
 
+    twopi_over_3v = 2.0*pi/3.0/boxlx/boxly/boxlz;
+
     // set wolf parameters
     wolfvcon1 = -erfc(kappa*rcutoffelec)/rcutoffelec;
     wolfvcon2 = erfc(kappa*rcutoffelec)/rcutoffelecsq 
-	+ 2.0*kappa*exp(-(kappa*rcutoffelec)*(kappa*rcutoffelec))/(sqrt(pi)*rcutoff);
+	+ 2.0*kappa*exp(-(kappa*rcutoffelec)*(kappa*rcutoffelec))/(sqrt(pi)*rcutoffelec);
     wolffcon1 = 2.0*kappa/sqrt(pi);
     wolffcon2 = -wolfvcon2;
 
 
     // read in coordinates
-    fpcoords = fopen(coords_file,"r");
+    fpcoords = fopen(COORDSIN,"r");
     // fscanf(fpcoords, "%[^\n]", buffer);
     fgets(buffer,datalen,fpcoords);
     fgets(buffer,datalen,fpcoords);
@@ -226,6 +279,8 @@ int init_vars()
 
 int ending()
 {
+    int ii;
+
     fprintf(fpouts,"=========================================================\n");
     fprintf(fpouts,"Total energy                %15.6le\n",accumulator[0][5]);
     fprintf(fpouts,"   std. dev.                %15.4lf\n",accumulator[0][6]);
@@ -283,6 +338,10 @@ int ending()
     fprintf(fpouts,"   std. dev.                %15.4lf\n",accumulator[13][6]);
     fprintf(fpouts,"   fluctuation              %15.4lf\n",accumulator[13][7]);
 
+    fprintf(fpouts,"Vaccum energy               %15.6le\n",accumulator[16][5]);
+    fprintf(fpouts,"   std. dev.                %15.4lf\n",accumulator[16][6]);
+    fprintf(fpouts,"   fluctuation              %15.4lf\n",accumulator[16][7]);
+
     fprintf(fpouts,"Solid fluid energy          %15.6le\n",accumulator[14][5]);
     fprintf(fpouts,"   std. dev.                %15.4lf\n",accumulator[14][6]);
     fprintf(fpouts,"   fluctuation              %15.4lf\n",accumulator[14][7]);
@@ -290,6 +349,47 @@ int ending()
     fprintf(fpouts,"Temperature                 %15.6le\n",accumulator[15][5]);
     fprintf(fpouts,"   std. dev.                %15.4lf\n",accumulator[15][6]);
     fprintf(fpouts,"   fluctuation              %15.4lf\n",accumulator[15][7]);
+
+    fprintf(fpouts,"=========================================================\n");
+
+    if (isSFon)
+    {
+	if (sf_type==nanotube_hypergeo)
+	{
+	    free(hgntc_xx);
+	    free(hgntc_yy);
+	    free(hgnt_radius);
+	}
+	else if (sf_type==nanotube_atom_explicit)
+	{
+	    free(solid_sigma);
+	    free(solid_epsilon);
+	    free(solid_charge);
+	    free(solid_xx);
+	    free(solid_yy);
+	    free(solid_zz);
+	}
+	else if (sf_type==nanotube_my_interp)
+	{
+	    // free memories
+	    for (ii=0;ii<nunique_atom_max;ii++)
+	    {
+		free(Ene[ii]);
+		free(dEx[ii]);
+		free(dEy[ii]);
+		free(dEz[ii]);
+		free(dFxx[ii]);
+		free(dFxy[ii]);
+		free(dFxz[ii]);
+		free(dFyx[ii]);
+		free(dFyy[ii]);
+		free(dFyz[ii]);
+		free(dFzx[ii]);
+		free(dFzy[ii]);
+		free(dFzz[ii]);
+	    }
+	}
+    }
 
     // close files
     fclose(fplog);
@@ -303,6 +403,12 @@ int readins()
     int ii;
     const int datalen = 200;
     char buffer[200];
+    int atomid, moleid;
+    int isFirstAtom;
+    int last_mole_id;
+
+    fprintf(stderr,"Reading input file...\n");
+    fprintf(fpouts,"Reading input file...\n");
 
     /* read input file */
     fpins = fopen(INPUT,"r");
@@ -311,7 +417,7 @@ int readins()
     sscanf(fgets(buffer,datalen,fpins), "%lf", &treq);
     sscanf(fgets(buffer,datalen,fpins), "%lf %lf %lf", &boxlx, &boxly, &boxlz);
     sscanf(fgets(buffer,datalen,fpins), "%lf %lf %lf", &rcuton, &rcutoff, &rcutoffelec);
-    sscanf(fgets(buffer,datalen,fpins), "%s", coords_file);
+    // sscanf(fgets(buffer,datalen,fpins), "%s", coords_file);
     sscanf(fgets(buffer,datalen,fpins), "%d %d", &nstep, &fStart_option);
     sscanf(fgets(buffer,datalen,fpins), "%d %d %d %d %d", 
 	    &nstep_ave, &nstep_print, &nstep_save, &nstep_ss, &nstep_trj);
@@ -320,7 +426,7 @@ int readins()
     sscanf(fgets(buffer,datalen,fpins), "%d %d", &isNVTnh, &whichNH);
     sscanf(fgets(buffer,datalen,fpins), "%lf %lf", &qq, &qqs);
     sscanf(fgets(buffer,datalen,fpins), "%d", &isLJswitchOn);
-    sscanf(fgets(buffer,datalen,fpins), "%d", &isEwaldOn);
+    sscanf(fgets(buffer,datalen,fpins), "%d %d %d", &isEwaldOn,&fEwald_BC,&fEwald_Dim);
     sscanf(fgets(buffer,datalen,fpins), "%d", &isWolfOn);
     sscanf(fgets(buffer,datalen,fpins), "%d %d %d", &KMAXX, &KMAXY, &KMAXZ);
     sscanf(fgets(buffer,datalen,fpins), "%d", &KSQMAX);
@@ -331,22 +437,45 @@ int readins()
     sscanf(fgets(buffer,datalen,fpins), "%d", &isSFon);
     sscanf(fgets(buffer,datalen,fpins), "%d", &sf_type);
 
-
-
     fclose(fpins);
 
+    fprintf(stderr,"reading cfg file...\n");
+    fprintf(fpouts,"reading cfg file...\n");
+    
     /* read config file */
     fpcfg = fopen(CONFIG,"r");
     // read the first line of comments
     // fscanf(fpcfg, "%[^\n]", buffer); /* read in everything to the buffer except the return */
-    fgets(sysname,datalen,fpcfg);
+    fscanf(fpcfg,"%s %d\n",sysname,&nspecie);
+    assert(nspecie<=nspecie_max);
 
     // read in atom list
     fscanf(fpcfg, "%d atoms\n", &natom);
     assert(natom<=natom_max);
+    nmole = 0;
+    isFirstAtom = 1;
+    last_mole_id = 0;
     for (ii=0;ii<natom;ii++)
-	fscanf(fpcfg,"%lf %lf %s %lf %lf %lf %lf %d %d\n",&atomid,&moleid,atomname[ii],&aw[ii],&epsilon[ii],&sigma[ii],
+    {
+	fscanf(fpcfg,"%d %d %s %lf %lf %lf %lf %d %d\n",&atomid,&moleid,atomname[ii],&aw[ii],&epsilon[ii],&sigma[ii],
 		&charge[ii],&isghost[ii],&tasostype[ii]);
+	// assign the molecule index to the atom
+	atom_to_mole_idx[ii] = moleid;
+	// assign the correct index of the first atom in a molecule
+	if (moleid == last_mole_id+1)
+	{
+	    isFirstAtom = 1;
+	    last_mole_id = moleid;
+	}
+	if (isFirstAtom)
+	{
+	    mole_first_atom_idx[nmole] = atomid;
+	    nmole++;
+	    assert(nmole<nmole_max+1);
+	    isFirstAtom = 0;
+	}
+    }
+    mole_first_atom_idx[nmole] = atomid + 1; // set the boundary of the last molecule
 
     // read in bond list
     fscanf(fpcfg, "%d bonds\n", &nbond);
@@ -388,12 +517,13 @@ int readins()
 
 int echo()
 {
-    fprintf(fpouts,"=========================================================\n");
+    fprintf(fpouts,"=====================================\n");
     fprintf(fpouts,"Units:\n");
-    fprintf(fpouts,"  Energy(J/mol) Temperature(K) Velocity(m/s) Distance(Angstrom)\n");
+    fprintf(fpouts,"  Energy(J/mol)\n  Temperature(K)\n  Velocity(m/s)\n  Distance(Angstrom)\n");
     fprintf(fpouts,"  Force(J/Angstrom/mol)\n");
-    fprintf(fpouts,"=========================================================\n");
+    fprintf(fpouts,"=====================================\n");
     fprintf(fpouts,"natom=%d\n",natom);
+    fprintf(fpouts,"number of molecules = %d\n",nmole);
     fprintf(fpouts,"nconstraint=%d\n",nconstraint);
 
     fprintf(fpouts,"%s",sysname);
@@ -404,14 +534,40 @@ int echo()
     fprintf(fpouts,"%d impropers.\n",nimp);
     fprintf(fpouts,"%d nonbonded pairs.\n",nnbp);
     fprintf(fpouts,"%d %d %d %d KMAX etc.\n",KMAXX,KMAXY,KMAXZ,KSQMAX);
-    fprintf(fpouts,"qq = %le\n",qq);
+
+    fprintf(fpouts,"utot=%lf\n",uinter+uintra+ukin); // utot
+    fprintf(fpouts,"upot=%lf\n",uinter+uintra); // upot
+    fprintf(fpouts,"ukin=%lf\n",ukin);
+    fprintf(fpouts,"uinter=%lf\n",uinter);
+    fprintf(fpouts,"uintra=%lf\n",uintra);
+    fprintf(fpouts,"uvdw=%lf\n",uvdw);
+    fprintf(fpouts,"ubond=%lf\n",ubond);
+    fprintf(fpouts,"uangle=%lf\n",uangle);
+    fprintf(fpouts,"udih=%lf\n",udih);
+    fprintf(fpouts,"uimp=%lf\n",uimp);
+    fprintf(fpouts,"uewald=%lf\n",uewald);
+    fprintf(fpouts,"ureal=%lf\n",ureal);
+    fprintf(fpouts,"ufourier=%lf\n",ufourier);
+    fprintf(fpouts,"uself=%lf\n",uself);
+    fprintf(fpouts,"uexcl=%lf\n",uexcl);
+    fprintf(fpouts,"uvaccum=%lf\n",uvaccum);
+    fprintf(fpouts,"uGz0=%lf\n",uGz0);
+
+    fprintf(fpouts,"usflj=%lf\n",usflj);
+    fprintf(fpouts,"uwolf=%lf\n",uwolf);
+    fprintf(fpouts,"uwolf_real=%lf\n",uwolf_real);
+    fprintf(fpouts,"uwolf_con=%lf\n",uwolf_con);
+
+    fflush(fpouts);
 }
 
 int make_exclude_list()
 {
     int ii, jj, nexcllist;
-    nexcllist = 0;
 
+    fprintf(fpouts,"making exclude list...\n");
+
+    nexcllist = 0;
     for (ii=0;ii<natom;ii++)
     {
 	pointexcl[ii] = nexcllist;
@@ -465,19 +621,19 @@ int make_exclude_list()
 
     // check the exclude list
     /*
-    printf("n = %d\n",nexcllist);
-    int tmp = 0;
-    for (ii=0;ii<natom;ii++)
-    {
-       	printf("%d excludes are:\n",ii);
-       	for (jj=pointexcl[ii];jj<pointexcl[ii+1];jj++)
-       	{
-	    printf("%d ",excllist[tmp]);
-	    tmp++;
-       	}
-       	printf("\n");
-    }
-    */
+       printf("n = %d\n",nexcllist);
+       int tmp = 0;
+       for (ii=0;ii<natom;ii++)
+       {
+       printf("%d excludes are:\n",ii);
+       for (jj=pointexcl[ii];jj<pointexcl[ii+1];jj++)
+       {
+       printf("%d ",excllist[tmp]);
+       tmp++;
+       }
+       printf("\n");
+       }
+       */
 }
 
 int velinit()
@@ -487,6 +643,8 @@ int velinit()
     double stdvtmp, stdv;
     double totalmass;
     double scaling;
+
+    fprintf(fpouts,"initializing velocities...\n");
 
     totalmass = 0.0;
     px = py = pz = 0.0;
@@ -541,8 +699,6 @@ int velinit()
 int printit()
 {
     upot = uinter + uintra;
-    // add solid-fluid energy to the potential energy, will be zero if no usf
-    upot += usflj;
     utot = upot + ukin;
     // add energy of thermostat, if nose hoover is not used, they will just be zero
     utot = utot + upot_nhts + unhts + unhtss;
@@ -614,7 +770,7 @@ int snapshot()
     fprintf(fpss,"%d\n",natom);
     fprintf(fpss,"%d %lf %lf %lf\n",istep,boxlx,boxly,boxlz);
     for (ii=0;ii<natom;ii++)
-	fprintf(fpss,"C  %lf  %lf  %lf\n",xx[ii],yy[ii],zz[ii]);
+	fprintf(fpss,"%s  %lf  %lf  %lf\n",atomname[ii],xx[ii],yy[ii],zz[ii]);
     fclose(fpss);
 }
 
@@ -658,6 +814,10 @@ int saveit()
 int loadit()
 {
     int ii;
+
+    fprintf(stderr,"loading from saved file...\n");
+    fprintf(fpouts,"loading from saved file...\n");
+
     fpload = fopen(LOADFILE,"rb");
 
     fread(xx,sizeof(double),natom,fpload);
@@ -717,22 +877,44 @@ int calres()
     }
 }
 
+int opening()
+{
+    // open output file at the very beginning to keep log of the run
+    fpouts = fopen(OUTPUT,"w");
+
+    fprintf(fpouts,"WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW\n");
+    fprintf(fpouts,"WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW\n");
+    fprintf(fpouts,"WW......WWW.....WW.....WWW......WWW.....WWW\n");
+    fprintf(fpouts,"WW..W.W..W..WWWWWW..WW..WW..W.W..W..WWWWWWW\n");
+    fprintf(fpouts,"WW..W.W..W..WWWWWW..WW..WW..W.W..W..WWWWWWW\n");
+    fprintf(fpouts,"WW..W.W..WW....WWW..WW..WW..W.W..WW....WWWW\n");
+    fprintf(fpouts,"WW..W.W..WWWWW..WW..WW..WW..W.W..WWWWW..WWW\n");
+    fprintf(fpouts,"WW..W.W..WWWWW..WW..WW..WW..W.W..WWWWW..WWW\n");
+    fprintf(fpouts,"WW..WWW..W.....WWW.....WWW..WWW..W.....WW-2\n");
+    fprintf(fpouts,"WWWWWWWWWWWWWWWWWW..WWWWWWWWWWWWWWWWWWWWWWW\n");
+    fprintf(fpouts,"WWWWWWWWWWWWWWWWWW..WWWWWWWWWWWWWWWWWWWWWWW\n");
+    fprintf(fpouts,"WWWWWWWWWWWWWWWWWW..WWWWWWWWWWWWWWWWWWWWWWW\n");
+    fprintf(fpouts,"WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWYANG\n");
+}
+
 int main (int argc, char *argv[])
 {
+    opening();
     readins();
     init_vars();
-    echo();
     make_exclude_list();
 
     // start of the MD simulation
     // initialize velocities
     velinit(); 
-    
+
     if (fStart_option!=new_run) loadit(); // if not new run, load from old file
 
     // calculate total energies
     erfrc(); 
     rafrc();
+    // print out initial values
+    echo();
     // print initial properties
     printit();
     // make snapshots & movies
@@ -791,6 +973,8 @@ int main (int argc, char *argv[])
 	accumulator[14][1] += usflj*usflj;
 	accumulator[15][0] += tinst;
 	accumulator[15][1] += tinst*tinst;
+	accumulator[16][0] += uvaccum;
+	accumulator[16][1] += uvaccum*uvaccum;
 
 	if (istep%nstep_print == 0) printit();
 
