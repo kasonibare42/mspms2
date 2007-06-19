@@ -1,6 +1,8 @@
 #ifndef VARS_H
 #define VARS_H   
 
+#define _safealloc(pt,num,size)         pt=calloc(num,size); assert(pt!=NULL)
+
 #define INPUT		"in.mspms"
 #define OUTPUT		"out.mspms"
 #define CONFIG		"cfg.mspms"
@@ -208,14 +210,56 @@ double qqs, pss, ggs, sss;
 double unhtss;
 
 // my interpolations
-double *Ene[nunique_atom_max]; 
-double *dEx[nunique_atom_max], *dEy[nunique_atom_max], *dEz[nunique_atom_max];
-double *dFxx[nunique_atom_max], *dFxy[nunique_atom_max], *dFxz[nunique_atom_max];
-double *dFyx[nunique_atom_max], *dFyy[nunique_atom_max], *dFyz[nunique_atom_max];
-double *dFzx[nunique_atom_max], *dFzy[nunique_atom_max], *dFzz[nunique_atom_max];
+// energy interpolation parameters
+double *ene0[nunique_atom_max], *ene1[nunique_atom_max], *ene2[nunique_atom_max],
+       *ene3[nunique_atom_max], *ene4[nunique_atom_max], *ene5[nunique_atom_max],
+       *ene6[nunique_atom_max], *ene7[nunique_atom_max], *ene8[nunique_atom_max],
+       *ene9[nunique_atom_max], *ene10[nunique_atom_max], *ene11[nunique_atom_max],
+       *ene12[nunique_atom_max], *ene13[nunique_atom_max], *ene14[nunique_atom_max],
+       *ene15[nunique_atom_max], *ene16[nunique_atom_max], *ene17[nunique_atom_max],
+       *ene18[nunique_atom_max], *ene19[nunique_atom_max], *ene20[nunique_atom_max],
+       *ene21[nunique_atom_max], *ene22[nunique_atom_max], *ene23[nunique_atom_max],
+       *ene24[nunique_atom_max], *ene25[nunique_atom_max], *ene26[nunique_atom_max],
+       *ene27[nunique_atom_max], *ene28[nunique_atom_max], *ene29[nunique_atom_max],
+       *ene30[nunique_atom_max], *ene31[nunique_atom_max];
+double *fxa0[nunique_atom_max], *fxa1[nunique_atom_max], *fxa2[nunique_atom_max],
+       *fxa3[nunique_atom_max], *fxa4[nunique_atom_max], *fxa5[nunique_atom_max],
+       *fxa6[nunique_atom_max], *fxa7[nunique_atom_max], *fxa8[nunique_atom_max],
+       *fxa9[nunique_atom_max], *fxa10[nunique_atom_max], *fxa11[nunique_atom_max],
+       *fxa12[nunique_atom_max], *fxa13[nunique_atom_max], *fxa14[nunique_atom_max],
+       *fxa15[nunique_atom_max], *fxa16[nunique_atom_max], *fxa17[nunique_atom_max],
+       *fxa18[nunique_atom_max], *fxa19[nunique_atom_max], *fxa20[nunique_atom_max],
+       *fxa21[nunique_atom_max], *fxa22[nunique_atom_max], *fxa23[nunique_atom_max],
+       *fxa24[nunique_atom_max], *fxa25[nunique_atom_max], *fxa26[nunique_atom_max],
+       *fxa27[nunique_atom_max], *fxa28[nunique_atom_max], *fxa29[nunique_atom_max],
+       *fxa30[nunique_atom_max], *fxa31[nunique_atom_max];
+double *fya0[nunique_atom_max], *fya1[nunique_atom_max], *fya2[nunique_atom_max],
+       *fya3[nunique_atom_max], *fya4[nunique_atom_max], *fya5[nunique_atom_max],
+       *fya6[nunique_atom_max], *fya7[nunique_atom_max], *fya8[nunique_atom_max],
+       *fya9[nunique_atom_max], *fya10[nunique_atom_max], *fya11[nunique_atom_max],
+       *fya12[nunique_atom_max], *fya13[nunique_atom_max], *fya14[nunique_atom_max],
+       *fya15[nunique_atom_max], *fya16[nunique_atom_max], *fya17[nunique_atom_max],
+       *fya18[nunique_atom_max], *fya19[nunique_atom_max], *fya20[nunique_atom_max],
+       *fya21[nunique_atom_max], *fya22[nunique_atom_max], *fya23[nunique_atom_max],
+       *fya24[nunique_atom_max], *fya25[nunique_atom_max], *fya26[nunique_atom_max],
+       *fya27[nunique_atom_max], *fya28[nunique_atom_max], *fya29[nunique_atom_max],
+       *fya30[nunique_atom_max], *fya31[nunique_atom_max];
+double *fza0[nunique_atom_max], *fza1[nunique_atom_max], *fza2[nunique_atom_max],
+       *fza3[nunique_atom_max], *fza4[nunique_atom_max], *fza5[nunique_atom_max],
+       *fza6[nunique_atom_max], *fza7[nunique_atom_max], *fza8[nunique_atom_max],
+       *fza9[nunique_atom_max], *fza10[nunique_atom_max], *fza11[nunique_atom_max],
+       *fza12[nunique_atom_max], *fza13[nunique_atom_max], *fza14[nunique_atom_max],
+       *fza15[nunique_atom_max], *fza16[nunique_atom_max], *fza17[nunique_atom_max],
+       *fza18[nunique_atom_max], *fza19[nunique_atom_max], *fza20[nunique_atom_max],
+       *fza21[nunique_atom_max], *fza22[nunique_atom_max], *fza23[nunique_atom_max],
+       *fza24[nunique_atom_max], *fza25[nunique_atom_max], *fza26[nunique_atom_max],
+       *fza27[nunique_atom_max], *fza28[nunique_atom_max], *fza29[nunique_atom_max],
+       *fza30[nunique_atom_max], *fza31[nunique_atom_max];
+double *interp_vector;
 double uclx, ucly, uclz;
 double grid_itvl_x, grid_itvl_y, grid_itvl_z;;
 int ngrid_x, ngrid_y, ngrid_z, ngrid_total;
+int ncube_x, ncube_y, ncube_z, ncube_total;
 double xcenter, ycenter, zcenter;
 double xmin, xmax, ymin, ymax, zmin, zmax;
 

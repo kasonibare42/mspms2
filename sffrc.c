@@ -4,22 +4,12 @@
 #include <assert.h>
 #include <string.h>
 #include <ctype.h>
-#include <gsl/gsl_linalg.h>
 #include "vars.h"
 
 extern void cforce_atom_(int*, double*, double*, double*, double*, double*);
 extern void initpotentialgrid_(int*, double*, double*, double*, int*, int*, int*, double*);
 extern void pass_grid_file_name_(char*, int*);
 extern void read_grids_(int* nspecies_yang);
-
-double *amatrix, *amatrix_backup;
-double *interp_vector;
-double *bvector;
-gsl_vector *work; // = gsl_vector_alloc(32);
-gsl_vector *Svector; //  = gsl_vector_alloc(32);
-gsl_vector *xvector; // = gsl_vector_alloc(32);
-gsl_matrix *Vmatrix; // = gsl_matrix_alloc(32,32);
-gsl_matrix *Xmatrix;
 
 // initialize and reading the tasos grids
 int init_tasos_grid()
@@ -97,8 +87,6 @@ int init_my_interp()
 
     fprintf(stderr,"Warning: this solid-fluid interpolation method is not fully tested.\n");
     fprintf(fpouts,"Warning: this solid-fluid interpolation method is not fully tested.\n");
-    fprintf(stderr,"Warning: the algorithm is not efficient.\n");
-    fprintf(fpouts,"Warning: the algorithm is not efficient.\n");
     fprintf(stderr,"Reading input data for myinterp...\n");
     fprintf(fpouts,"Reading input data for myinterp...\n");
 
@@ -110,26 +98,8 @@ int init_my_interp()
     for (ii=0;ii<natom;ii++)
 	tasostype[ii] -= 1;
 
-    // set up the variables needed for solving matrix
-    work = gsl_vector_alloc(32);
-    Svector = gsl_vector_alloc(32);
-    xvector = gsl_vector_alloc(32);
-    Vmatrix = gsl_matrix_alloc(32,32);
-    Xmatrix = gsl_matrix_alloc(32,32);
-    amatrix = calloc(1024,sizeof(double));
-    amatrix_backup = calloc(1024,sizeof(double));
-    interp_vector = calloc(32,sizeof(double));
-    bvector = calloc(32,sizeof(double));
-
-    // initiate pointers for s-f grids
-    for (ii=0;ii<nunique_atom_max;ii++)
-    {
-	Ene[ii] = NULL;
-	dEx[ii] = dEy[ii] = dEz[ii] = NULL;
-	dFxx[ii] = dFxy[ii] = dFxz[ii] = NULL;
-	dFyx[ii] = dFyy[ii] = dFyz[ii] = NULL;
-	dFzx[ii] = dFzy[ii] = dFzz[ii] = NULL;
-    }
+    // set up the variable needed for interpolation
+    _safealloc(interp_vector,32,sizeof(double));
 
     while (fgets(buffer,datalen,fpins)!=NULL)
     { 
@@ -192,54 +162,283 @@ int init_my_interp()
 			ngrid_total,ngrid_x,ngrid_y,ngrid_z,ii);
 		fprintf(fpouts,"%d=%d*%d*%d grids in grid file %d.\n",
 			ngrid_total,ngrid_x,ngrid_y,ngrid_z,ii);
+		ncube_x = ngrid_x - 1;
+		ncube_y = ngrid_y - 1;
+		ncube_z = ngrid_z - 1;
+		ncube_total = ncube_x*ncube_y*ncube_z;
+		fprintf(stderr,"contains %d=%d*%d*%d cubes.\n",
+			ncube_total,ncube_x,ncube_y,ncube_z);
+		fprintf(fpouts,"contains %d=%d*%d*%d cubes.\n",
+			ncube_total,ncube_x,ncube_y,ncube_z);
 		fread(&grid_itvl_x,sizeof(double),1,fpgridfile);
 		fread(&grid_itvl_y,sizeof(double),1,fpgridfile);
 		fread(&grid_itvl_z,sizeof(double),1,fpgridfile);
 		fprintf(stderr,"grid size x,y,z = %lf,%lf,%lf\n",grid_itvl_x,grid_itvl_y,grid_itvl_z);
 		fprintf(fpouts,"grid size x,y,z = %lf,%lf,%lf\n",grid_itvl_x,grid_itvl_y,grid_itvl_z);
 
-		Ene[ii] = calloc(ngrid_total,sizeof(double));
-		dEx[ii] = calloc(ngrid_total,sizeof(double));
-		dEy[ii] = calloc(ngrid_total,sizeof(double));
-		dEz[ii] = calloc(ngrid_total,sizeof(double));
-		dFxx[ii] = calloc(ngrid_total,sizeof(double));
-		dFxy[ii] = calloc(ngrid_total,sizeof(double));
-		dFxz[ii] = calloc(ngrid_total,sizeof(double));
-		dFyx[ii] = calloc(ngrid_total,sizeof(double));
-		dFyy[ii] = calloc(ngrid_total,sizeof(double));
-		dFyz[ii] = calloc(ngrid_total,sizeof(double));
-		dFzx[ii] = calloc(ngrid_total,sizeof(double));
-		dFzy[ii] = calloc(ngrid_total,sizeof(double));
-		dFzz[ii] = calloc(ngrid_total,sizeof(double));
+		_safealloc(ene0[ii],ncube_total,sizeof(double));
+		_safealloc(ene1[ii],ncube_total,sizeof(double));
+		_safealloc(ene2[ii],ncube_total,sizeof(double));
+		_safealloc(ene3[ii],ncube_total,sizeof(double));
+		_safealloc(ene4[ii],ncube_total,sizeof(double));
+		_safealloc(ene5[ii],ncube_total,sizeof(double));
+		_safealloc(ene6[ii],ncube_total,sizeof(double));
+		_safealloc(ene7[ii],ncube_total,sizeof(double));
+		_safealloc(ene8[ii],ncube_total,sizeof(double));
+		_safealloc(ene9[ii],ncube_total,sizeof(double));
+		_safealloc(ene10[ii],ncube_total,sizeof(double));
+		_safealloc(ene11[ii],ncube_total,sizeof(double));
+		_safealloc(ene12[ii],ncube_total,sizeof(double));
+		_safealloc(ene13[ii],ncube_total,sizeof(double));
+		_safealloc(ene14[ii],ncube_total,sizeof(double));
+		_safealloc(ene15[ii],ncube_total,sizeof(double));
+		_safealloc(ene16[ii],ncube_total,sizeof(double));
+		_safealloc(ene17[ii],ncube_total,sizeof(double));
+		_safealloc(ene18[ii],ncube_total,sizeof(double));
+		_safealloc(ene19[ii],ncube_total,sizeof(double));
+		_safealloc(ene20[ii],ncube_total,sizeof(double));
+		_safealloc(ene21[ii],ncube_total,sizeof(double));
+		_safealloc(ene22[ii],ncube_total,sizeof(double));
+		_safealloc(ene23[ii],ncube_total,sizeof(double));
+		_safealloc(ene24[ii],ncube_total,sizeof(double));
+		_safealloc(ene25[ii],ncube_total,sizeof(double));
+		_safealloc(ene26[ii],ncube_total,sizeof(double));
+		_safealloc(ene27[ii],ncube_total,sizeof(double));
+		_safealloc(ene28[ii],ncube_total,sizeof(double));
+		_safealloc(ene29[ii],ncube_total,sizeof(double));
+		_safealloc(ene30[ii],ncube_total,sizeof(double));
+		_safealloc(ene31[ii],ncube_total,sizeof(double));
 
-		assert(Ene[ii]!=NULL);
-		assert(dEx[ii]!=NULL);
-		assert(dEy[ii]!=NULL);
-		assert(dEz[ii]!=NULL);
-		assert(dFxx[ii]!=NULL);
-		assert(dFxy[ii]!=NULL);
-		assert(dFxz[ii]!=NULL);
-		assert(dFyx[ii]!=NULL);
-		assert(dFyy[ii]!=NULL);
-		assert(dFyz[ii]!=NULL);
-		assert(dFzx[ii]!=NULL);
-		assert(dFzy[ii]!=NULL);
-		assert(dFzz[ii]!=NULL);
+		_safealloc(fxa0[ii],ncube_total,sizeof(double));
+		_safealloc(fxa1[ii],ncube_total,sizeof(double));
+		_safealloc(fxa2[ii],ncube_total,sizeof(double));
+		_safealloc(fxa3[ii],ncube_total,sizeof(double));
+		_safealloc(fxa4[ii],ncube_total,sizeof(double));
+		_safealloc(fxa5[ii],ncube_total,sizeof(double));
+		_safealloc(fxa6[ii],ncube_total,sizeof(double));
+		_safealloc(fxa7[ii],ncube_total,sizeof(double));
+		_safealloc(fxa8[ii],ncube_total,sizeof(double));
+		_safealloc(fxa9[ii],ncube_total,sizeof(double));
+		_safealloc(fxa10[ii],ncube_total,sizeof(double));
+		_safealloc(fxa11[ii],ncube_total,sizeof(double));
+		_safealloc(fxa12[ii],ncube_total,sizeof(double));
+		_safealloc(fxa13[ii],ncube_total,sizeof(double));
+		_safealloc(fxa14[ii],ncube_total,sizeof(double));
+		_safealloc(fxa15[ii],ncube_total,sizeof(double));
+		_safealloc(fxa16[ii],ncube_total,sizeof(double));
+		_safealloc(fxa17[ii],ncube_total,sizeof(double));
+		_safealloc(fxa18[ii],ncube_total,sizeof(double));
+		_safealloc(fxa19[ii],ncube_total,sizeof(double));
+		_safealloc(fxa20[ii],ncube_total,sizeof(double));
+		_safealloc(fxa21[ii],ncube_total,sizeof(double));
+		_safealloc(fxa22[ii],ncube_total,sizeof(double));
+		_safealloc(fxa23[ii],ncube_total,sizeof(double));
+		_safealloc(fxa24[ii],ncube_total,sizeof(double));
+		_safealloc(fxa25[ii],ncube_total,sizeof(double));
+		_safealloc(fxa26[ii],ncube_total,sizeof(double));
+		_safealloc(fxa27[ii],ncube_total,sizeof(double));
+		_safealloc(fxa28[ii],ncube_total,sizeof(double));
+		_safealloc(fxa29[ii],ncube_total,sizeof(double));
+		_safealloc(fxa30[ii],ncube_total,sizeof(double));
+		_safealloc(fxa31[ii],ncube_total,sizeof(double));
 
-		fread(Ene[ii],sizeof(double),ngrid_total,fpgridfile);
-		fread(dEx[ii],sizeof(double),ngrid_total,fpgridfile);
-		fread(dEy[ii],sizeof(double),ngrid_total,fpgridfile);
-		fread(dEz[ii],sizeof(double),ngrid_total,fpgridfile);
-		fread(dFxx[ii],sizeof(double),ngrid_total,fpgridfile);
-		fread(dFxy[ii],sizeof(double),ngrid_total,fpgridfile);
-		fread(dFxz[ii],sizeof(double),ngrid_total,fpgridfile);
-		fread(dFyx[ii],sizeof(double),ngrid_total,fpgridfile);
-		fread(dFyy[ii],sizeof(double),ngrid_total,fpgridfile);
-		fread(dFyz[ii],sizeof(double),ngrid_total,fpgridfile);
-		fread(dFzx[ii],sizeof(double),ngrid_total,fpgridfile);
-		fread(dFzy[ii],sizeof(double),ngrid_total,fpgridfile);
-		fread(dFzz[ii],sizeof(double),ngrid_total,fpgridfile);
-		fclose(fpgridfile); 
+		_safealloc(fya0[ii],ncube_total,sizeof(double));
+		_safealloc(fya1[ii],ncube_total,sizeof(double));
+		_safealloc(fya2[ii],ncube_total,sizeof(double));
+		_safealloc(fya3[ii],ncube_total,sizeof(double));
+		_safealloc(fya4[ii],ncube_total,sizeof(double));
+		_safealloc(fya5[ii],ncube_total,sizeof(double));
+		_safealloc(fya6[ii],ncube_total,sizeof(double));
+		_safealloc(fya7[ii],ncube_total,sizeof(double));
+		_safealloc(fya8[ii],ncube_total,sizeof(double));
+		_safealloc(fya9[ii],ncube_total,sizeof(double));
+		_safealloc(fya10[ii],ncube_total,sizeof(double));
+		_safealloc(fya11[ii],ncube_total,sizeof(double));
+		_safealloc(fya12[ii],ncube_total,sizeof(double));
+		_safealloc(fya13[ii],ncube_total,sizeof(double));
+		_safealloc(fya14[ii],ncube_total,sizeof(double));
+		_safealloc(fya15[ii],ncube_total,sizeof(double));
+		_safealloc(fya16[ii],ncube_total,sizeof(double));
+		_safealloc(fya17[ii],ncube_total,sizeof(double));
+		_safealloc(fya18[ii],ncube_total,sizeof(double));
+		_safealloc(fya19[ii],ncube_total,sizeof(double));
+		_safealloc(fya20[ii],ncube_total,sizeof(double));
+		_safealloc(fya21[ii],ncube_total,sizeof(double));
+		_safealloc(fya22[ii],ncube_total,sizeof(double));
+		_safealloc(fya23[ii],ncube_total,sizeof(double));
+		_safealloc(fya24[ii],ncube_total,sizeof(double));
+		_safealloc(fya25[ii],ncube_total,sizeof(double));
+		_safealloc(fya26[ii],ncube_total,sizeof(double));
+		_safealloc(fya27[ii],ncube_total,sizeof(double));
+		_safealloc(fya28[ii],ncube_total,sizeof(double));
+		_safealloc(fya29[ii],ncube_total,sizeof(double));
+		_safealloc(fya30[ii],ncube_total,sizeof(double));
+		_safealloc(fya31[ii],ncube_total,sizeof(double));
+
+		_safealloc(fza0[ii],ncube_total,sizeof(double));
+		_safealloc(fza1[ii],ncube_total,sizeof(double));
+		_safealloc(fza2[ii],ncube_total,sizeof(double));
+		_safealloc(fza3[ii],ncube_total,sizeof(double));
+		_safealloc(fza4[ii],ncube_total,sizeof(double));
+		_safealloc(fza5[ii],ncube_total,sizeof(double));
+		_safealloc(fza6[ii],ncube_total,sizeof(double));
+		_safealloc(fza7[ii],ncube_total,sizeof(double));
+		_safealloc(fza8[ii],ncube_total,sizeof(double));
+		_safealloc(fza9[ii],ncube_total,sizeof(double));
+		_safealloc(fza10[ii],ncube_total,sizeof(double));
+		_safealloc(fza11[ii],ncube_total,sizeof(double));
+		_safealloc(fza12[ii],ncube_total,sizeof(double));
+		_safealloc(fza13[ii],ncube_total,sizeof(double));
+		_safealloc(fza14[ii],ncube_total,sizeof(double));
+		_safealloc(fza15[ii],ncube_total,sizeof(double));
+		_safealloc(fza16[ii],ncube_total,sizeof(double));
+		_safealloc(fza17[ii],ncube_total,sizeof(double));
+		_safealloc(fza18[ii],ncube_total,sizeof(double));
+		_safealloc(fza19[ii],ncube_total,sizeof(double));
+		_safealloc(fza20[ii],ncube_total,sizeof(double));
+		_safealloc(fza21[ii],ncube_total,sizeof(double));
+		_safealloc(fza22[ii],ncube_total,sizeof(double));
+		_safealloc(fza23[ii],ncube_total,sizeof(double));
+		_safealloc(fza24[ii],ncube_total,sizeof(double));
+		_safealloc(fza25[ii],ncube_total,sizeof(double));
+		_safealloc(fza26[ii],ncube_total,sizeof(double));
+		_safealloc(fza27[ii],ncube_total,sizeof(double));
+		_safealloc(fza28[ii],ncube_total,sizeof(double));
+		_safealloc(fza29[ii],ncube_total,sizeof(double));
+		_safealloc(fza30[ii],ncube_total,sizeof(double));
+		_safealloc(fza31[ii],ncube_total,sizeof(double));
+
+		fread(ene0[ii],sizeof(double),ncube_total,fpgridfile);
+		fread(ene1[ii],sizeof(double),ncube_total,fpgridfile);
+		fread(ene2[ii],sizeof(double),ncube_total,fpgridfile);
+		fread(ene3[ii],sizeof(double),ncube_total,fpgridfile);
+		fread(ene4[ii],sizeof(double),ncube_total,fpgridfile);
+		fread(ene5[ii],sizeof(double),ncube_total,fpgridfile);
+		fread(ene6[ii],sizeof(double),ncube_total,fpgridfile);
+		fread(ene7[ii],sizeof(double),ncube_total,fpgridfile);
+		fread(ene8[ii],sizeof(double),ncube_total,fpgridfile);
+		fread(ene9[ii],sizeof(double),ncube_total,fpgridfile);
+		fread(ene10[ii],sizeof(double),ncube_total,fpgridfile);
+		fread(ene11[ii],sizeof(double),ncube_total,fpgridfile);
+		fread(ene12[ii],sizeof(double),ncube_total,fpgridfile);
+		fread(ene13[ii],sizeof(double),ncube_total,fpgridfile);
+		fread(ene14[ii],sizeof(double),ncube_total,fpgridfile);
+		fread(ene15[ii],sizeof(double),ncube_total,fpgridfile);
+		fread(ene16[ii],sizeof(double),ncube_total,fpgridfile);
+		fread(ene17[ii],sizeof(double),ncube_total,fpgridfile);
+		fread(ene18[ii],sizeof(double),ncube_total,fpgridfile);
+		fread(ene19[ii],sizeof(double),ncube_total,fpgridfile);
+		fread(ene20[ii],sizeof(double),ncube_total,fpgridfile);
+		fread(ene21[ii],sizeof(double),ncube_total,fpgridfile);
+		fread(ene22[ii],sizeof(double),ncube_total,fpgridfile);
+		fread(ene23[ii],sizeof(double),ncube_total,fpgridfile);
+		fread(ene24[ii],sizeof(double),ncube_total,fpgridfile);
+		fread(ene25[ii],sizeof(double),ncube_total,fpgridfile);
+		fread(ene26[ii],sizeof(double),ncube_total,fpgridfile);
+		fread(ene27[ii],sizeof(double),ncube_total,fpgridfile);
+		fread(ene28[ii],sizeof(double),ncube_total,fpgridfile);
+		fread(ene29[ii],sizeof(double),ncube_total,fpgridfile);
+		fread(ene30[ii],sizeof(double),ncube_total,fpgridfile);
+		fread(ene31[ii],sizeof(double),ncube_total,fpgridfile);
+
+		fread(fxa0[ii],sizeof(double),ncube_total,fpgridfile);
+		fread(fxa1[ii],sizeof(double),ncube_total,fpgridfile);
+		fread(fxa2[ii],sizeof(double),ncube_total,fpgridfile);
+		fread(fxa3[ii],sizeof(double),ncube_total,fpgridfile);
+		fread(fxa4[ii],sizeof(double),ncube_total,fpgridfile);
+		fread(fxa5[ii],sizeof(double),ncube_total,fpgridfile);
+		fread(fxa6[ii],sizeof(double),ncube_total,fpgridfile);
+		fread(fxa7[ii],sizeof(double),ncube_total,fpgridfile);
+		fread(fxa8[ii],sizeof(double),ncube_total,fpgridfile);
+		fread(fxa9[ii],sizeof(double),ncube_total,fpgridfile);
+		fread(fxa10[ii],sizeof(double),ncube_total,fpgridfile);
+		fread(fxa11[ii],sizeof(double),ncube_total,fpgridfile);
+		fread(fxa12[ii],sizeof(double),ncube_total,fpgridfile);
+		fread(fxa13[ii],sizeof(double),ncube_total,fpgridfile);
+		fread(fxa14[ii],sizeof(double),ncube_total,fpgridfile);
+		fread(fxa15[ii],sizeof(double),ncube_total,fpgridfile);
+		fread(fxa16[ii],sizeof(double),ncube_total,fpgridfile);
+		fread(fxa17[ii],sizeof(double),ncube_total,fpgridfile);
+		fread(fxa18[ii],sizeof(double),ncube_total,fpgridfile);
+		fread(fxa19[ii],sizeof(double),ncube_total,fpgridfile);
+		fread(fxa20[ii],sizeof(double),ncube_total,fpgridfile);
+		fread(fxa21[ii],sizeof(double),ncube_total,fpgridfile);
+		fread(fxa22[ii],sizeof(double),ncube_total,fpgridfile);
+		fread(fxa23[ii],sizeof(double),ncube_total,fpgridfile);
+		fread(fxa24[ii],sizeof(double),ncube_total,fpgridfile);
+		fread(fxa25[ii],sizeof(double),ncube_total,fpgridfile);
+		fread(fxa26[ii],sizeof(double),ncube_total,fpgridfile);
+		fread(fxa27[ii],sizeof(double),ncube_total,fpgridfile);
+		fread(fxa28[ii],sizeof(double),ncube_total,fpgridfile);
+		fread(fxa29[ii],sizeof(double),ncube_total,fpgridfile);
+		fread(fxa30[ii],sizeof(double),ncube_total,fpgridfile);
+		fread(fxa31[ii],sizeof(double),ncube_total,fpgridfile);
+
+		fread(fya0[ii],sizeof(double),ncube_total,fpgridfile);
+		fread(fya1[ii],sizeof(double),ncube_total,fpgridfile);
+		fread(fya2[ii],sizeof(double),ncube_total,fpgridfile);
+		fread(fya3[ii],sizeof(double),ncube_total,fpgridfile);
+		fread(fya4[ii],sizeof(double),ncube_total,fpgridfile);
+		fread(fya5[ii],sizeof(double),ncube_total,fpgridfile);
+		fread(fya6[ii],sizeof(double),ncube_total,fpgridfile);
+		fread(fya7[ii],sizeof(double),ncube_total,fpgridfile);
+		fread(fya8[ii],sizeof(double),ncube_total,fpgridfile);
+		fread(fya9[ii],sizeof(double),ncube_total,fpgridfile);
+		fread(fya10[ii],sizeof(double),ncube_total,fpgridfile);
+		fread(fya11[ii],sizeof(double),ncube_total,fpgridfile);
+		fread(fya12[ii],sizeof(double),ncube_total,fpgridfile);
+		fread(fya13[ii],sizeof(double),ncube_total,fpgridfile);
+		fread(fya14[ii],sizeof(double),ncube_total,fpgridfile);
+		fread(fya15[ii],sizeof(double),ncube_total,fpgridfile);
+		fread(fya16[ii],sizeof(double),ncube_total,fpgridfile);
+		fread(fya17[ii],sizeof(double),ncube_total,fpgridfile);
+		fread(fya18[ii],sizeof(double),ncube_total,fpgridfile);
+		fread(fya19[ii],sizeof(double),ncube_total,fpgridfile);
+		fread(fya20[ii],sizeof(double),ncube_total,fpgridfile);
+		fread(fya21[ii],sizeof(double),ncube_total,fpgridfile);
+		fread(fya22[ii],sizeof(double),ncube_total,fpgridfile);
+		fread(fya23[ii],sizeof(double),ncube_total,fpgridfile);
+		fread(fya24[ii],sizeof(double),ncube_total,fpgridfile);
+		fread(fya25[ii],sizeof(double),ncube_total,fpgridfile);
+		fread(fya26[ii],sizeof(double),ncube_total,fpgridfile);
+		fread(fya27[ii],sizeof(double),ncube_total,fpgridfile);
+		fread(fya28[ii],sizeof(double),ncube_total,fpgridfile);
+		fread(fya29[ii],sizeof(double),ncube_total,fpgridfile);
+		fread(fya30[ii],sizeof(double),ncube_total,fpgridfile);
+		fread(fya31[ii],sizeof(double),ncube_total,fpgridfile);
+
+		fread(fza0[ii],sizeof(double),ncube_total,fpgridfile);
+		fread(fza1[ii],sizeof(double),ncube_total,fpgridfile);
+		fread(fza2[ii],sizeof(double),ncube_total,fpgridfile);
+		fread(fza3[ii],sizeof(double),ncube_total,fpgridfile);
+		fread(fza4[ii],sizeof(double),ncube_total,fpgridfile);
+		fread(fza5[ii],sizeof(double),ncube_total,fpgridfile);
+		fread(fza6[ii],sizeof(double),ncube_total,fpgridfile);
+		fread(fza7[ii],sizeof(double),ncube_total,fpgridfile);
+		fread(fza8[ii],sizeof(double),ncube_total,fpgridfile);
+		fread(fza9[ii],sizeof(double),ncube_total,fpgridfile);
+		fread(fza10[ii],sizeof(double),ncube_total,fpgridfile);
+		fread(fza11[ii],sizeof(double),ncube_total,fpgridfile);
+		fread(fza12[ii],sizeof(double),ncube_total,fpgridfile);
+		fread(fza13[ii],sizeof(double),ncube_total,fpgridfile);
+		fread(fza14[ii],sizeof(double),ncube_total,fpgridfile);
+		fread(fza15[ii],sizeof(double),ncube_total,fpgridfile);
+		fread(fza16[ii],sizeof(double),ncube_total,fpgridfile);
+		fread(fza17[ii],sizeof(double),ncube_total,fpgridfile);
+		fread(fza18[ii],sizeof(double),ncube_total,fpgridfile);
+		fread(fza19[ii],sizeof(double),ncube_total,fpgridfile);
+		fread(fza20[ii],sizeof(double),ncube_total,fpgridfile);
+		fread(fza21[ii],sizeof(double),ncube_total,fpgridfile);
+		fread(fza22[ii],sizeof(double),ncube_total,fpgridfile);
+		fread(fza23[ii],sizeof(double),ncube_total,fpgridfile);
+		fread(fza24[ii],sizeof(double),ncube_total,fpgridfile);
+		fread(fza25[ii],sizeof(double),ncube_total,fpgridfile);
+		fread(fza26[ii],sizeof(double),ncube_total,fpgridfile);
+		fread(fza27[ii],sizeof(double),ncube_total,fpgridfile);
+		fread(fza28[ii],sizeof(double),ncube_total,fpgridfile);
+		fread(fza29[ii],sizeof(double),ncube_total,fpgridfile);
+		fread(fza30[ii],sizeof(double),ncube_total,fpgridfile);
+		fread(fza31[ii],sizeof(double),ncube_total,fpgridfile);
 	    } // loop through unique atoms grid files
 	    fclose(fpins);
 	    return 0;
@@ -249,19 +448,6 @@ int init_my_interp()
     fprintf(fpouts,"Error: data for myinterp not found.\n");
     fclose(fpins);
     exit(1);
-}
-
-int end_my_interp()
-{
-    gsl_vector_free(work);
-    gsl_vector_free(Svector);
-    gsl_vector_free(xvector);
-    gsl_matrix_free(Vmatrix);
-    gsl_matrix_free(Xmatrix);
-    free(amatrix);
-    free(amatrix_backup);
-    free(interp_vector);
-    free(bvector);
 }
 
 int Amatrix_ele_assign_value(double *line, double x, double y, double z)
@@ -457,458 +643,10 @@ int get_values_from_grid(double fxx,double fyy, double fzz, int type, double *us
      *
      *          x(t)
      */
-    /*
-    // values at the 8 corners
-    double Avalue, Bvalue, Cvalue, Dvalue;
-    double Evalue, Fvalue, Gvalue, Hvalue;
-    // 1st and 2nd order derivaties at 8 corners
-    double Adx, Ady, Adz;
-    double Bdx, Bdy, Bdz;
-    double Cdx, Cdy, Cdz;
-    double Ddx, Ddy, Ddz;
-    double Edx, Edy, Edz;
-    double Fdx, Fdy, Fdz;
-    double Gdx, Gdy, Gdz;
-    double Hdx, Hdy, Hdz;
-    // 2nd order derivaties
-    double Adxx, Adxy, Adxz, Adyx, Adyy, Adyz, Adzx, Adzy, Adzz;
-    double Bdxx, Bdxy, Bdxz, Bdyx, Bdyy, Bdyz, Bdzx, Bdzy, Bdzz;
-    double Cdxx, Cdxy, Cdxz, Cdyx, Cdyy, Cdyz, Cdzx, Cdzy, Cdzz;;
-    double Ddxx, Ddxy, Ddxz, Ddyx, Ddyy, Ddyz, Ddzx, Ddzy, Ddzz;;
-    double Edxx, Edxy, Edxz, Edyx, Edyy, Edyz, Edzx, Edzy, Edzz;
-    double Fdxx, Fdxy, Fdxz, Fdyx, Fdyy, Fdyz, Fdzx, Fdzy, Fdzz;;
-    double Gdxx, Gdxy, Gdxz, Gdyx, Gdyy, Gdyz, Gdzx, Gdzy, Gdzz;
-    double Hdxx, Hdxy, Hdxz, Hdyx, Hdyy, Hdyz, Hdzx, Hdzy, Hdzz;
-    // hermite functions on x,y,z directions
-    double h00x, h10x, h01x, h11x;
-    double h00y, h10y, h01y, h11y;
-    double h00z, h10z, h01z, h11z;
-    // interpolated values at 12 boarders
-    double H1, // A-B
-    H2, // A-D
-    H3, // A-E
-    H4, // D-C
-    H5, // D-H
-    H6, // B-C
-    H7, // B-F
-    H8, // C-G
-    H9, // E-F
-    H10, // E-H
-    H11, // H-G
-    H12; // F-G
-    // factors for the 12 interpolated values
-    double f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, f12;
-    // final interpolate value
-    double PP;
     // index of the lowest corner A
     int iAx, iAy, iAz;
-    // index of the 8 corners in the grid
-    int Aidx, Bidx, Cidx, Didx, Eidx, Fidx, Gidx, Hidx;
-    // the fractional increament in x,y,z
-    double tx, uy, vz;
-    double tx2, tx3, uy2, uy3, vz2, vz3;
-    double tempidx;
-
-    // fxx = 9.8;
-    // fyy = 10.6;
-    // fzz = 0.0;
-
-
-
-    // calculate the index of corner A
-    tx = modf((fxx-xmin)/grid_itvl_x,&tempidx);
-    iAx = (int)tempidx;
-    uy = modf((fyy-ymin)/grid_itvl_y,&tempidx);
-    iAy = (int)tempidx;
-    // periodical boundary
-    fzz = fzz - zmax*rint(fzz/zmax);
-    // make sure its in the primal box
-    if (fzz<0)
-    fzz = zmax + fzz;
-    vz = modf((fzz-zmin)/grid_itvl_z,&tempidx);
-    iAz = (int)tempidx;
-    tx2 = tx*tx;
-    tx3 = tx2*tx;
-    uy2 = uy*uy;
-    uy3 = uy2*uy;
-    vz2 = vz*vz;
-    vz3 = vz2*vz;
-
-    // coordinates of 8 corners
-    double Ax, Ay, Az;
-    double Bx, By, Bz;
-    double Cx, Cy, Cz;
-    double Dx, Dy, Dz;
-    double Ex, Ey, Ez;
-    double Fx, Fy, Fz;
-    double Gx, Gy, Gz;
-    double Hx, Hy, Hz;
-    // calculate the corner coordinates
-    Ax = iAx*grid_itvl_x + xmin;
-    Ay = iAy*grid_itvl_y + ymin;
-    Az = iAz*grid_itvl_z + zmin;
-    Bx = Ax + grid_itvl_x; By = Ay; Bz = Az;
-    Cx = Ax + grid_itvl_x; Cy = Ay + grid_itvl_y; Cz = Az;
-    Dx = Ax; Dy = Ay + grid_itvl_y; Dz = Az;
-    Ex = Ax; Ey = Ay; Ez = Az + grid_itvl_z;
-    Fx = Ax + grid_itvl_x; Fy = Ay; Fz = Az + grid_itvl_z;
-    Gx = Ax + grid_itvl_x; Gy = Ay + grid_itvl_y; Gz = Az + grid_itvl_z;
-    Hx = Ax; Hy = Ay + grid_itvl_y; Hz = Az + grid_itvl_z;
-
-    // calculate the index of the 8 corners in the grid
-    Aidx = iAx*ngrid_y*ngrid_z + iAy*ngrid_z + iAz;
-    Bidx = (iAx+1)*ngrid_y*ngrid_z + iAy*ngrid_z + iAz;
-    Cidx = (iAx+1)*ngrid_y*ngrid_z + (iAy+1)*ngrid_z + iAz;
-    Didx = iAx*ngrid_y*ngrid_z + (iAy+1)*ngrid_z + iAz;
-    Eidx = iAx*ngrid_y*ngrid_z + iAy*ngrid_z + (iAz+1);
-    Fidx = (iAx+1)*ngrid_y*ngrid_z + iAy*ngrid_z + (iAz+1);
-    Gidx = (iAx+1)*ngrid_y*ngrid_z + (iAy+1)*ngrid_z + (iAz+1);
-    Hidx = iAx*ngrid_y*ngrid_z + (iAy+1)*ngrid_z + (iAz+1);
-
-    // make sure its within the boundary
-    assert(Hidx<ngrid_total);
-
-    // get the values
-    Avalue = Ene[type][Aidx];
-    Bvalue = Ene[type][Bidx];
-    Cvalue = Ene[type][Cidx];
-    Dvalue = Ene[type][Didx];
-    Evalue = Ene[type][Eidx];
-    Fvalue = Ene[type][Fidx];
-    Gvalue = Ene[type][Gidx];
-    Hvalue = Ene[type][Hidx];
-
-    // get the 1st order derivatives
-    Adx = dEx[type][Aidx];
-    Ady = dEy[type][Aidx];
-    Adz = dEz[type][Aidx];
-    Bdx = dEx[type][Bidx];
-    Bdy = dEy[type][Bidx];
-    Bdz = dEz[type][Bidx];
-    Cdx = dEx[type][Cidx];
-    Cdy = dEy[type][Cidx];
-    Cdz = dEz[type][Cidx];
-    Ddx = dEx[type][Didx];
-    Ddy = dEy[type][Didx];
-    Ddz = dEz[type][Didx];
-    Edx = dEx[type][Eidx];
-    Edy = dEy[type][Eidx];
-    Edz = dEz[type][Eidx];
-    Fdx = dEx[type][Fidx];
-    Fdy = dEy[type][Fidx];
-    Fdz = dEz[type][Fidx];
-    Gdx = dEx[type][Gidx];
-    Gdy = dEy[type][Gidx];
-    Gdz = dEz[type][Gidx];
-    Hdx = dEx[type][Hidx];
-    Hdy = dEy[type][Hidx];
-    Hdz = dEz[type][Hidx];
-
-    // get the 2nd order derivaties
-    Adxx = dFxx[type][Aidx];
-    Adxy = dFxy[type][Aidx];
-    Adxz = dFxz[type][Aidx];
-    Adyx = dFyx[type][Aidx];
-    Adyy = dFyy[type][Aidx];
-    Adyz = dFyz[type][Aidx];
-    Adzx = dFzx[type][Aidx];
-    Adzy = dFzy[type][Aidx];
-    Adzz = dFzz[type][Aidx];
-
-    Bdxx = dFxx[type][Bidx];
-    Bdxy = dFxy[type][Bidx];
-    Bdxz = dFxz[type][Bidx];
-    Bdyx = dFyx[type][Bidx];
-    Bdyy = dFyy[type][Bidx];
-    Bdyz = dFyz[type][Bidx];
-    Bdzx = dFzx[type][Bidx];
-    Bdzy = dFzy[type][Bidx];
-    Bdzz = dFzz[type][Bidx];
-
-    Cdxx = dFxx[type][Cidx];
-    Cdxy = dFxy[type][Cidx];
-    Cdxz = dFxz[type][Cidx];
-    Cdyx = dFyx[type][Cidx];
-    Cdyy = dFyy[type][Cidx];
-    Cdyz = dFyz[type][Cidx];
-    Cdzx = dFzx[type][Cidx];
-    Cdzy = dFzy[type][Cidx];
-    Cdzz = dFzz[type][Cidx];
-
-    Ddxx = dFxx[type][Didx];
-    Ddxy = dFxy[type][Didx];
-    Ddxz = dFxz[type][Didx];
-    Ddyx = dFyx[type][Didx];
-    Ddyy = dFyy[type][Didx];
-    Ddyz = dFyz[type][Didx];
-    Ddzx = dFzx[type][Didx];
-    Ddzy = dFzy[type][Didx];
-    Ddzz = dFzz[type][Didx];
-
-    Edxx = dFxx[type][Eidx];
-    Edxy = dFxy[type][Eidx];
-    Edxz = dFxz[type][Eidx];
-    Edyx = dFyx[type][Eidx];
-    Edyy = dFyy[type][Eidx];
-    Edyz = dFyz[type][Eidx];
-    Edzx = dFzx[type][Eidx];
-    Edzy = dFzy[type][Eidx];
-    Edzz = dFzz[type][Eidx];
-
-    Fdxx = dFxx[type][Fidx];
-    Fdxy = dFxy[type][Fidx];
-    Fdxz = dFxz[type][Fidx];
-    Fdyx = dFyx[type][Fidx];
-    Fdyy = dFyy[type][Fidx];
-    Fdyz = dFyz[type][Fidx];
-    Fdzx = dFzx[type][Fidx];
-    Fdzy = dFzy[type][Fidx];
-    Fdzz = dFzz[type][Fidx];
-
-    Gdxx = dFxx[type][Gidx];
-    Gdxy = dFxy[type][Gidx];
-    Gdxz = dFxz[type][Gidx];
-    Gdyx = dFyx[type][Gidx];
-    Gdyy = dFyy[type][Gidx];
-    Gdyz = dFyz[type][Gidx];
-    Gdzx = dFzx[type][Gidx];
-    Gdzy = dFzy[type][Gidx];
-    Gdzz = dFzz[type][Gidx];
-
-    Hdxx = dFxx[type][Hidx];
-    Hdxy = dFxy[type][Hidx];
-    Hdxz = dFxz[type][Hidx];
-    Hdyx = dFyx[type][Hidx];
-    Hdyy = dFyy[type][Hidx];
-    Hdyz = dFyz[type][Hidx];
-    Hdzx = dFzx[type][Hidx];
-    Hdzy = dFzy[type][Hidx];
-    Hdzz = dFzz[type][Hidx];
-
-    // calculate hermite functions in X direction
-    h00x = 2.0*tx3 - 3.0*tx2 + 1.0;
-    h10x = (tx3 - 2.0*tx2 + tx)*grid_itvl_x;
-    h01x = -2.0*tx3 + 3.0*tx2;
-    h11x = (tx3 - tx2)*grid_itvl_x;
-    // calculate hermite functions in Y direction
-    h00y = 2.0*uy3 - 3.0*uy2 + 1.0;
-    h10y = (uy3 - 2.0*uy2 + uy)*grid_itvl_y;
-    h01y = -2.0*uy3 + 3.0*uy2;
-    h11y = (uy3 - uy2)*grid_itvl_y;
-    // calculate hermite functions in X direction
-    h00z = 2.0*vz3 - 3.0*vz2 + 1.0;
-    h10z = (vz3 - 2.0*vz2 + vz)*grid_itvl_z;
-    h01z = -2.0*vz3 + 3.0*vz2;
-    h11z = (vz3 - vz2)*grid_itvl_z;
-
-    // calculate the factors
-    f1 = (1-uy)*(1-vz);
-    f2 = (1-tx)*(1-vz);
-    f3 = (1-uy)*(1-tx);
-    f4 = uy*(1-vz);
-    f5 = uy*(1-tx);
-    f6 = tx*(1-vz);
-    f7 = tx*(1-uy);
-    f8 = tx*uy;
-    f9 = vz*(1-uy);
-    f10 = vz*(1-tx);
-    f11 = uy*vz;
-    f12 = vz*tx;
-
-    // Energy
-    // calculate the 12 intermediate interpolations
-    H1 = h00x*Avalue + h10x*Adx + h01x*Bvalue + h11x*Bdx; // A-B
-    H2 = h00y*Avalue + h10y*Ady + h01y*Dvalue + h11y*Ddy; // A-D
-    H3 = h00z*Avalue + h10z*Adz + h01z*Evalue + h11z*Edz; // A-E
-    H4 = h00x*Dvalue + h10x*Ddx + h01x*Cvalue + h11x*Cdx; // D-C
-    H5 = h00z*Dvalue + h10z*Ddz + h01z*Hvalue + h11z*Hdz; // D-H
-    H6 = h00y*Bvalue + h10y*Bdy + h01y*Cvalue + h11y*Cdy; // B-C
-    H7 = h00z*Bvalue + h10z*Bdz + h01z*Fvalue + h11z*Fdz; // B-F
-    H8 = h00z*Cvalue + h10z*Cdz + h01z*Gvalue + h11z*Gdz; // C-G
-    H9 = h00x*Evalue + h10x*Edx + h01x*Fvalue + h11x*Fdx; // E-F
-    H10 = h00y*Evalue + h10y*Edy + h01y*Hvalue + h11y*Hdy; // E-H
-    H11 = h00x*Hvalue + h10x*Hdx + h01x*Gvalue + h11x*Gdx; // H-G
-    H12 = h00y*Fvalue + h10y*Fdy + h01y*Gvalue + h11y*Gdy; // F-G
-    // final value 
-    PP = (H1*f1+H2*f2+H3*f3+H4*f4+H5*f5+H6*f6+H7*f7+H8*f8+H9*f9+H10*f10+H11*f11+H12*f12)/3.0;
-    *usf = PP;
-
-    // fx
-    // calculate the 12 intermediate interpolations
-    H1 = h00x*(-Adx) + h10x*Adxx + h01x*(-Bdx) + h11x*Bdxx; // A-B
-    H2 = h00y*(-Adx) + h10y*Adxy + h01y*(-Ddx) + h11y*Ddxy; // A-D
-    H3 = h00z*(-Adx) + h10z*Adxz + h01z*(-Edx) + h11z*Edxz; // A-E
-    H4 = h00x*(-Ddx) + h10x*Ddxx + h01x*(-Cdx) + h11x*Cdxx; // D-C
-    H5 = h00z*(-Ddx) + h10z*Ddxz + h01z*(-Hdx) + h11z*Hdxz; // D-H
-    H6 = h00y*(-Bdx) + h10y*Bdxy + h01y*(-Cdx) + h11y*Cdxy; // B-C
-    H7 = h00z*(-Bdx) + h10z*Bdxz + h01z*(-Fdx) + h11z*Fdxz; // B-F
-    H8 = h00z*(-Cdx) + h10z*Cdxz + h01z*(-Gdx) + h11z*Gdxz; // C-G
-    H9 = h00x*(-Edx) + h10x*Edxx + h01x*(-Fdx) + h11x*Fdxx; // E-F
-    H10 = h00y*(-Edx) + h10y*Edxy + h01y*(-Hdx) + h11y*Hdxy; // E-H
-    H11 = h00x*(-Hdx) + h10x*Hdxx + h01x*(-Gdx) + h11x*Gdxx; // H-G
-    H12 = h00y*(-Fdx) + h10y*Fdxy + h01y*(-Gdx) + h11y*Gdxy; // F-G
-    // final value 
-    PP = (H1*f1+H2*f2+H3*f3+H4*f4+H5*f5+H6*f6+H7*f7+H8*f8+H9*f9+H10*f10+H11*f11+H12*f12)/3.0;
-    fsf[0] = PP;
-
-    // fy
-    // calculate the 12 intermediate interpolations
-    H1 = h00x*(-Ady) + h10x*Adyx + h01x*(-Bdy) + h11x*Bdyx; // A-B
-    H2 = h00y*(-Ady) + h10y*Adyy + h01y*(-Ddy) + h11y*Ddyy; // A-D
-    H3 = h00z*(-Ady) + h10z*Adyz + h01z*(-Edy) + h11z*Edyz; // A-E
-    H4 = h00x*(-Ddy) + h10x*Ddyx + h01x*(-Cdy) + h11x*Cdyx; // D-C
-    H5 = h00z*(-Ddy) + h10z*Ddyz + h01z*(-Hdy) + h11z*Hdyz; // D-H
-    H6 = h00y*(-Bdy) + h10y*Bdyy + h01y*(-Cdy) + h11y*Cdyy; // B-C
-    H7 = h00z*(-Bdy) + h10z*Bdyz + h01z*(-Fdy) + h11z*Fdyz; // B-F
-    H8 = h00z*(-Cdy) + h10z*Cdyz + h01z*(-Gdy) + h11z*Gdyz; // C-G
-    H9 = h00x*(-Edy) + h10x*Edyx + h01x*(-Fdy) + h11x*Fdyx; // E-F
-    H10 = h00y*(-Edy) + h10y*Edyy + h01y*(-Hdy) + h11y*Hdyy; // E-H
-    H11 = h00x*(-Hdy) + h10x*Hdyx + h01x*(-Gdy) + h11x*Gdyx; // H-G
-    H12 = h00y*(-Fdy) + h10y*Fdyy + h01y*(-Gdy) + h11y*Gdyy; // F-G
-    // final value 
-    PP = (H1*f1+H2*f2+H3*f3+H4*f4+H5*f5+H6*f6+H7*f7+H8*f8+H9*f9+H10*f10+H11*f11+H12*f12)/3.0;
-    fsf[1] = PP;
-
-    // fz
-    // calculate the 12 intermediate interpolations
-    H1 = h00x*(-Adz) + h10x*Adzx + h01x*(-Bdz) + h11x*Bdzx; // A-B
-    H2 = h00y*(-Adz) + h10y*Adzy + h01y*(-Ddz) + h11y*Ddzy; // A-D
-    H3 = h00z*(-Adz) + h10z*Adzz + h01z*(-Edz) + h11z*Edzz; // A-E
-    H4 = h00x*(-Ddz) + h10x*Ddzx + h01x*(-Cdz) + h11x*Cdzx; // D-C
-    H5 = h00z*(-Ddz) + h10z*Ddzz + h01z*(-Hdz) + h11z*Hdzz; // D-H
-    H6 = h00y*(-Bdz) + h10y*Bdzy + h01y*(-Cdz) + h11y*Cdzy; // B-C
-    H7 = h00z*(-Bdz) + h10z*Bdzz + h01z*(-Fdz) + h11z*Fdzz; // B-F
-    H8 = h00z*(-Cdz) + h10z*Cdzz + h01z*(-Gdz) + h11z*Gdzz; // C-G
-    H9 = h00x*(-Edz) + h10x*Edzx + h01x*(-Fdz) + h11x*Fdzx; // E-F
-    H10 = h00y*(-Edz) + h10y*Edzy + h01y*(-Hdz) + h11y*Hdzy; // E-H
-    H11 = h00x*(-Hdz) + h10x*Hdzx + h01x*(-Gdz) + h11x*Gdzx; // H-G
-    H12 = h00y*(-Fdz) + h10y*Fdzy + h01y*(-Gdz) + h11y*Gdzy; // F-G
-    // final value 
-    PP = (H1*f1+H2*f2+H3*f3+H4*f4+H5*f5+H6*f6+H7*f7+H8*f8+H9*f9+H10*f10+H11*f11+H12*f12)/3.0;
-    fsf[2] = PP;
-
-    */
-
-	/*
-	   printf("xx=%lf  yy=%lf  zz=%lf\n",fxx,fyy,fzz);
-	   printf("iAx=%d  iAy=%d  iAz=%d\n",iAx,iAy,iAz);
-	   printf("Aidx=%d  Eidx=%d  Hidx=%d\n",Aidx,Eidx,Hidx);
-
-	   printf("Ax=%lf  Ay=%lf  Az=%lf\n",Ax,Ay,Az);
-	   printf("Bx=%lf  By=%lf  Bz=%lf\n",Bx,By,Bz);
-	   printf("Cx=%lf  Cy=%lf  Cz=%lf\n",Cx,Cy,Cz);
-	   printf("Dx=%lf  Dy=%lf  Dz=%lf\n",Dx,Dy,Dz);
-	   printf("Ex=%lf  Ey=%lf  Ez=%lf\n",Ex,Ey,Ez);
-	   printf("Fx=%lf  Fy=%lf  Fz=%lf\n",Fx,Fy,Fz);
-	   printf("Gx=%lf  Gy=%lf  Gz=%lf\n",Gx,Gy,Gz);
-	   printf("Hx=%lf  Hy=%lf  Hz=%lf\n",Hx,Hy,Hz);
-
-	   printf("A=%lf B=%lf C=%lf D=%lf E=%lf F=%lf G=%lf H=%lf\n",
-	   Avalue,Bvalue,Cvalue,Dvalue,Evalue,Fvalue,Gvalue,Hvalue);
-
-	   printf("Adx=%lf Ady=%lf Adz=%lf\n",Adx,Ady,Adz);
-	   printf("Bdx=%lf Bdy=%lf Bdz=%lf\n",Bdx,Bdy,Bdz);
-	   printf("Cdx=%lf Cdy=%lf Cdz=%lf\n",Cdx,Cdy,Cdz);
-	   printf("Ddx=%lf Ddy=%lf Ddz=%lf\n",Ddx,Ddy,Ddz);
-	   printf("Edx=%lf Edy=%lf Edz=%lf\n",Edx,Edy,Edz);
-	   printf("Fdx=%lf Fdy=%lf Fdz=%lf\n",Fdx,Fdy,Fdz);
-	   printf("Gdx=%lf Gdy=%lf Gdz=%lf\n",Gdx,Gdy,Gdz);
-	   printf("Hdx=%lf Hdy=%lf Hdz=%lf\n",Hdx,Hdy,Hdz);
-
-	   printf("\n");
-	   printf("Adxx=%lf Adxy=%lf Adxz=%lf\n",Adxx,Adxy,Adxz);
-	   printf("Adyx=%lf Adyy=%lf Adyz=%lf\n",Adyx,Adyy,Adyz);
-	   printf("Adzx=%lf Adzy=%lf Adzz=%lf\n",Adzx,Adzy,Adzz);
-	   printf("Bdxx=%lf Bdxy=%lf Bdxz=%lf\n",Bdxx,Bdxy,Bdxz);
-	   printf("Bdyx=%lf Bdyy=%lf Bdyz=%lf\n",Bdyx,Bdyy,Bdyz);
-	   printf("Bdzx=%lf Bdzy=%lf Bdzz=%lf\n",Bdzx,Bdzy,Bdzz);
-	   printf("Cdxx=%lf Cdxy=%lf Cdxz=%lf\n",Cdxx,Cdxy,Cdxz);
-	   printf("Cdyx=%lf Cdyy=%lf Cdyz=%lf\n",Cdyx,Cdyy,Cdyz);
-	   printf("Cdzx=%lf Cdzy=%lf Cdzz=%lf\n",Cdzx,Cdzy,Cdzz);
-	   printf("Ddxx=%lf Ddxy=%lf Ddxz=%lf\n",Ddxx,Ddxy,Ddxz);
-	   printf("Ddyx=%lf Ddyy=%lf Ddyz=%lf\n",Ddyx,Ddyy,Ddyz);
-	   printf("Ddzx=%lf Ddzy=%lf Ddzz=%lf\n",Ddzx,Ddzy,Ddzz);
-	   printf("Edxx=%lf Edxy=%lf Edxz=%lf\n",Edxx,Edxy,Edxz);
-	   printf("Edyx=%lf Edyy=%lf Edyz=%lf\n",Edyx,Edyy,Edyz);
-	   printf("Edzx=%lf Edzy=%lf Edzz=%lf\n",Edzx,Edzy,Edzz);
-	   printf("Fdxx=%lf Fdxy=%lf Fdxz=%lf\n",Fdxx,Fdxy,Fdxz);
-	   printf("Fdyx=%lf Fdyy=%lf Fdyz=%lf\n",Fdyx,Fdyy,Fdyz);
-	   printf("Fdzx=%lf Fdzy=%lf Fdzz=%lf\n",Fdzx,Fdzy,Fdzz);
-	   printf("Gdxx=%lf Gdxy=%lf Gdxz=%lf\n",Gdxx,Gdxy,Gdxz);
-	   printf("Gdyx=%lf Gdyy=%lf Gdyz=%lf\n",Gdyx,Gdyy,Gdyz);
-	   printf("Gdzx=%lf Gdzy=%lf Gdzz=%lf\n",Gdzx,Gdzy,Gdzz);
-	   printf("Hdxx=%lf Hdxy=%lf Hdxz=%lf\n",Hdxx,Hdxy,Hdxz);
-	   printf("Hdyx=%lf Hdyy=%lf Hdyz=%lf\n",Hdyx,Hdyy,Hdyz);
-	   printf("Hdzx=%lf Hdzy=%lf Hdzz=%lf\n",Hdzx,Hdzy,Hdzz);
-
-	   printf("\nH1=%lf H2=%lf H3=%lf H4=%lf H5=%lf H6=%lf H7=%lf H8=%lf H9=%lf H10=%lf H11=%lf H12=%lf\n",
-	   H1,H2,H3,H4,H5,H6,H7,H8,H9,H10,H11,H12);
-	   printf("f1=%lf f2=%lf f3=%lf f4=%lf f5=%lf f6=%lf f7=%lf f8=%lf f9=%lf f10=%lf f11=%lf f12=%lf\n",
-	   f1,f2,f3,f4,f5,f6,f7,f8,f9,f10,f11,f12);
-
-	   printf("usf=%lf\n",*usf);
-	   printf("fx=%lf   fy=%lf   fz=%lf\n",fsf[0],fsf[1],fsf[2]);
-
-	   exit(1);
-	   */
-
-
-
-
-
-
-
-
-
-
-    // values at the 8 corners
-    double Avalue, Bvalue, Cvalue, Dvalue;
-    double Evalue, Fvalue, Gvalue, Hvalue;
-    // 1st order derivaties at 8 corners
-    double Adx, Ady, Adz; 
-    double Bdx, Bdy, Bdz; 
-    double Cdx, Cdy, Cdz; 
-    double Ddx, Ddy, Ddz; 
-    double Edx, Edy, Edz; 
-    double Fdx, Fdy, Fdz; 
-    double Gdx, Gdy, Gdz; 
-    double Hdx, Hdy, Hdz; 
-    // 2nd order derivaties
-    double Adxx, Adxy, Adxz, Adyx, Adyy, Adyz, Adzx, Adzy, Adzz;
-    double Bdxx, Bdxy, Bdxz, Bdyx, Bdyy, Bdyz, Bdzx, Bdzy, Bdzz;
-    double Cdxx, Cdxy, Cdxz, Cdyx, Cdyy, Cdyz, Cdzx, Cdzy, Cdzz;;
-    double Ddxx, Ddxy, Ddxz, Ddyx, Ddyy, Ddyz, Ddzx, Ddzy, Ddzz;;
-    double Edxx, Edxy, Edxz, Edyx, Edyy, Edyz, Edzx, Edzy, Edzz;
-    double Fdxx, Fdxy, Fdxz, Fdyx, Fdyy, Fdyz, Fdzx, Fdzy, Fdzz;;
-    double Gdxx, Gdxy, Gdxz, Gdyx, Gdyy, Gdyz, Gdzx, Gdzy, Gdzz;
-    double Hdxx, Hdxy, Hdxz, Hdyx, Hdyy, Hdyz, Hdzx, Hdzy, Hdzz;
-    // final interpolate value
-    double PP;
-    // index of the lowest corner A
-    int iAx, iAy, iAz;
-    // index of the 8 corners in the grid
-    int Aidx, Bidx, Cidx, Didx, Eidx, Fidx, Gidx, Hidx;
-    // coordinates of 8 corners
-    double Ax, Ay, Az;
-    double Bx, By, Bz;
-    double Cx, Cy, Cz;
-    double Dx, Dy, Dz;
-    double Ex, Ey, Ez;
-    double Fx, Fy, Fz;
-    double Gx, Gy, Gz;
-    double Hx, Hy, Hz;
-
-    int ii;
-
-    // double amatrix[1024], amatrix_backup[1024];
-    // gsl_vector *work = gsl_vector_alloc(32);
-    // gsl_vector *Svector = gsl_vector_alloc(32);
-    // gsl_vector *xvector = gsl_vector_alloc(32);
-    // gsl_matrix *Vmatrix = gsl_matrix_alloc(32,32);
-    // double interp_vector[32];
-    // double bvector[32];
-
-    // printf("xx=%lf  yy=%lf  zz=%lf\n",fxx,fyy,fzz);
+    // index of the interpolation cube
+    int cubeidx;
 
     // calculate the index of corner A
     iAx = (int)((fxx-xmin)/grid_itvl_x);
@@ -919,633 +657,148 @@ int get_values_from_grid(double fxx,double fyy, double fzz, int type, double *us
     if (fzz<0) fzz=zmax+fzz;
     iAz = (int)((fzz-zmin)/grid_itvl_z);
 
-
-    // calculate the corner coordinates
-    Ax = iAx*grid_itvl_x + xmin;
-    Ay = iAy*grid_itvl_y + ymin;
-    Az = iAz*grid_itvl_z + zmin;
-    Bx = Ax + grid_itvl_x; By = Ay; Bz = Az;
-    Cx = Ax + grid_itvl_x; Cy = Ay + grid_itvl_y; Cz = Az;
-    Dx = Ax; Dy = Ay + grid_itvl_y; Dz = Az;
-    Ex = Ax; Ey = Ay; Ez = Az + grid_itvl_z;
-    Fx = Ax + grid_itvl_x; Fy = Ay; Fz = Az + grid_itvl_z;
-    Gx = Ax + grid_itvl_x; Gy = Ay + grid_itvl_y; Gz = Az + grid_itvl_z;
-    Hx = Ax; Hy = Ay + grid_itvl_y; Hz = Az + grid_itvl_z;
-
-    // calculate the index of the 8 corners in the grid
-    Aidx = iAx*ngrid_y*ngrid_z + iAy*ngrid_z + iAz;
-    Bidx = (iAx+1)*ngrid_y*ngrid_z + iAy*ngrid_z + iAz;
-    Cidx = (iAx+1)*ngrid_y*ngrid_z + (iAy+1)*ngrid_z + iAz;
-    Didx = iAx*ngrid_y*ngrid_z + (iAy+1)*ngrid_z + iAz;
-    Eidx = iAx*ngrid_y*ngrid_z + iAy*ngrid_z + (iAz+1);
-    Fidx = (iAx+1)*ngrid_y*ngrid_z + iAy*ngrid_z + (iAz+1);
-    Gidx = (iAx+1)*ngrid_y*ngrid_z + (iAy+1)*ngrid_z + (iAz+1);
-    Hidx = iAx*ngrid_y*ngrid_z + (iAy+1)*ngrid_z + (iAz+1);
-
-    // printf("xx=%lf  yy=%lf  zz=%lf\n",fxx,fyy,fzz);
-    // printf("iAx=%d  iAy=%d  iAz=%d\n",iAx,iAy,iAz);
-    // printf("Aidx=%d  Eidx=%d  Hidx=%d\n",Aidx,Eidx,Hidx);
-
-    // make sure its within the boundary
-    assert(Hidx<ngrid_total);
-
-    // get the values
-    Avalue = Ene[type][Aidx];
-    Bvalue = Ene[type][Bidx];
-    Cvalue = Ene[type][Cidx];
-    Dvalue = Ene[type][Didx];
-    Evalue = Ene[type][Eidx];
-    Fvalue = Ene[type][Fidx];
-    Gvalue = Ene[type][Gidx];
-    Hvalue = Ene[type][Hidx];
-
-    // get the 1st order derivatives
-    Adx = dEx[type][Aidx];
-    Ady = dEy[type][Aidx];
-    Adz = dEz[type][Aidx];
-    Bdx = dEx[type][Bidx];
-    Bdy = dEy[type][Bidx];
-    Bdz = dEz[type][Bidx];
-    Cdx = dEx[type][Cidx];
-    Cdy = dEy[type][Cidx];
-    Cdz = dEz[type][Cidx];
-    Ddx = dEx[type][Didx];
-    Ddy = dEy[type][Didx];
-    Ddz = dEz[type][Didx];
-    Edx = dEx[type][Eidx];
-    Edy = dEy[type][Eidx];
-    Edz = dEz[type][Eidx];
-    Fdx = dEx[type][Fidx];
-    Fdy = dEy[type][Fidx];
-    Fdz = dEz[type][Fidx];
-    Gdx = dEx[type][Gidx];
-    Gdy = dEy[type][Gidx];
-    Gdz = dEz[type][Gidx];
-    Hdx = dEx[type][Hidx];
-    Hdy = dEy[type][Hidx];
-    Hdz = dEz[type][Hidx];
-
-    // get 2nd order derivaties
-    Adxx = dFxx[type][Aidx];
-    Adxy = dFxy[type][Aidx];
-    Adxz = dFxz[type][Aidx];
-    Adyx = dFyx[type][Aidx];
-    Adyy = dFyy[type][Aidx];
-    Adyz = dFyz[type][Aidx];
-    Adzx = dFzx[type][Aidx];
-    Adzy = dFzy[type][Aidx];
-    Adzz = dFzz[type][Aidx];
-
-    Bdxx = dFxx[type][Bidx];
-    Bdxy = dFxy[type][Bidx];
-    Bdxz = dFxz[type][Bidx];
-    Bdyx = dFyx[type][Bidx];
-    Bdyy = dFyy[type][Bidx];
-    Bdyz = dFyz[type][Bidx];
-    Bdzx = dFzx[type][Bidx];
-    Bdzy = dFzy[type][Bidx];
-    Bdzz = dFzz[type][Bidx];
-
-    Cdxx = dFxx[type][Cidx];
-    Cdxy = dFxy[type][Cidx];
-    Cdxz = dFxz[type][Cidx];
-    Cdyx = dFyx[type][Cidx];
-    Cdyy = dFyy[type][Cidx];
-    Cdyz = dFyz[type][Cidx];
-    Cdzx = dFzx[type][Cidx];
-    Cdzy = dFzy[type][Cidx];
-    Cdzz = dFzz[type][Cidx];
-
-    Ddxx = dFxx[type][Didx];
-    Ddxy = dFxy[type][Didx];
-    Ddxz = dFxz[type][Didx];
-    Ddyx = dFyx[type][Didx];
-    Ddyy = dFyy[type][Didx];
-    Ddyz = dFyz[type][Didx];
-    Ddzx = dFzx[type][Didx];
-    Ddzy = dFzy[type][Didx];
-    Ddzz = dFzz[type][Didx];
-
-    Edxx = dFxx[type][Eidx];
-    Edxy = dFxy[type][Eidx];
-    Edxz = dFxz[type][Eidx];
-    Edyx = dFyx[type][Eidx];
-    Edyy = dFyy[type][Eidx];
-    Edyz = dFyz[type][Eidx];
-    Edzx = dFzx[type][Eidx];
-    Edzy = dFzy[type][Eidx];
-    Edzz = dFzz[type][Eidx];
-
-    Fdxx = dFxx[type][Fidx];
-    Fdxy = dFxy[type][Fidx];
-    Fdxz = dFxz[type][Fidx];
-    Fdyx = dFyx[type][Fidx];
-    Fdyy = dFyy[type][Fidx];
-    Fdyz = dFyz[type][Fidx];
-    Fdzx = dFzx[type][Fidx];
-    Fdzy = dFzy[type][Fidx];
-    Fdzz = dFzz[type][Fidx];
-
-    Gdxx = dFxx[type][Gidx];
-    Gdxy = dFxy[type][Gidx];
-    Gdxz = dFxz[type][Gidx];
-    Gdyx = dFyx[type][Gidx];
-    Gdyy = dFyy[type][Gidx];
-    Gdyz = dFyz[type][Gidx];
-    Gdzx = dFzx[type][Gidx];
-    Gdzy = dFzy[type][Gidx];
-    Gdzz = dFzz[type][Gidx];
-
-    Hdxx = dFxx[type][Hidx];
-    Hdxy = dFxy[type][Hidx];
-    Hdxz = dFxz[type][Hidx];
-    Hdyx = dFyx[type][Hidx];
-    Hdyy = dFyy[type][Hidx];
-    Hdyz = dFyz[type][Hidx];
-    Hdzx = dFzx[type][Hidx];
-    Hdzy = dFzy[type][Hidx];
-    Hdzz = dFzz[type][Hidx];
-
-
-    /*
-    Ax=3; Ay=3; Az=3;
-    Bx=3.2; By=3; Bz=3;
-    Cx=3.2; Cy=3.2; Cz=3;
-    Dx=3; Dy=3.2; Dz=3;
-    Ex=3; Ey=3; Ez=3.2; 
-    Fx=3.2; Fy=3; Fz=3.2;
-    Gx=3.2; Gy=3.2; Gz=3.2;
-    Hx=3; Hy=3.2; Hz=3.2;
-    fxx=3.1; fyy=3.1; fzz=3.1;
-    */
-
-    /*
-       Avalue = 27.000000;
-       Bvalue = 28.240000;
-       Cvalue = 29.480000;
-       Dvalue = 28.240000;
-       Evalue = 28.240000;
-       Fvalue = 29.480000;
-       Gvalue = 30.720000;
-       Hvalue = 29.480000;
-
-       Adx=6.00000000; Ady=6.00000000; Adz=6.00000000;
-       Bdx=6.40000000; Bdy=6.00000000; Bdz=6.00000000;
-       Cdx=6.40000000; Cdy=6.40000000; Cdz=6.00000000;
-       Ddx=6.00000000; Ddy=6.40000000; Ddz=6.00000000;
-       Edx=6.00000000; Edy=6.00000000; Edz=6.40000000;
-       Fdx=6.40000000; Fdy=6.00000000; Fdz=6.40000000;
-       Gdx=6.40000000; Gdy=6.40000000; Gdz=6.40000000;
-       Hdx=6.00000000; Hdy=6.40000000; Hdz=6.40000000;
-       */
-
-
-
-    /*
-       Avalue = -165.1804;
-       Bvalue = -146.5216;
-       Cvalue = -130.3909;
-       Dvalue = -146.5216;
-       Evalue = -146.5216;
-       Fvalue = -130.3909;
-       Gvalue = -116.4187;
-       Hvalue = -130.3909;
-
-       Adx=97.0547788; Ady=97.0547788; Adz=97.0547788;
-       Bdx=103.525097; Bdy=97.0547788; Bdz=97.0547788;
-       Cdx=103.525097; Cdy=103.525097; Cdz=97.0547788;
-       Ddx=97.0547788; Ddy=103.525097; Ddz=97.0547788;
-       Edx=97.0547788; Edy=97.0547788; Edz=103.525097;
-       Fdx=103.525097; Fdy=97.0547788; Fdz=103.525097;
-       Gdx=103.525097; Gdy=103.525097; Gdz=103.525097;
-       Hdx=97.0547788; Hdy=103.525097; Hdz=103.525097;
-       */
-
-
-
-    /*
-       printf("Ax=%lf  Ay=%lf  Az=%lf\n",Ax,Ay,Az);
-
-       printf("A=%lf B=%lf C=%lf D=%lf E=%lf F=%lf G=%lf H=%lf\n",
-       Avalue,Bvalue,Cvalue,Dvalue,Evalue,Fvalue,Gvalue,Hvalue);
-
-       printf("Adx=%lf Ady=%lf Adz=%lf\n",Adx,Ady,Adz);
-       printf("Bdx=%lf Bdy=%lf Bdz=%lf\n",Bdx,Bdy,Bdz);
-       printf("Cdx=%lf Cdy=%lf Cdz=%lf\n",Cdx,Cdy,Cdz);
-       printf("Ddx=%lf Ddy=%lf Ddz=%lf\n",Ddx,Ddy,Ddz);
-       printf("Edx=%lf Edy=%lf Edz=%lf\n",Edx,Edy,Edz);
-       printf("Fdx=%lf Fdy=%lf Fdz=%lf\n",Fdx,Fdy,Fdz);
-       printf("Gdx=%lf Gdy=%lf Gdz=%lf\n",Gdx,Gdy,Gdz);
-       printf("Hdx=%lf Hdy=%lf Hdz=%lf\n",Hdx,Hdy,Hdz);
-
-	   printf("\n");
-	   printf("Adxx=%lf Adxy=%lf Adxz=%lf\n",Adxx,Adxy,Adxz);
-	   printf("Adyx=%lf Adyy=%lf Adyz=%lf\n",Adyx,Adyy,Adyz);
-	   printf("Adzx=%lf Adzy=%lf Adzz=%lf\n",Adzx,Adzy,Adzz);
-	   printf("Bdxx=%lf Bdxy=%lf Bdxz=%lf\n",Bdxx,Bdxy,Bdxz);
-	   printf("Bdyx=%lf Bdyy=%lf Bdyz=%lf\n",Bdyx,Bdyy,Bdyz);
-	   printf("Bdzx=%lf Bdzy=%lf Bdzz=%lf\n",Bdzx,Bdzy,Bdzz);
-	   printf("Cdxx=%lf Cdxy=%lf Cdxz=%lf\n",Cdxx,Cdxy,Cdxz);
-	   printf("Cdyx=%lf Cdyy=%lf Cdyz=%lf\n",Cdyx,Cdyy,Cdyz);
-	   printf("Cdzx=%lf Cdzy=%lf Cdzz=%lf\n",Cdzx,Cdzy,Cdzz);
-	   printf("Ddxx=%lf Ddxy=%lf Ddxz=%lf\n",Ddxx,Ddxy,Ddxz);
-	   printf("Ddyx=%lf Ddyy=%lf Ddyz=%lf\n",Ddyx,Ddyy,Ddyz);
-	   printf("Ddzx=%lf Ddzy=%lf Ddzz=%lf\n",Ddzx,Ddzy,Ddzz);
-	   printf("Edxx=%lf Edxy=%lf Edxz=%lf\n",Edxx,Edxy,Edxz);
-	   printf("Edyx=%lf Edyy=%lf Edyz=%lf\n",Edyx,Edyy,Edyz);
-	   printf("Edzx=%lf Edzy=%lf Edzz=%lf\n",Edzx,Edzy,Edzz);
-	   printf("Fdxx=%lf Fdxy=%lf Fdxz=%lf\n",Fdxx,Fdxy,Fdxz);
-	   printf("Fdyx=%lf Fdyy=%lf Fdyz=%lf\n",Fdyx,Fdyy,Fdyz);
-	   printf("Fdzx=%lf Fdzy=%lf Fdzz=%lf\n",Fdzx,Fdzy,Fdzz);
-	   printf("Gdxx=%lf Gdxy=%lf Gdxz=%lf\n",Gdxx,Gdxy,Gdxz);
-	   printf("Gdyx=%lf Gdyy=%lf Gdyz=%lf\n",Gdyx,Gdyy,Gdyz);
-	   printf("Gdzx=%lf Gdzy=%lf Gdzz=%lf\n",Gdzx,Gdzy,Gdzz);
-	   printf("Hdxx=%lf Hdxy=%lf Hdxz=%lf\n",Hdxx,Hdxy,Hdxz);
-	   printf("Hdyx=%lf Hdyy=%lf Hdyz=%lf\n",Hdyx,Hdyy,Hdyz);
-	   printf("Hdzx=%lf Hdzy=%lf Hdzz=%lf\n",Hdzx,Hdzy,Hdzz);
-	   */
-
-
-    // calcualte the element values in matrix A
-    // Ax=b
-    // Matrix A is ordered as
-    // 1-8 	are A-H values
-    // 9-16 	are A-H dx 
-    // 17-24	are A-H dy 
-    // 25-32	are A-H dz 
-    Amatrix_ele_assign_value(amatrix,Ax,Ay,Az);
-    Amatrix_ele_assign_value(amatrix+32,Bx,By,Bz);
-    Amatrix_ele_assign_value(amatrix+64,Cx,Cy,Cz);
-    Amatrix_ele_assign_value(amatrix+96,Dx,Dy,Dz);
-    Amatrix_ele_assign_value(amatrix+128,Ex,Ey,Ez);
-    Amatrix_ele_assign_value(amatrix+160,Fx,Fy,Fz);
-    Amatrix_ele_assign_value(amatrix+192,Gx,Gy,Gz);
-    Amatrix_ele_assign_value(amatrix+224,Hx,Hy,Hz);
-    Amatrix_ele_assign_dx(amatrix+256,Ax,Ay,Az);
-    Amatrix_ele_assign_dx(amatrix+288,Bx,By,Bz);
-    Amatrix_ele_assign_dx(amatrix+320,Cx,Cy,Cz);
-    Amatrix_ele_assign_dx(amatrix+352,Dx,Dy,Dz);
-    Amatrix_ele_assign_dx(amatrix+384,Ex,Ey,Ez);
-    Amatrix_ele_assign_dx(amatrix+416,Fx,Fy,Fz);
-    Amatrix_ele_assign_dx(amatrix+448,Gx,Gy,Gz);
-    Amatrix_ele_assign_dx(amatrix+480,Hx,Hy,Hz);
-    Amatrix_ele_assign_dy(amatrix+512,Ax,Ay,Az);
-    Amatrix_ele_assign_dy(amatrix+544,Bx,By,Bz);
-    Amatrix_ele_assign_dy(amatrix+576,Cx,Cy,Cz);
-    Amatrix_ele_assign_dy(amatrix+608,Dx,Dy,Dz);
-    Amatrix_ele_assign_dy(amatrix+640,Ex,Ey,Ez);
-    Amatrix_ele_assign_dy(amatrix+672,Fx,Fy,Fz);
-    Amatrix_ele_assign_dy(amatrix+704,Gx,Gy,Gz);
-    Amatrix_ele_assign_dy(amatrix+736,Hx,Hy,Hz);
-    Amatrix_ele_assign_dz(amatrix+768,Ax,Ay,Az);
-    Amatrix_ele_assign_dz(amatrix+800,Bx,By,Bz);
-    Amatrix_ele_assign_dz(amatrix+832,Cx,Cy,Cz);
-    Amatrix_ele_assign_dz(amatrix+864,Dx,Dy,Dz);
-    Amatrix_ele_assign_dz(amatrix+896,Ex,Ey,Ez);
-    Amatrix_ele_assign_dz(amatrix+928,Fx,Fy,Fz);
-    Amatrix_ele_assign_dz(amatrix+960,Gx,Gy,Gz);
-    Amatrix_ele_assign_dz(amatrix+992,Hx,Hy,Hz);
-
-    // set the backup matrix since the SVD function will change A's value
-    for (ii=0;ii<1024;ii++) amatrix_backup[ii] = amatrix[ii];
+    // calcualte the position of the interpolation cube
+    cubeidx = iAx*ncube_y*ncube_z + iAy*ncube_z + iAz;
+    assert(cubeidx<ncube_total);
 
     // assign the value of the interpolation vector at x,y,z
     Amatrix_ele_assign_value(interp_vector,fxx,fyy,fzz);
 
-    // printf("interp =\n"); for (ii=0;ii<32;ii++) printf("%lf\n",interp_vector[ii]);
+    // energy interpolation
+    *usf = ene0[type][cubeidx]*interp_vector[0]
+	+ ene1[type][cubeidx]*interp_vector[1]
+	+ ene2[type][cubeidx]*interp_vector[2]
+	+ ene3[type][cubeidx]*interp_vector[3]
+	+ ene4[type][cubeidx]*interp_vector[4]
+	+ ene5[type][cubeidx]*interp_vector[5]
+	+ ene6[type][cubeidx]*interp_vector[6]
+	+ ene7[type][cubeidx]*interp_vector[7]
+	+ ene8[type][cubeidx]*interp_vector[8]
+	+ ene9[type][cubeidx]*interp_vector[9]
+	+ ene10[type][cubeidx]*interp_vector[10]
+	+ ene11[type][cubeidx]*interp_vector[11]
+	+ ene12[type][cubeidx]*interp_vector[12]
+	+ ene13[type][cubeidx]*interp_vector[13]
+	+ ene14[type][cubeidx]*interp_vector[14]
+	+ ene15[type][cubeidx]*interp_vector[15]
+	+ ene16[type][cubeidx]*interp_vector[16]
+	+ ene17[type][cubeidx]*interp_vector[17]
+	+ ene18[type][cubeidx]*interp_vector[18]
+	+ ene19[type][cubeidx]*interp_vector[19]
+	+ ene20[type][cubeidx]*interp_vector[20]
+	+ ene21[type][cubeidx]*interp_vector[21]
+	+ ene22[type][cubeidx]*interp_vector[22]
+	+ ene23[type][cubeidx]*interp_vector[23]
+	+ ene24[type][cubeidx]*interp_vector[24]
+	+ ene25[type][cubeidx]*interp_vector[25]
+	+ ene26[type][cubeidx]*interp_vector[26]
+	+ ene27[type][cubeidx]*interp_vector[27]
+	+ ene28[type][cubeidx]*interp_vector[28]
+	+ ene29[type][cubeidx]*interp_vector[29]
+	+ ene30[type][cubeidx]*interp_vector[30]
+	+ ene31[type][cubeidx]*interp_vector[31];
 
+    // fx
+    fsf[0] = fxa0[type][cubeidx]*interp_vector[0]
+	+ fxa1[type][cubeidx]*interp_vector[1]
+	+ fxa2[type][cubeidx]*interp_vector[2]
+	+ fxa3[type][cubeidx]*interp_vector[3]
+	+ fxa4[type][cubeidx]*interp_vector[4]
+	+ fxa5[type][cubeidx]*interp_vector[5]
+	+ fxa6[type][cubeidx]*interp_vector[6]
+	+ fxa7[type][cubeidx]*interp_vector[7]
+	+ fxa8[type][cubeidx]*interp_vector[8]
+	+ fxa9[type][cubeidx]*interp_vector[9]
+	+ fxa10[type][cubeidx]*interp_vector[10]
+	+ fxa11[type][cubeidx]*interp_vector[11]
+	+ fxa12[type][cubeidx]*interp_vector[12]
+	+ fxa13[type][cubeidx]*interp_vector[13]
+	+ fxa14[type][cubeidx]*interp_vector[14]
+	+ fxa15[type][cubeidx]*interp_vector[15]
+	+ fxa16[type][cubeidx]*interp_vector[16]
+	+ fxa17[type][cubeidx]*interp_vector[17]
+	+ fxa18[type][cubeidx]*interp_vector[18]
+	+ fxa19[type][cubeidx]*interp_vector[19]
+	+ fxa20[type][cubeidx]*interp_vector[20]
+	+ fxa21[type][cubeidx]*interp_vector[21]
+	+ fxa22[type][cubeidx]*interp_vector[22]
+	+ fxa23[type][cubeidx]*interp_vector[23]
+	+ fxa24[type][cubeidx]*interp_vector[24]
+	+ fxa25[type][cubeidx]*interp_vector[25]
+	+ fxa26[type][cubeidx]*interp_vector[26]
+	+ fxa27[type][cubeidx]*interp_vector[27]
+	+ fxa28[type][cubeidx]*interp_vector[28]
+	+ fxa29[type][cubeidx]*interp_vector[29]
+	+ fxa30[type][cubeidx]*interp_vector[30]
+	+ fxa31[type][cubeidx]*interp_vector[31];
 
-    /*
-       int jj;
-       for (ii=0;ii<32;ii++)
-       {
-       for (jj=0;jj<32;jj++)
-       {
-       printf("%7.4lf ",amatrix[ii*32+jj]);
-       }
-       printf("\n");
-       }
-       */
+    // fy
+    fsf[1] = fya0[type][cubeidx]*interp_vector[0]
+	+ fya1[type][cubeidx]*interp_vector[1]
+	+ fya2[type][cubeidx]*interp_vector[2]
+	+ fya3[type][cubeidx]*interp_vector[3]
+	+ fya4[type][cubeidx]*interp_vector[4]
+	+ fya5[type][cubeidx]*interp_vector[5]
+	+ fya6[type][cubeidx]*interp_vector[6]
+	+ fya7[type][cubeidx]*interp_vector[7]
+	+ fya8[type][cubeidx]*interp_vector[8]
+	+ fya9[type][cubeidx]*interp_vector[9]
+	+ fya10[type][cubeidx]*interp_vector[10]
+	+ fya11[type][cubeidx]*interp_vector[11]
+	+ fya12[type][cubeidx]*interp_vector[12]
+	+ fya13[type][cubeidx]*interp_vector[13]
+	+ fya14[type][cubeidx]*interp_vector[14]
+	+ fya15[type][cubeidx]*interp_vector[15]
+	+ fya16[type][cubeidx]*interp_vector[16]
+	+ fya17[type][cubeidx]*interp_vector[17]
+	+ fya18[type][cubeidx]*interp_vector[18]
+	+ fya19[type][cubeidx]*interp_vector[19]
+	+ fya20[type][cubeidx]*interp_vector[20]
+	+ fya21[type][cubeidx]*interp_vector[21]
+	+ fya22[type][cubeidx]*interp_vector[22]
+	+ fya23[type][cubeidx]*interp_vector[23]
+	+ fya24[type][cubeidx]*interp_vector[24]
+	+ fya25[type][cubeidx]*interp_vector[25]
+	+ fya26[type][cubeidx]*interp_vector[26]
+	+ fya27[type][cubeidx]*interp_vector[27]
+	+ fya28[type][cubeidx]*interp_vector[28]
+	+ fya29[type][cubeidx]*interp_vector[29]
+	+ fya30[type][cubeidx]*interp_vector[30]
+	+ fya31[type][cubeidx]*interp_vector[31];
 
-    // assign data to b vector for energy
-    // ordered as A-H, value, dx, dy, dz
-    // This is the only thing that needs to be changed
-    // for energy and force interpolations
-    bvector[0] = Avalue;
-    bvector[1] = Bvalue;
-    bvector[2] = Cvalue;
-    bvector[3] = Dvalue;
-    bvector[4] = Evalue;
-    bvector[5] = Fvalue;
-    bvector[6] = Gvalue;
-    bvector[7] = Hvalue;
-    bvector[8] = Adx;
-    bvector[9] = Bdx;
-    bvector[10] = Cdx;
-    bvector[11] = Ddx;
-    bvector[12] = Edx;
-    bvector[13] = Fdx;
-    bvector[14] = Gdx;
-    bvector[15] = Hdx;
-    bvector[16] = Ady;
-    bvector[17] = Bdy;
-    bvector[18] = Cdy;
-    bvector[19] = Ddy;
-    bvector[20] = Edy;
-    bvector[21] = Fdy;
-    bvector[22] = Gdy;
-    bvector[23] = Hdy;
-    bvector[24] = Adz;
-    bvector[25] = Bdz;
-    bvector[26] = Cdz;
-    bvector[27] = Ddz;
-    bvector[28] = Edz;
-    bvector[29] = Fdz;
-    bvector[30] = Gdz;
-    bvector[31] = Hdz;
-
-    // printf("b = \n"); for (ii=0;ii<32;ii++) printf("%lf\n",bvector[ii]);
-
-    // create matrix view object for amatrix
-    gsl_matrix_view Umatrix
-	= gsl_matrix_view_array(amatrix, 32, 32);
-
-    // create vector view object for bvector
-    gsl_vector_view b
-	= gsl_vector_view_array(bvector, 32);
-
-    // singular value decomposition
-    // gsl_linalg_SV_decomp(&Umatrix.matrix, Vmatrix, Svector, work);
-    gsl_linalg_SV_decomp_mod(&Umatrix.matrix, Xmatrix, Vmatrix, Svector, work);
-    // modified Golub-Reinsch algorithm, faster for M>>N
-
-    // printf("s = \n"); gsl_vector_fprintf(stdout,Svector,"%lf");
-
-    // set the trivial values of svector to exactly 0.0 to avoild 
-    // numerical accuracy problem. very important!
-    for (ii=0;ii<32;ii++)
-    {
-	if (Svector->data[ii] <1.0e-8)
-	    Svector->data[ii] = 0.0;
-    }
-
-    // printf("s = \n"); gsl_vector_fprintf(stdout,Svector,"%lf");
-
-    // solve the equation of Ax=b using singular vectors
-    // minimizing least squares
-    gsl_linalg_SV_solve(&Umatrix.matrix, Vmatrix, Svector, &b.vector, xvector);
-
-    // calculate the value at the interpolatin position
-    PP = 0.0;
-    for (ii=0;ii<32;ii++)
-	PP += interp_vector[ii]*xvector->data[ii];
-    // assign the value
-    *usf = PP;
-
-    // assign the value of the interpolation vector at x,y,z
-    Amatrix_ele_assign_dx(interp_vector,fxx,fyy,fzz);
-    PP = 0.0;
-    for (ii=0;ii<32;ii++)
-	PP += interp_vector[ii]*xvector->data[ii];
-    fsf[0] = -PP;
-    // printf("dx=%lf\n",-PP);
-    Amatrix_ele_assign_dy(interp_vector,fxx,fyy,fzz);
-    PP = 0.0;
-    for (ii=0;ii<32;ii++)
-	PP += interp_vector[ii]*xvector->data[ii];
-    fsf[1] = -PP;
-    // printf("dy=%lf\n",-PP);
-    Amatrix_ele_assign_dz(interp_vector,fxx,fyy,fzz);
-    PP = 0.0;
-    for (ii=0;ii<32;ii++)
-	PP += interp_vector[ii]*xvector->data[ii];
-    fsf[2] = -PP;
-    // printf("dz=%lf\n",-PP);
-    // Amatrix_ele_assign_value(interp_vector,fxx,fyy,fzz);
-
-
-    /*
-    // ---------------- fx -------------------
-    // assign values to bvector for fx
-    // ordered as A-H, value, dx, dy, dz
-    // This is the only thing that needs to be changed
-    // for energy and force interpolations
-    bvector[0] = -Adx;
-    bvector[1] = -Bdx;
-    bvector[2] = -Cdx;
-    bvector[3] = -Ddx;
-    bvector[4] = -Edx;
-    bvector[5] = -Fdx;
-    bvector[6] = -Gdx;
-    bvector[7] = -Hdx;
-    bvector[8] = Adxx;
-    bvector[9] = Bdxx;
-    bvector[10] = Cdxx;
-    bvector[11] = Ddxx;
-    bvector[12] = Edxx;
-    bvector[13] = Fdxx;
-    bvector[14] = Gdxx;
-    bvector[15] = Hdxx;
-    bvector[16] = Adxy;
-    bvector[17] = Bdxy;
-    bvector[18] = Cdxy;
-    bvector[19] = Ddxy;
-    bvector[20] = Edxy;
-    bvector[21] = Fdxy;
-    bvector[22] = Gdxy;
-    bvector[23] = Hdxy;
-    bvector[24] = Adxz;
-    bvector[25] = Bdxz;
-    bvector[26] = Cdxz;
-    bvector[27] = Ddxz;
-    bvector[28] = Edxz;
-    bvector[29] = Fdxz;
-    bvector[30] = Gdxz;
-    bvector[31] = Hdxz;
-
-    // printf("b = \n"); for (ii=0;ii<32;ii++) printf("%lf\n",bvector[ii]);
-
-    // set the amatrix to the old values for next SVD 
-    for (ii=0;ii<1024;ii++) amatrix[ii] = amatrix_backup[ii];
-
-    // singular value decomposition
-    // gsl_linalg_SV_decomp(&Umatrix.matrix, Vmatrix, Svector, work);
-    gsl_linalg_SV_decomp_mod(&Umatrix.matrix, Xmatrix, Vmatrix, Svector, work);
-
-    // printf("s = \n"); gsl_vector_fprintf(stdout,Svector,"%lf");
-
-    // set the trivial values of svector to exactly 0.0 to avoild 
-    // numerical accuracy problem. very important!
-    for (ii=0;ii<32;ii++)
-    {
-	if (Svector->data[ii] <1.0e-8)
-	    Svector->data[ii] = 0.0;
-    }
-
-    // solve the equation of Ax=b using singular vectors
-    // minimizing least squares
-    gsl_linalg_SV_solve(&Umatrix.matrix, Vmatrix, Svector, &b.vector, xvector);
-    
-    // calculate the value at the interpolatin position
-    PP = 0.0;
-    for (ii=0;ii<32;ii++)
-	PP += interp_vector[ii]*xvector->data[ii];
-    // assign the value to fx
-    fsf[0] = PP;
-    // printf("fx = %lf\n",PP);
-
-    // --------------- fy ----------------
-    // assign values to bvector for fx
-    // ordered as A-H, value, dx, dy, dz
-    // This is the only thing that needs to be changed
-    // for energy and force interpolations
-    bvector[0] = -Ady;
-    bvector[1] = -Bdy;
-    bvector[2] = -Cdy;
-    bvector[3] = -Ddy;
-    bvector[4] = -Edy;
-    bvector[5] = -Fdy;
-    bvector[6] = -Gdy;
-    bvector[7] = -Hdy;
-    bvector[8] = Adyx;
-    bvector[9] = Bdyx;
-    bvector[10] = Cdyx;
-    bvector[11] = Ddyx;
-    bvector[12] = Edyx;
-    bvector[13] = Fdyx;
-    bvector[14] = Gdyx;
-    bvector[15] = Hdyx;
-    bvector[16] = Adyy;
-    bvector[17] = Bdyy;
-    bvector[18] = Cdyy;
-    bvector[19] = Ddyy;
-    bvector[20] = Edyy;
-    bvector[21] = Fdyy;
-    bvector[22] = Gdyy;
-    bvector[23] = Hdyy;
-    bvector[24] = Adyz;
-    bvector[25] = Bdyz;
-    bvector[26] = Cdyz;
-    bvector[27] = Ddyz;
-    bvector[28] = Edyz;
-    bvector[29] = Fdyz;
-    bvector[30] = Gdyz;
-    bvector[31] = Hdyz;
-
-    // set the amatrix to the old values for next SVD 
-    for (ii=0;ii<1024;ii++) amatrix[ii] = amatrix_backup[ii];
-
-    // singular value decomposition
-    // gsl_linalg_SV_decomp(&Umatrix.matrix, Vmatrix, Svector, work);
-    gsl_linalg_SV_decomp_mod(&Umatrix.matrix, Xmatrix, Vmatrix, Svector, work);
-
-    // set the trivial values of svector to exactly 0.0 to avoild 
-    // numerical accuracy problem. very important!
-    for (ii=0;ii<32;ii++)
-    {
-	if (Svector->data[ii] <1.0e-8)
-	    Svector->data[ii] = 0.0;
-    }
-
-    // solve the equation of Ax=b using singular vectors
-    // minimizing least squares
-    gsl_linalg_SV_solve(&Umatrix.matrix, Vmatrix, Svector, &b.vector, xvector);
-    
-    // calculate the value at the interpolatin position
-    PP = 0.0;
-    for (ii=0;ii<32;ii++)
-	PP += interp_vector[ii]*xvector->data[ii];
-    // assign the value to fy
-    fsf[1] = PP;
-    // printf("fy = %lf\n",PP);
-
-    // --------------- fz ----------------------
-    // assign values to bvector for fx
-    // ordered as A-H, value, dx, dy, dz
-    // This is the only thing that needs to be changed
-    // for energy and force interpolations
-    bvector[0] = -Adz;
-    bvector[1] = -Bdz;
-    bvector[2] = -Cdz;
-    bvector[3] = -Ddz;
-    bvector[4] = -Edz;
-    bvector[5] = -Fdz;
-    bvector[6] = -Gdz;
-    bvector[7] = -Hdz;
-    bvector[8] = Adzx;
-    bvector[9] = Bdzx;
-    bvector[10] = Cdzx;
-    bvector[11] = Ddzx;
-    bvector[12] = Edzx;
-    bvector[13] = Fdzx;
-    bvector[14] = Gdzx;
-    bvector[15] = Hdzx;
-    bvector[16] = Adzy;
-    bvector[17] = Bdzy;
-    bvector[18] = Cdzy;
-    bvector[19] = Ddzy;
-    bvector[20] = Edzy;
-    bvector[21] = Fdzy;
-    bvector[22] = Gdzy;
-    bvector[23] = Hdzy;
-    bvector[24] = Adzz;
-    bvector[25] = Bdzz;
-    bvector[26] = Cdzz;
-    bvector[27] = Ddzz;
-    bvector[28] = Edzz;
-    bvector[29] = Fdzz;
-    bvector[30] = Gdzz;
-    bvector[31] = Hdzz;
-
-    // set the amatrix to the old values for next SVD 
-    for (ii=0;ii<1024;ii++) amatrix[ii] = amatrix_backup[ii];
-
-    // singular value decomposition
-    // gsl_linalg_SV_decomp(&Umatrix.matrix, Vmatrix, Svector, work);
-    gsl_linalg_SV_decomp_mod(&Umatrix.matrix, Xmatrix, Vmatrix, Svector, work);
-
-    // set the trivial values of svector to exactly 0.0 to avoild 
-    // numerical accuracy problem. very important!
-    for (ii=0;ii<32;ii++)
-    {
-	if (Svector->data[ii] <1.0e-8)
-	    Svector->data[ii] = 0.0;
-    }
-
-    // solve the equation of Ax=b using singular vectors
-    // minimizing least squares
-    gsl_linalg_SV_solve(&Umatrix.matrix, Vmatrix, Svector, &b.vector, xvector);
-    
-    // calculate the value at the interpolatin position
-    PP = 0.0;
-    for (ii=0;ii<32;ii++)
-	PP += interp_vector[ii]*xvector->data[ii];
-    // assign the value to fz
-    fsf[2] = PP;
-    // printf("fz = %lf\n",PP);
-
-
-
-    printf("fx=%lf   fy=%lf   fz=%lf\n",fsf[0],fsf[1],fsf[2]);
-    exit(1);
-    */
-
-
-
-
-    /*
-       printf("x = \n");
-       gsl_vector_fprintf(stdout,xvector,"%8.1f");
-
-       printf("PP=%lf\n",PP);
-       */
-
-
-
-
-
-
-
+    // fz
+    fsf[2] = fza0[type][cubeidx]*interp_vector[0]
+	+ fza1[type][cubeidx]*interp_vector[1]
+	+ fza2[type][cubeidx]*interp_vector[2]
+	+ fza3[type][cubeidx]*interp_vector[3]
+	+ fza4[type][cubeidx]*interp_vector[4]
+	+ fza5[type][cubeidx]*interp_vector[5]
+	+ fza6[type][cubeidx]*interp_vector[6]
+	+ fza7[type][cubeidx]*interp_vector[7]
+	+ fza8[type][cubeidx]*interp_vector[8]
+	+ fza9[type][cubeidx]*interp_vector[9]
+	+ fza10[type][cubeidx]*interp_vector[10]
+	+ fza11[type][cubeidx]*interp_vector[11]
+	+ fza12[type][cubeidx]*interp_vector[12]
+	+ fza13[type][cubeidx]*interp_vector[13]
+	+ fza14[type][cubeidx]*interp_vector[14]
+	+ fza15[type][cubeidx]*interp_vector[15]
+	+ fza16[type][cubeidx]*interp_vector[16]
+	+ fza17[type][cubeidx]*interp_vector[17]
+	+ fza18[type][cubeidx]*interp_vector[18]
+	+ fza19[type][cubeidx]*interp_vector[19]
+	+ fza20[type][cubeidx]*interp_vector[20]
+	+ fza21[type][cubeidx]*interp_vector[21]
+	+ fza22[type][cubeidx]*interp_vector[22]
+	+ fza23[type][cubeidx]*interp_vector[23]
+	+ fza24[type][cubeidx]*interp_vector[24]
+	+ fza25[type][cubeidx]*interp_vector[25]
+	+ fza26[type][cubeidx]*interp_vector[26]
+	+ fza27[type][cubeidx]*interp_vector[27]
+	+ fza28[type][cubeidx]*interp_vector[28]
+	+ fza29[type][cubeidx]*interp_vector[29]
+	+ fza30[type][cubeidx]*interp_vector[30]
+	+ fza31[type][cubeidx]*interp_vector[31];
 
 }
 
