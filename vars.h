@@ -78,8 +78,12 @@
 
 int nspecie, nmole, natom; /* total number of molecules, atoms, species */
 int mole_first_atom_idx[nmole_max+1]; // index of the first atom in a molecule
-int atom_to_mole_idx[natom_max]; // the index of the molecule which the atom is belong to
 double mole_xx[nmole_max], mole_yy[nmole_max], mole_zz[nmole_max];
+int mole_status[nmole_max]; // the status of the molecule, e.g. vacancy etc.
+int mole_first_bond_idx[nmole_max+1]; // index of the first bond in a molecule
+int mole_first_angle_idx[nmole_max+1]; // index of the first angle in a molecule
+int mole_first_dih_idx[nmole_max+1]; // index of the first dihedral in a molecule
+int mole_first_imp_idx[nmole_max+1]; // index of the first improper in a molecule
 double mw[nmole_max]; // molecule weight
 double xx[natom_max], yy[natom_max], zz[natom_max]; /* position */
 // inner coordinates relative to the center of mass, also used for PBC reconstruction of the molecule
@@ -91,6 +95,7 @@ double aw[natom_max], epsilon[natom_max], sigma[natom_max], charge[natom_max]; /
 int isghost[natom_max]; /* flag of ghost atom, including ghost LJ or ghost electrostatic */
 int tasostype[natom_max]; /* atom type for tasos interpolation */
 char atomname[natom_max][5];
+int atom_to_mole_idx[natom_max]; // the index of the molecule which the atom is belong to
 
 // for atom explicit solid (nanotubes)
 int solid_natom;

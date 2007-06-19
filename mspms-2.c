@@ -51,7 +51,9 @@ int init_vars()
 	mw[ii] = 0.0;
 	for (jj=mole_first_atom_idx[ii];jj<mole_first_atom_idx[ii+1];jj++)
 	    mw[ii] += aw[jj];
-	// fprintf(fpouts,"molecule %d: %d-%d :  mw=%lf\n",ii,mole_first_atom_idx[ii],mole_first_atom_idx[ii+1],mw[ii]);
+	// fprintf(fpouts,"molecule %d: %d-%d :  mw=%lf : 1st bond id=%d : 1st angle id=%d : 1st dih id=%d\n",
+	// ii,mole_first_atom_idx[ii],mole_first_atom_idx[ii+1]-1,mw[ii],
+	// mole_first_bond_idx[ii],mole_first_angle_idx[ii],mole_first_dih_idx[ii]);
     }
 
     nframe = 0; // number of frames in trajectory file
@@ -483,28 +485,67 @@ int readins()
     // read in bond list
     fscanf(fpcfg, "%d bonds\n", &nbond);
     assert(nbond<=nbond_max);
+    last_mole_id = 0;
     for (ii=0;ii<nbond;ii++)
+    {
 	fscanf(fpcfg,"%d %d %d %lf %lf %lf\n",&bond_idx[ii][0],&bond_idx[ii][1],
 		&bond_type[ii],&Kb[ii],&Req[ii],&alpha[ii]);
+	// check if the bond atom is belong to the molecule
+	// if it is, set this bond as the 1st bond of the molecule and increase
+	// the counter of the molecule by 1 to the next molecule
+	if (mole_first_atom_idx[last_mole_id]<=bond_idx[ii][0] && bond_idx[ii][0]< mole_first_atom_idx[last_mole_id+1]) 
+	{
+	    mole_first_bond_idx[last_mole_id] = ii;
+	    last_mole_id++;
+	    assert(last_mole_id<nmole_max+1);
+	}
+    }
+    // set the upper bound for the last molecule
+    mole_first_bond_idx[last_mole_id] = ii;
 
     // read in angle list
     fscanf(fpcfg, "%d angles\n", &nangle);
     assert(nangle<=nangle_max);
+    last_mole_id = 0;
     for (ii=0;ii<nangle;ii++)
     {
 	fscanf(fpcfg,"%d %d %d %d %lf %lf %lf %lf %lf\n",&angle_idx[ii][0],&angle_idx[ii][1],
 		&angle_idx[ii][2],&angle_type[ii],&Ktheta[ii],&Thetaeq[ii],
 		&agl_para_3[ii], &agl_para_4[ii], &agl_para_5[ii]); // these 3 parameters only for TRwater
+
+	// check if the angle atom is belong to the molecule
+	// if it is, set this angle as the 1st angle of the molecule and increase
+	// the counter of the molecule by 1 to the next molecule
+	if (mole_first_atom_idx[last_mole_id]<=angle_idx[ii][0] && angle_idx[ii][0]< mole_first_atom_idx[last_mole_id+1]) 
+	{
+	    mole_first_angle_idx[last_mole_id] = ii;
+	    last_mole_id++;
+	    assert(last_mole_id<nmole_max+1);
+	}
     }
+    // set the upper bound for the last molecule
+    mole_first_angle_idx[last_mole_id] = ii;
 
     // read in dihedral list
     fscanf(fpcfg, "%d dihedrals\n", &ndih);
     assert(ndih<=ndih_max);
+    last_mole_id = 0;
     for (ii=0;ii<ndih;ii++)
     {
 	fscanf(fpcfg,"%d %d %d %d %d %lf %lf %lf %lf\n",&dih_idx[ii][0],&dih_idx[ii][1],
 		&dih_idx[ii][2],&dih_idx[ii][3],&dih_type[ii],&c1[ii],&c2[ii],&c3[ii],&c4[ii]);
+	// check if the dihedral atom is belong to the molecule
+	// if it is, set this diheral as the 1st dihedral of the molecule and increase
+	// the counter of the molecule by 1 to the next molecule
+	if (mole_first_atom_idx[last_mole_id]<=dih_idx[ii][0] && dih_idx[ii][0]< mole_first_atom_idx[last_mole_id+1]) 
+	{
+	    mole_first_dih_idx[last_mole_id] = ii;
+	    last_mole_id++;
+	    assert(last_mole_id<nmole_max+1);
+	}
     }
+    // set the upper bound for the last molecule
+    mole_first_dih_idx[last_mole_id] = ii;
 
     // read in improper list
     fscanf(fpcfg, "%d impropers\n", &nimp);
@@ -525,18 +566,24 @@ int echo()
     fprintf(fpouts,"  Energy(J/mol)\n  Temperature(K)\n  Velocity(m/s)\n  Distance(Angstrom)\n");
     fprintf(fpouts,"  Force(J/Angstrom/mol)\n");
     fprintf(fpouts,"=====================================\n");
+    fprintf(fpouts,"%s\n",sysname);
     fprintf(fpouts,"natom=%d\n",natom);
-    fprintf(fpouts,"number of molecules = %d\n",nmole);
+    fprintf(fpouts,"nmole = %d\n",nmole);
     fprintf(fpouts,"nconstraint=%d\n",nconstraint);
 
-    fprintf(fpouts,"%s",sysname);
     fprintf(fpouts,"%d atoms.\n",natom);
     fprintf(fpouts,"%d bonds.\n",nbond);
     fprintf(fpouts,"%d angles.\n",nangle);
     fprintf(fpouts,"%d dihedrals.\n",ndih);
     fprintf(fpouts,"%d impropers.\n",nimp);
     fprintf(fpouts,"%d nonbonded pairs.\n",nnbp);
+    fprintf(fpouts,"%d kappa\n",kappa);
     fprintf(fpouts,"%d %d %d %d KMAX etc.\n",KMAXX,KMAXY,KMAXZ,KSQMAX);
+    // nvt
+    // charge on
+    // sf on
+    // LJ switch on
+    // copy in.mspms here?
 
     fprintf(fpouts,"utot=%lf\n",uinter+uintra+ukin); // utot
     fprintf(fpouts,"upot=%lf\n",uinter+uintra); // upot
