@@ -1302,7 +1302,29 @@ int get_values_from_grid(double fxx,double fyy, double fzz, int type, double *us
     // assign the value
     *usf = PP;
 
+    // assign the value of the interpolation vector at x,y,z
+    Amatrix_ele_assign_dx(interp_vector,fxx,fyy,fzz);
+    PP = 0.0;
+    for (ii=0;ii<32;ii++)
+	PP += interp_vector[ii]*xvector->data[ii];
+    fsf[0] = -PP;
+    // printf("dx=%lf\n",-PP);
+    Amatrix_ele_assign_dy(interp_vector,fxx,fyy,fzz);
+    PP = 0.0;
+    for (ii=0;ii<32;ii++)
+	PP += interp_vector[ii]*xvector->data[ii];
+    fsf[1] = -PP;
+    // printf("dy=%lf\n",-PP);
+    Amatrix_ele_assign_dz(interp_vector,fxx,fyy,fzz);
+    PP = 0.0;
+    for (ii=0;ii<32;ii++)
+	PP += interp_vector[ii]*xvector->data[ii];
+    fsf[2] = -PP;
+    // printf("dz=%lf\n",-PP);
+    // Amatrix_ele_assign_value(interp_vector,fxx,fyy,fzz);
 
+
+    /*
     // ---------------- fx -------------------
     // assign values to bvector for fx
     // ordered as A-H, value, dx, dy, dz
@@ -1504,6 +1526,9 @@ int get_values_from_grid(double fxx,double fyy, double fzz, int type, double *us
 
 
 
+    printf("fx=%lf   fy=%lf   fz=%lf\n",fsf[0],fsf[1],fsf[2]);
+    exit(1);
+    */
 
 
 
