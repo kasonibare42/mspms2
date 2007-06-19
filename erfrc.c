@@ -141,7 +141,7 @@ int loop_ij()
 		// this has to be done before the minimum image convention
 		// not sure if cutoff check should be applied
 		// If the cutoff is larger than the size in x,y dimension,
-		// this should be no problem
+		// this should not be a problem
 		if (isEwaldOn && fEwald_Dim==ewald_1D)
 		{
 		    rhoklsq = rxij*rxij + ryij*ryij;
@@ -155,7 +155,6 @@ int loop_ij()
 			// use numerical differential
 			// This may not be a good way to do it
 			// temp1 is the value, temp2 is the absolute std. err.
-			double tt = gsl_sf_gamma_inc(0.0,kapparhokl_sq);
 			gsl_deriv_central(&FF,kapparhokl_sq,1.0e-8,&temp1,&temp2);
 			temp2 = kappasq*temp1 + 1.0/rhoklsq;
 			fij = chargei*charge[jj]*temp2*const_columb/boxlz;
@@ -339,7 +338,7 @@ int loop_14()
 		    // force on atom ii2
 		    fxl[ii2] -= fxij;
 		    fyl[ii2] -= fyij;
-		} // if rhoklsq != 0.0 (>1.0e-10)
+		} // if rhoklsq != 0.0 
 	    } // if 1D ewald is used
 
 	    // check for necessary 1,4 parameter modifiers
@@ -518,7 +517,7 @@ int loop_13()
 		    // force on atom ii2
 		    fxl[ii2] -= fxij;
 		    fyl[ii2] -= fyij;
-		} // if rhoklsq != 0.0 (>1.0e-10)
+		} // if rhoklsq != 0.0 
 	    } // if 1D ewald is used
 
 
@@ -720,7 +719,7 @@ int loop_12()
 		// force on atom ii2
 		fxl[ii2] -= fxij;
 		fyl[ii2] -= fyij;
-	    } // if rhoklsq != 0.0 (>1.0e-10)
+	    } // if rhoklsq != 0.0 
 	} // if 1D ewald is used
 
 	// save the old positions
