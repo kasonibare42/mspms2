@@ -12,9 +12,9 @@ extern void initpotentialgrid_(int*, double*, double*, double*, int*, int*, int*
 extern void pass_grid_file_name_(char*, int*);
 extern void read_grids_(int* nspecies_yang);
 
-double amatrix[1024], amatrix_backup[1024];
-double interp_vector[32];
-double bvector[32];
+double *amatrix, *amatrix_backup;
+double *interp_vector;
+double *bvector;
 gsl_vector *work; // = gsl_vector_alloc(32);
 gsl_vector *Svector; //  = gsl_vector_alloc(32);
 gsl_vector *xvector; // = gsl_vector_alloc(32);
@@ -95,12 +95,6 @@ int init_my_interp()
     double uclx_chk, ucly_chk, uclz_chk;
     double temp;
 
-    work = gsl_vector_alloc(32);
-    Svector = gsl_vector_alloc(32);
-    xvector = gsl_vector_alloc(32);
-    Vmatrix = gsl_matrix_alloc(32,32);
-    Xmatrix = gsl_matrix_alloc(32,32);
-
     fprintf(stderr,"Warning: this solid-fluid interpolation method is not fully tested.\n");
     fprintf(fpouts,"Warning: this solid-fluid interpolation method is not fully tested.\n");
     fprintf(stderr,"Warning: the algorithm is not efficient.\n");
@@ -115,6 +109,17 @@ int init_my_interp()
     // myinterp type = tasos type - 1
     for (ii=0;ii<natom;ii++)
 	tasostype[ii] -= 1;
+
+    // set up the variables needed for solving matrix
+    work = gsl_vector_alloc(32);
+    Svector = gsl_vector_alloc(32);
+    xvector = gsl_vector_alloc(32);
+    Vmatrix = gsl_matrix_alloc(32,32);
+    Xmatrix = gsl_matrix_alloc(32,32);
+    amatrix = calloc(1024,sizeof(double));
+    amatrix_backup = calloc(1024,sizeof(double));
+    interp_vector = calloc(32,sizeof(double));
+    bvector = calloc(32,sizeof(double));
 
     // initiate pointers for s-f grids
     for (ii=0;ii<nunique_atom_max;ii++)
@@ -253,6 +258,10 @@ int end_my_interp()
     gsl_vector_free(xvector);
     gsl_matrix_free(Vmatrix);
     gsl_matrix_free(Xmatrix);
+    free(amatrix);
+    free(amatrix_backup);
+    free(interp_vector);
+    free(bvector);
 }
 
 int Amatrix_ele_assign_value(double *line, double x, double y, double z)
