@@ -55,6 +55,7 @@ int init_tasos_grid()
 		jj = ii + 1;
 		pass_grid_file_name_(szgrid[ii], &jj);
 		fprintf(stderr,"%s\n",szgrid[ii]);
+		fprintf(fpouts,"%s\n",szgrid[ii]);
 	    }
 	    fprintf(stderr,"pass grid file name ok\n");
 	    fprintf(fpouts,"pass grid file name ok\n");
@@ -439,6 +440,8 @@ int init_my_interp()
 		fread(fza29[ii],sizeof(double),ncube_total,fpgridfile);
 		fread(fza30[ii],sizeof(double),ncube_total,fpgridfile);
 		fread(fza31[ii],sizeof(double),ncube_total,fpgridfile);
+
+		fclose(fpgridfile);
 	    } // loop through unique atoms grid files
 	    fclose(fpins);
 	    return 0;

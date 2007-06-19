@@ -28,7 +28,6 @@ extern int init_sf_hypergeo();
 extern int init_sf_atom_explicit();
 extern int init_tasos_grid();
 extern int init_my_interp();
-extern int end_my_interp();
 
 
 /* Initiate variables */
@@ -257,7 +256,7 @@ int init_vars()
     TWOPI_LX = 2.0*pi/boxlx;
     TWOPI_LY = 2.0*pi/boxly;
     TWOPI_LZ = 2.0*pi/boxlz;
-
+    // 1D ewald constant
     twopi_over_3v = 2.0*pi/3.0/boxlx/boxly/boxlz;
 
     // set wolf parameters
@@ -375,6 +374,7 @@ int ending()
 	else if (sf_type==nanotube_my_interp)
 	{
 	    // free memories
+	    free(interp_vector);
 	    for (ii=0;ii<nunique_atom_max;ii++)
 	    {
 		free(ene0[ii]);
@@ -509,7 +509,6 @@ int ending()
 		free(fza30[ii]);
 		free(fza31[ii]);
 
-		free(interp_vector);
 	    }
 	}
     }
@@ -1161,6 +1160,7 @@ int main (int argc, char *argv[])
 
     calres();
 
+    fprintf(stderr,"%d frames in the trajectory file.\n",nframe);
     fprintf(fpouts,"%d frames in the trajectory file.\n",nframe);
 
     // write out results and clean up

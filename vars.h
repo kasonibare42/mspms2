@@ -2,6 +2,7 @@
 #define VARS_H   
 
 #define _safealloc(pt,num,size)         pt=calloc(num,size); assert(pt!=NULL)
+#define _safefree(pt)	if ((pt)!=NULL) {free(pt); (pt)=NULL;}
 
 #define INPUT		"in.mspms"
 #define OUTPUT		"out.mspms"
@@ -51,7 +52,7 @@
 #define ewald_bc_vaccum		2
 
 #define ewald_1D		1
-#define ewald_2D		2
+#define ewald_2D		2 // not yet in use
 #define ewald_3D		3
 
 #define solid_hetero		0  // solid type, e.g. mof?
@@ -75,7 +76,8 @@
 #define pi		3.141592653589793
 #define Euler_const	0.577215665
 #define parallel_to_z_err		1.0e-6
-#define c3_pisq_theta 	11.3105666436484 // 3*pi^2*theta, assume the same charge density as graphite, theta=0.382 A^-2
+// 3*pi^2*theta, assume the same charge density as graphite, theta=0.382 A^-2, used for hypergeo nanotube
+#define c3_pisq_theta 	11.3105666436484 
 
 
 int nspecie, nmole, natom; /* total number of molecules, atoms, species */
@@ -129,6 +131,7 @@ int nbp_idx[nnbp_max][2];
 int excllist[exclude_max];
 int pointexcl[natom_max+1]; // the index of exclude list starts and ends
 
+// name of the object system
 char sysname[200];
 
 FILE *fpins, *fpouts, *fpcfg, *fplog;
@@ -210,7 +213,7 @@ double qqs, pss, ggs, sss;
 double unhtss;
 
 // my interpolations
-// energy interpolation parameters
+// energy and forces interpolation parameters
 double *ene0[nunique_atom_max], *ene1[nunique_atom_max], *ene2[nunique_atom_max],
        *ene3[nunique_atom_max], *ene4[nunique_atom_max], *ene5[nunique_atom_max],
        *ene6[nunique_atom_max], *ene7[nunique_atom_max], *ene8[nunique_atom_max],
