@@ -721,7 +721,7 @@ int echo()
     fprintf(fpouts,"ufourier=%lf\n",ufourier);
     fprintf(fpouts,"uself=%lf\n",uself);
     fprintf(fpouts,"uexcl=%lf\n",uexcl);
-    fprintf(fpouts,"uvaccum=%lf\n",uvaccum);
+    fprintf(fpouts,"uvacuum=%lf\n",uvacuum);
     fprintf(fpouts,"uGz0=%lf\n",uGz0);
 
     fprintf(fpouts,"usflj=%lf\n",usflj);
@@ -1145,8 +1145,8 @@ int main (int argc, char *argv[])
 	accumulator[14][1] += usflj*usflj;
 	accumulator[15][0] += tinst;
 	accumulator[15][1] += tinst*tinst;
-	accumulator[16][0] += uvaccum;
-	accumulator[16][1] += uvaccum*uvaccum;
+	accumulator[16][0] += uvacuum;
+	accumulator[16][1] += uvacuum*uvacuum;
 	accumulator[17][0] += uwolf;
 	accumulator[17][1] += uwolf*uwolf;
 

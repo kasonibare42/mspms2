@@ -49,7 +49,7 @@
 #define nanotube_my_interp	4 // my interpolation grid
 
 #define ewald_bc_tinfoil	1
-#define ewald_bc_vaccum		2
+#define ewald_bc_vacuum		2
 
 #define ewald_1D		1
 #define ewald_2D		2 // not yet in use
@@ -153,7 +153,7 @@ double rcutoffelec, rcutoffelecsq;
 double f0; // 1,4 LJ potential modifier for OPLS, set to 1.0 for no modification or 0.5 for OPLS or 0.0 for TraPPE.
 int isLJswitchOn; // use switch potential for LJ or not
 int isEwaldOn; // Ewald summation electrostatic interactions
-int fEwald_BC; // flag of boundary condition for ewald summation. 1-tinfoil; 2-vaccum
+int fEwald_BC; // flag of boundary condition for ewald summation. 1-tinfoil; 2-vacuum
 int fEwald_Dim; // flag of Ewald method dimension. 1, 2 or 3 dimension.
 int isWolfOn; // wolf method for electrostatic interactions
 double kappa, kappasq; // sqrt(alpha) in ewald summation. 
@@ -178,10 +178,22 @@ double ureal; // real part of ewald, term 3 in 12.1.25
 double ufourier; // fourier part of ewald, term 1 in 12.1.25
 double uself; // self interaction correction part of ewald, term 2 in 12.1.25
 double uexcl; // excluding energy for ewald summation
-double uvaccum; // vaccum boundary for ewald
+double uvacuum; // vacuum boundary for ewald
 double uGz0; // 1D ewald Gz=0 term
 double LJswitch; // switch factor for LJ
 double usflj; // solid-fluid LJ energy
+
+double pinst; // instantaneous pressure
+double pvdw;
+double pbond, pangle, pdih, pimp;
+double pewald;
+double preal; // pressure contribution from real part of ewald
+double pfourier;
+double pself;
+double pexcl;
+double pvacuum;
+double pGz0;
+double pusflj;
 
 int nfree; // freedom
 double tinst; // instantaneous temperature
@@ -190,7 +202,7 @@ int nframe; // number of frames in the trajectory file
 
 double TWOPI_LX, TWOPI_LY, TWOPI_LZ; // ewald
 double Bfactor_ewald, Vfactor_ewald;
-double twopi_over_3v; // constant for vaccum boundary
+double twopi_over_3v; // constant for vacuum boundary
 
 // variables for wolf method
 double uwolf, uwolf_real, uwolf_con;
@@ -288,7 +300,7 @@ accumulator[12]   ufourier
 accumulator[13]   uself
 accumulator[14]   usflj
 accumulator[15]   tinst
-accumulator[16]   uvaccum
+accumulator[16]   uvacuum
 accumulator[17]   uwolf
 
 icounter[10]   number of average cycles

@@ -948,7 +948,7 @@ int ewald_fourier_and_self()
     uself = uself*const_columb*sqrt(kappa*kappa/pi);
 }
 
-int ewald_vaccum()
+int ewald_vacuum()
 {
     int ii;
     double xxpri, yypri, zzpri; // PBC coords into primal box
@@ -990,8 +990,8 @@ int ewald_vaccum()
 	qrz = qrz + chargei*zzpri;
     }
     // energy
-    uvaccum = qrx*qrx + qry*qry + qrz*qrz; // still need constant
-    uvaccum = uvaccum*twopi_over_3v*const_columb;
+    uvacuum = qrx*qrx + qry*qry + qrz*qrz; // still need constant
+    uvacuum = uvacuum*twopi_over_3v*const_columb;
 
     // forces
     for (ii=0;ii<natom;ii++)
@@ -1031,7 +1031,7 @@ int erfrc()
     uwolf_real = 0.0;
     uwolf_con = 0.0;
     usflj = 0.0;
-    uvaccum = 0.0;
+    uvacuum = 0.0;
     uGz0 = 0.0;
 
     // zero forces
@@ -1054,12 +1054,12 @@ int erfrc()
 	// total 3D ewald energy with tinfoil boundary condition
 	uewald = ureal + ufourier - uself - uexcl;
 
-	// calculate vaccum boundary condition
+	// calculate vacuum boundary condition
 	// energy/force term is needed
-	if (fEwald_BC == ewald_bc_vaccum)
+	if (fEwald_BC == ewald_bc_vacuum)
 	{
-	    ewald_vaccum();
-	    uewald += uvaccum; // add into total ewald energy
+	    ewald_vacuum();
+	    uewald += uvacuum; // add into total ewald energy
 	}
 	// if 1D ewald is used
 	if (fEwald_Dim==ewald_1D)
