@@ -929,7 +929,6 @@ int ewald_vaccum()
     double qrx, qry, qrz;
     double chargei;
     double fij;
-    // double charge_sum;
 
     // the atoms have to be grouped adjacent to their respective molecular
     // centers of mass before performing this sum
@@ -948,7 +947,6 @@ int ewald_vaccum()
     // calculate the new positions to the PBC'd center of mass
     reconstruct_coords_from_com();
 
-    // charge_sum = 0.0;
     qrx = qry = qrz = 0.0;
     for (ii=0;ii<natom;ii++)
     {
@@ -964,20 +962,19 @@ int ewald_vaccum()
 	qrx = qrx + chargei*xxpri;
 	qry = qry + chargei*yypri;
 	qrz = qrz + chargei*zzpri;
-
-	// charge_sum += chargei;
     }
     // energy
     uvaccum = qrx*qrx + qry*qry + qrz*qrz; // still need constant
     uvaccum = uvaccum*twopi_over_3v*const_columb;
 
     // forces
-    // charge_sum should be exactly zero for a charge netural system
-    // hence, the force should be zero
-    // fij = -2.0*twopi_over_3v*const_columb*charge_sum;
-    // fxl[ii] += fij*qrx;
-    // fyl[ii] += fij*qry;
-    // fzl[ii] += fij*qrz;
+    for (ii=0;ii<natom;ii++)
+    {
+       	fij = -2.0*twopi_over_3v*const_columb*charge[ii];
+       	fxl[ii] += fij*qrx;
+	fyl[ii] += fij*qry;
+	fzl[ii] += fij*qrz;
+    }
 }
 
 int wolf_con()

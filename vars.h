@@ -289,6 +289,7 @@ accumulator[13]   uself
 accumulator[14]   usflj
 accumulator[15]   tinst
 accumulator[16]   uvaccum
+accumulator[17]   uwolf
 
 icounter[10]   number of average cycles
 

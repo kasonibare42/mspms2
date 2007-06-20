@@ -352,6 +352,10 @@ int ending()
     fprintf(fpouts,"   std. dev.                %15.4lf\n",accumulator[15][6]);
     fprintf(fpouts,"   fluctuation              %15.4lf\n",accumulator[15][7]);
 
+    fprintf(fpouts,"Wolf energy                 %15.6le\n",accumulator[17][5]);
+    fprintf(fpouts,"   std. dev.                %15.4lf\n",accumulator[17][6]);
+    fprintf(fpouts,"   fluctuation              %15.4lf\n",accumulator[17][7]);
+
     fprintf(fpouts,"=========================================================\n");
 
     if (isSFon)
@@ -694,7 +698,7 @@ int echo()
     fprintf(fpouts,"%d dihedrals.\n",ndih);
     fprintf(fpouts,"%d impropers.\n",nimp);
     fprintf(fpouts,"%d nonbonded pairs.\n",nnbp);
-    fprintf(fpouts,"%d kappa\n",kappa);
+    fprintf(fpouts,"%lf kappa\n",kappa);
     fprintf(fpouts,"%d %d %d %d KMAX etc.\n",KMAXX,KMAXY,KMAXZ,KSQMAX);
     // nvt
     // charge on
@@ -1143,6 +1147,8 @@ int main (int argc, char *argv[])
 	accumulator[15][1] += tinst*tinst;
 	accumulator[16][0] += uvaccum;
 	accumulator[16][1] += uvaccum*uvaccum;
+	accumulator[17][0] += uwolf;
+	accumulator[17][1] += uwolf*uwolf;
 
 	if (istep%nstep_print == 0) printit();
 
