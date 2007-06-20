@@ -288,6 +288,8 @@ int loop_14()
     double sigmaij, epsilonij;
     double uij_vdw14, uij_vdw14_temp, uij_real14, uij_real14_temp;
     double uij_wolf14_temp;
+    double rijsq_old;
+    int	fCalculate14;
     double fij, fxij, fyij, fzij;
     double temp1, temp2;
     double rhoklsq, kapparhokl_sq;
@@ -307,8 +309,8 @@ int loop_14()
 	{
 	    ii1 = dih_idx[ii][0];
 	    ii2 = dih_idx[ii][3];
-	    if (isghost[ii1]==all_ghost || isghost[ii2]==all_ghost)
-		continue;
+	    // not ghost check needed here since 1,4 are in the same molecule
+	    // and ghost check is only for inter molecules or solid-fluid
 	    rxij = xx[ii1] - xx[ii2];
 	    ryij = yy[ii1] - yy[ii2];
 	    rzij = zz[ii1] - zz[ii2];
@@ -349,15 +351,34 @@ int loop_14()
 	    // can add CHARMM modifier here, different 1,4 parameters
 	    // must be done before minimum image convention
 
+	    // save old rxij, ryij and rzij to check if 1,4 are in same molecule
+	    // or 1,4' image interaction
+	    rijsq_old = rxij*rxij + ryij*ryij + rzij*rzij;
 	    // minimum image convention
 	    rxij = rxij - boxlx*rint(rxij/boxlx);
 	    ryij = ryij - boxly*rint(ryij/boxly);
 	    rzij = rzij - boxlz*rint(rzij/boxlz);
 	    rijsq = rxij*rxij + ryij*ryij + rzij*rzij;
 	    rij = sqrt(rijsq);
+	    // if 1,4 distance is changed after minimum image convention
+	    // which means 1,4' are used now and they are in two different molecules
+	    // now ghost check should be applied
+	    if (fabs(rijsq_old-rijsq)>1.0e-8)  // 1,4' found, need check ghost before calculate LJ for them
+	    {
+		fprintf(stderr,"Warning: long 1,4 non-bonded pair %d-%d found...\n",ii1,ii2);
+		fprintf(fpouts,"Warning: long 1,4 non-bonded pair %d-%d found...\n",ii1,ii2);
+		// ghost check for 1,4'
+	       	if (isghost[ii1]==lj_ghost || isghost[ii2]==lj_ghost)
+		    fCalculate14 == false;
+		else
+		    fCalculate14 == true;
+	    }
+	    else // 1,4 found, always calculate LJ for them
+		fCalculate14 = true;
 
-	    // LJ part, also check ghost atoms
-	    if (isghost[ii1]!=lj_ghost && isghost[ii2]!=lj_ghost && rijsq<rcutoffsq)
+	    // LJ part, do not need check ghost here. 
+	    // since 1,4 is in the same molecule
+	    if (fCalculate14==true && rijsq<rcutoffsq)
 	    {
 		if (isLJswitchOn)  // if use switch for LJ
 		{
@@ -486,8 +507,7 @@ int loop_13()
 	{
 	    ii1 = angle_idx[ii][0];
 	    ii2 = angle_idx[ii][2];
-	    if (isghost[ii1]==all_ghost || isghost[ii2]==all_ghost)
-		continue;
+	    // do not need check ghost atom since 1,3 is in the same molecule
 	    rxij = xx[ii1] - xx[ii2];
 	    ryij = yy[ii1] - yy[ii2];
 	    rzij = zz[ii1] - zz[ii2];
@@ -594,6 +614,8 @@ int loop_13()
 	    // use the old rxij, ryij and rzij for check
 	    if (fabs(rxij_old)>boxlx/2.0 || fabs(ryij_old)>boxly/2.0 || fabs(rzij_old)>boxlz/2.0)
 	    {
+		fprintf(stderr,"Warning: long 1,3 angle ending pair %d-%d found...\n",ii1,ii2);
+		fprintf(fpouts,"Warning: long 1,3 angle ending pair %d-%d found...\n",ii1,ii2);
 		// minimum image convention already applied in ewald part if charge interaction is ON
 		// however, charge interaction may not be on
 		// So its better to calculate them again
@@ -601,7 +623,9 @@ int loop_13()
 		ryij = ryij - boxly*rint(ryij/boxly);
 		rzij = rzij - boxlz*rint(rzij/boxlz);
 		rijsq = rxij*rxij + ryij*ryij + rzij*rzij;
-		// LJ part, also check ghost atoms
+		// LJ part, do not need check ghost atom since 1,3 are in the same molecule
+	       	// here we check ghost atom because in this case, 1,3 are actually 1 and 3'
+	       	// which are in two different molecule
 		if (isghost[ii1]!=lj_ghost && isghost[ii2]!=lj_ghost && rijsq<rcutoffsq) // LJ cutoff
 		{
 		    rij = sqrt(rijsq);
@@ -688,8 +712,6 @@ int loop_12()
     {
 	ii1 = bond_idx[ii][0];
 	ii2 = bond_idx[ii][1];
-	if (isghost[ii1]==all_ghost || isghost[ii2]==all_ghost)
-	    continue;
 	rxij = xx[ii1] - xx[ii2];
 	ryij = yy[ii1] - yy[ii2];
 	rzij = zz[ii1] - zz[ii2];
@@ -793,12 +815,16 @@ int loop_12()
 	// part if ewald is on
 	if (fabs(rxij_old)>boxlx/2.0 || fabs(ryij_old)>boxly/2.0 || fabs(rzij_old)>boxlz/2.0)
 	{
+	    fprintf(stderr,"Warning: long 1,2 bond ending pair %d-%d found...\n",ii1,ii2);
+	    fprintf(fpouts,"Warning: long 1,2 bond ending pair %d-%d found...\n",ii1,ii2);
 	    // minimum image convention, see more comments in 1,3 calculations
 	    rxij = rxij - boxlx*rint(rxij/boxlx);
 	    ryij = ryij - boxly*rint(ryij/boxly);
 	    rzij = rzij - boxlz*rint(rzij/boxlz);
 	    rijsq = rxij*rxij + ryij*ryij + rzij*rzij;
 	    // LJ part, also check ghost atoms
+	    // here we check ghost atom because in this case, 12 are actually 1 and 2'
+	    // which are in two different molecule
 	    if (isghost[ii1]!=lj_ghost && isghost[ii2]!=lj_ghost && rijsq<rcutoffsq) // LJ cutoff
 	    {
 		rij = sqrt(rijsq);
