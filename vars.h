@@ -65,7 +65,7 @@
 #define nangle_max	2000
 #define ndih_max	2000
 #define nimp_max	2000
-#define nnbp_max	2000
+#define nnbp_max	4000
 #define exclude_max	4000
 
 #define nunique_atom_max	5 // number of unqiue atoms for grid interpolation
@@ -75,6 +75,7 @@
 #define const_columb	1389355.1051  // unit is J/mol. Na*(1.602177e-19)^2/4/PI/epsilon0/(1.0e-10)
 #define pi		3.141592653589793
 #define Euler_const	0.577215665
+#define tolerant_err	1.0e-8
 #define parallel_to_z_err		1.0e-6
 // 3*pi^2*theta, assume the same charge density as graphite, theta=0.382 A^-2, used for hypergeo nanotube
 #define c3_pisq_theta 	11.3105666436484 
@@ -88,6 +89,7 @@ int mole_first_bond_idx[nmole_max+1]; // index of the first bond in a molecule
 int mole_first_angle_idx[nmole_max+1]; // index of the first angle in a molecule
 int mole_first_dih_idx[nmole_max+1]; // index of the first dihedral in a molecule
 int mole_first_imp_idx[nmole_max+1]; // index of the first improper in a molecule
+int mole_first_nbp_idx[nmole_max+1]; // index of the first nonbonded pair in a molecule
 double mw[nmole_max]; // molecule weight
 double xx[natom_max], yy[natom_max], zz[natom_max]; /* position */
 // inner coordinates relative to the center of mass, also used for PBC reconstruction of the molecule

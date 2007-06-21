@@ -55,7 +55,7 @@ int cal_com_and_inner_coords()
 int reconstruct_coords_from_com()
 {
     int ii, jj;
-    
+
     for (ii=0;ii<nmole;ii++)
     {
 	for (jj=mole_first_atom_idx[ii];jj<mole_first_atom_idx[ii+1];jj++)
@@ -75,8 +75,8 @@ int cal_coords_PBC()
     for (ii=0;ii<natom;ii++);
     {
 	ex[ii] = xx[ii] - boxlx*rint(xx[ii]/boxlx);
-       	fy[ii] = yy[ii] - boxlx*rint(yy[ii]/boxlx);
-       	gz[ii] = zz[ii] - boxlx*rint(zz[ii]/boxlx);
+	fy[ii] = yy[ii] - boxlx*rint(yy[ii]/boxlx);
+	gz[ii] = zz[ii] - boxlx*rint(zz[ii]/boxlx);
     }
 }
 
@@ -363,12 +363,12 @@ int loop_14()
 	    // if 1,4 distance is changed after minimum image convention
 	    // which means 1,4' are used now and they are in two different molecules
 	    // now ghost check should be applied
-	    if (fabs(rijsq_old-rijsq)>1.0e-8)  // 1,4' found, need check ghost before calculate LJ for them
+	    if (fabs(rijsq_old-rijsq)>tolerant_err)  // 1,4' found, need check ghost before calculate LJ for them
 	    {
 		fprintf(stderr,"Warning: long 1,4 non-bonded pair %d-%d found...\n",ii1,ii2);
 		fprintf(fpouts,"Warning: long 1,4 non-bonded pair %d-%d found...\n",ii1,ii2);
 		// ghost check for 1,4'
-	       	if (isghost[ii1]==lj_ghost || isghost[ii2]==lj_ghost)
+		if (isghost[ii1]==lj_ghost || isghost[ii2]==lj_ghost)
 		    fCalculate14 == false;
 		else
 		    fCalculate14 == true;
@@ -624,8 +624,8 @@ int loop_13()
 		rzij = rzij - boxlz*rint(rzij/boxlz);
 		rijsq = rxij*rxij + ryij*ryij + rzij*rzij;
 		// LJ part, do not need check ghost atom since 1,3 are in the same molecule
-	       	// here we check ghost atom because in this case, 1,3 are actually 1 and 3'
-	       	// which are in two different molecule
+		// here we check ghost atom because in this case, 1,3 are actually 1 and 3'
+		// which are in two different molecule
 		if (isghost[ii1]!=lj_ghost && isghost[ii2]!=lj_ghost && rijsq<rcutoffsq) // LJ cutoff
 		{
 		    rij = sqrt(rijsq);
@@ -796,11 +796,11 @@ int loop_12()
 		fxij = fij*rxij;
 		fyij = fij*ryij;
 		fzij = fij*rzij;
-		// force on atom ii
+		// force on atom ii1
 		fxl[ii1] += fxij;
 		fyl[ii1] += fyij;
 		fzl[ii1] += fzij;
-		// force on atom jj
+		// force on atom ii2
 		fxl[ii2] -= fxij;
 		fyl[ii2] -= fyij;
 		fzl[ii2] -= fzij;
@@ -871,7 +871,7 @@ int loop_12()
 		fyl[ii2] -= fyij;
 		fzl[ii2] -= fzij;
 	    } // rcutoffsq
-	} // if 13 > 13'
+	} // if 12 > 12'
     } // nbond loop
 
     // add into total energy
@@ -881,6 +881,245 @@ int loop_12()
     uGz0 += uij_Gz0/(2.0*boxlz);
 }
 
+// calcualte interaction between nonbonded pairs
+int loop_nbp()
+{
+    int ii;
+    int ii1, ii2;
+    double rxij, ryij, rzij;
+    double rijsq, rij, r_rijsq;
+    double r_r6, r_r12, r_r12_minus_r_r6;
+    double epsilonij, sigmaij;
+    double uij_vdwnbp, uij_vdwnbp_temp, uij_realnbp, uij_realnbp_temp;
+    double uij_wolfnbp_temp;
+    double fij, fxij, fyij, fzij;
+    double temp1, temp2;
+    double rhoklsq, kapparhokl_sq;
+    double uij_Gz0nbp; // 1D ewald
+    double rxij_old, ryij_old, rzij_old;
+    double rijsq_old;
+    int isSameMole;
+    int fCalculate_nbpLJ, fCalculate_nbpelec;
+    gsl_function FF;
+
+    FF.function = &deriv_inc_gamma;
+    FF.params = 0;
+
+    uij_vdwnbp = 0.0;
+    uij_realnbp = 0.0;
+    uij_Gz0nbp = 0.0;
+
+    // loop through all nonbonded pairs
+    for (ii=0;ii<nnbp;ii++)
+    {
+	ii1 = nbp_idx[ii][0];
+	ii2 = nbp_idx[ii][1];
+	// save old rxij, ryij for possible 1D ewald
+	rxij_old = rxij = xx[ii1] - xx[ii2];
+	ryij_old = ryij = yy[ii1] - yy[ii2];
+	rzij_old = rzij = zz[ii1] - zz[ii2];
+	rijsq_old = rxij*rxij + ryij*ryij + rzij*rzij;
+	// minimum image convention
+	// if distance between ii1 and ii2 is smaller than
+	// half box length, which means no change after
+	// minimum image convention applied. It means that
+	// the two atoms are indeed in the same molecule.
+	// In this case, the interaction between them are 
+	// always needed to be calculated even they are marked
+	// as ghost, since ghost only means inter-molecular
+	// interaction.
+	// When the distance is larger than half box length,
+	// the interaction is actually between ii1 and ii2' (image)
+	// from two different molecules. Ghost check will be applied
+	// in this case.
+	rxij = rxij - boxlx*rint(rxij/boxlx);
+	ryij = ryij - boxly*rint(ryij/boxly);
+	rzij = rzij - boxlz*rint(rzij/boxlz);
+	rijsq = rxij*rxij + ryij*ryij + rzij*rzij;
+	// check if the position changed after the minimum image convention
+	if (fabs(rijsq-rijsq_old)>tolerant_err)
+	{
+	    // image found, check ghost
+	    // only calculate if they are not ghost atoms
+	    isSameMole = false;
+	    if (isghost[ii1]==all_ghost || isghost[ii2]==all_ghost)
+	    {
+		// if they are full ghost, dont calculate them 
+		fCalculate_nbpLJ = false;
+		fCalculate_nbpelec = false;
+	    }
+	    else if (isghost[ii1]==lj_ghost || isghost[ii2]==lj_ghost)
+	    {
+		// if they are lj ghost, dont calculate LJ, but calculate electric
+		fCalculate_nbpLJ = false;
+		fCalculate_nbpelec = true;
+	    }
+	    else
+	    {
+		// they are not ghost, calculate LJ and elec
+		fCalculate_nbpLJ = true;
+		fCalculate_nbpelec = true;
+	    }
+	}
+	else // they are in the same molecule, no ghost check need, always calculate everything
+	{
+	    isSameMole = true;
+	    fCalculate_nbpLJ = true;
+	    fCalculate_nbpelec = true;
+
+	} // end of same molecule check
+
+	// calculate rij
+	rij = sqrt(rijsq); 
+
+	// if LJ interactions are needed
+	if (fCalculate_nbpLJ==true)
+	{ 
+	    // cut off still needed to be checked
+	    if (rijsq<rcutoffsq)
+	    {
+		// if switch potential for LJ is on, then calculate the switch
+		if (isLJswitchOn)
+		{
+		    if (rijsq<rcutonsq)
+			LJswitch = 1.0;
+		    else
+			LJswitch = (rcutoffsq-rijsq)*(rcutoffsq-rijsq)
+			    *(rcutoffsq+2.0*rijsq-3.0*rcutonsq)/roff2_minus_ron2_cube;
+		}
+		sigmaij = 0.5*(sigma[ii1]+sigma[ii2]);
+		epsilonij = sqrt(epsilon[ii1]*epsilon[ii2]);
+		r_rijsq = sigmaij*sigmaij/rijsq;
+		r_r6 = r_rijsq*r_rijsq*r_rijsq;
+		r_r12 = r_r6*r_r6;
+		r_r12_minus_r_r6 = r_r12 - r_r6;
+		uij_vdwnbp_temp = epsilonij*r_r12_minus_r_r6; // still need *4.0
+		if (isLJswitchOn) // if switch is used
+		    uij_vdwnbp += uij_vdwnbp_temp*LJswitch; // still need 4.0 else 
+		uij_vdwnbp += uij_vdwnbp_temp; // still need *4.0
+		// force calculations
+		if (isLJswitchOn)
+		{
+		    if (rijsq<rcutonsq)
+			fij = 24.0*epsilonij*(r_r12_minus_r_r6+r_r12)/rijsq; 
+		    else
+			fij = 24.0*epsilonij*(r_r12_minus_r_r6+r_r12)/rijsq*LJswitch // 4.0 for the real energy
+			    -4.0*uij_vdwnbp_temp*12.0*(rcutoffsq-rijsq)*(rcutonsq-rijsq)/roff2_minus_ron2_cube;
+		}
+		else
+		    fij = 24.0*epsilonij*(r_r12_minus_r_r6+r_r12)/rijsq;
+		fxij = fij*rxij;
+		fyij = fij*ryij;
+		fzij = fij*rzij;
+		// force on atom ii1
+		fxl[ii1] += fxij;
+		fyl[ii1] += fyij;
+		fzl[ii1] += fzij;
+		// force on atom ii2
+		fxl[ii2] -= fxij;
+		fyl[ii2] -= fyij;
+		fzl[ii2] -= fzij;
+	    } // cut off check
+	}// if LJ is needed
+
+	// if electrostatic interactions are needed
+	if (fCalculate_nbpelec == true)
+	{
+	    // calculate Gz=0 term for 1D ewald summation
+	    // this has to be done before the minimum image convention
+	    // so rxij_old, ryij_old are used
+	    // not sure if cutoff check should be applied
+	    // If the cutoff is larger than the size in x,y dimension,
+	    // this should not be a problem
+	    if (isEwaldOn && fEwald_Dim==ewald_1D)
+	    {
+		rhoklsq = rxij_old*rxij_old + ryij_old*ryij_old;
+		if (rhoklsq>parallel_to_z_err) 
+		{
+		    kapparhokl_sq = kappasq*rhoklsq;
+		    temp1 = Euler_const + gsl_sf_gamma_inc(0.0,kapparhokl_sq) + log(kapparhokl_sq);
+		    uij_Gz0nbp = uij_Gz0nbp -charge[ii1]*charge[ii2]*temp1;
+		    // forces
+		    // derivative of incomplete gamma function
+		    // use numerical differential
+		    // This may not be a good way to do it
+		    // temp1 is the value, temp2 is the absolute std. err.
+		    gsl_deriv_central(&FF,kapparhokl_sq,1.0e-8,&temp1,&temp2);
+		    temp2 = kappasq*temp1 + 1.0/rhoklsq;
+		    fij = charge[ii1]*charge[ii2]*temp2*const_columb/boxlz;
+		    fxij = fij*rxij_old;
+		    fyij = fij*ryij_old;
+		    // force on atom ii1
+		    fxl[ii1] += fxij;
+		    fyl[ii1] += fyij;
+		    // force on atom ii2
+		    fxl[ii2] -= fxij;
+		    fyl[ii2] -= fyij;
+		} // if rhoklsq != 0.0 (>1.0e-10)
+	    } // if 1D ewald is used
+
+	    // electrostatic part
+	    if (isEwaldOn && rijsq<rcutoffelecsq)
+	    {
+		uij_realnbp_temp = charge[ii1]*charge[ii2]/rij;
+		uij_realnbp += uij_realnbp_temp*erfc(kappa*rij); // real part ewald energy, still need 1/4*pi*epsilon0
+		temp1 = kappa*rij;
+		temp2 = uij_realnbp_temp*erfc(temp1);
+		// real part force calculation
+		fij = (temp2 + uij_realnbp_temp*2.0*temp1*exp(-temp1*temp1)/sqrt(pi))*const_columb/rijsq;
+		fxij = fij*rxij;
+		fyij = fij*ryij;
+		fzij = fij*rzij;
+		// force on atom ii1
+		fxl[ii1] += fxij;
+		fyl[ii1] += fyij;
+		fzl[ii1] += fzij;
+		// force on atom ii2
+		fxl[ii2] -= fxij;
+		fyl[ii2] -= fyij;
+		fzl[ii2] -= fzij;
+	    } // is Charge On check and rcutoffelecsq check
+
+	    // wolf method for electrostatic
+	    if (isWolfOn && rijsq<rcutoffelecsq)
+	    {
+		uwolf_real = uwolf_real 
+		    + charge[ii1]*charge[ii2]*(erfc(kappa*rij)/rij + wolfvcon1 + wolfvcon2*(rij-rcutoffelec));
+		uij_wolfnbp_temp = charge[ii1]*charge[ii2]/rij;
+		fij = const_columb*uij_wolfnbp_temp
+		    *(erfc(kappa*rij)/rijsq + wolffcon1*exp(-(kappa*rij)*(kappa*rij))/rij + wolffcon2);
+		fxij = fij*rxij;
+		fyij = fij*ryij;
+		fzij = fij*rzij;
+		// force on atom ii1
+		fxl[ii1] += fxij;
+		fyl[ii1] += fyij;
+		fzl[ii1] += fzij;
+		// force on atom ii2
+		fxl[ii2] -= fxij;
+		fyl[ii2] -= fyij;
+		fzl[ii2] -= fzij;
+	    } // if ewald is needed
+
+	} // if electrostatic is needed
+
+    } // nonbonded pair loop
+
+    // add into total energy
+    uvdw += uij_vdwnbp; // still need 4.0
+    ureal += uij_realnbp; // still neeed constant
+    uGz0 += uij_Gz0nbp/(2.0*boxlz); // still need constant
+}
+
+
+
+
+
+
+
+
+
+// fourier space sum and self interaction correction
 int ewald_fourier_and_self()
 {
     int ii;
@@ -996,8 +1235,8 @@ int ewald_vacuum()
     // forces
     for (ii=0;ii<natom;ii++)
     {
-       	fij = -2.0*twopi_over_3v*const_columb*charge[ii];
-       	fxl[ii] += fij*qrx;
+	fij = -2.0*twopi_over_3v*const_columb*charge[ii];
+	fxl[ii] += fij*qrx;
 	fyl[ii] += fij*qry;
 	fzl[ii] += fij*qrz;
     }

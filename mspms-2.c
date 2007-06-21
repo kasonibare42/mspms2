@@ -675,6 +675,18 @@ int readins()
     // read in nonbonded pair list
     fscanf(fpcfg, "%d nonbonded\n", &nnbp);
     assert(nnbp<=nnbp_max);
+    last_mole_id = 0;
+    for (ii=0;ii<nnbp;ii++)
+    {
+	fscanf(fpcfg,"%d %d\n",&nbp_idx[ii][0],&nbp_idx[ii][1]);
+	// check if nonbonded atom is belong to the molecule
+	if (mole_first_atom_idx[last_mole_id]<nbp_idx[ii][0] && nbp_idx[ii][0]< mole_first_atom_idx[last_mole_id+1])
+	{
+	    mole_first_nbp_idx[last_mole_id] = ii;
+	    last_mole_id++;
+	    assert(last_mole_id<nmole_max+1);
+	}
+    }
 
 
     fclose(fpcfg);
@@ -736,21 +748,28 @@ int make_exclude_list()
 {
     int ii, jj, nexcllist;
 
-    fprintf(fpouts,"making exclude list...\n");
+    fprintf(fpouts,"making exclude list... ");
 
     nexcllist = 0;
     for (ii=0;ii<natom;ii++)
     {
 	pointexcl[ii] = nexcllist;
 	// exclude bonded atoms
+	// In order to improve it and save the memory usage
+	// Only set atom jj to be an exclude atom for atom ii
+	// if jj>ii. It should avoid double count of the exclulde pairs.
+	// Since the calculations loop ij is from i=0,n-1 and j=i+1,n
+	// i.e. if 0 and 1 are exclude pair, 1 will be in 0's exclude list
+	// but 0 will not be in 1's exclude list
+	// Be careful of it while coding other interaction functions
 	for (jj=0;jj<nbond;jj++)
 	{
-	    if (bond_idx[jj][0] == ii)
+	    if (bond_idx[jj][0] == ii && bond_idx[jj][1] > ii)
 	    {
 		excllist[nexcllist] = bond_idx[jj][1];
 		nexcllist++;
 	    }
-	    else if (bond_idx[jj][1] == ii)
+	    else if (bond_idx[jj][1] == ii && bond_idx[jj][0] > ii)
 	    {
 		excllist[nexcllist] = bond_idx[jj][0];
 		nexcllist++;
@@ -760,12 +779,12 @@ int make_exclude_list()
 	// exclude angled atoms
 	for (jj=0;jj<nangle;jj++)
 	{
-	    if (angle_idx[jj][0] == ii)
+	    if (angle_idx[jj][0] == ii && angle_idx[jj][2] > ii)
 	    {
 		excllist[nexcllist] = angle_idx[jj][2];
 		nexcllist++;
 	    }
-	    else if (angle_idx[jj][2] == ii)
+	    else if (angle_idx[jj][2] == ii && angle_idx[jj][0] > ii)
 	    {
 		excllist[nexcllist] = angle_idx[jj][0];
 		nexcllist++;
@@ -775,12 +794,12 @@ int make_exclude_list()
 	// exclude dihedraled atoms
 	for (jj=0;jj<ndih;jj++)
 	{
-	    if (dih_idx[jj][0] == ii)
+	    if (dih_idx[jj][0] == ii && dih_idx[jj][3] > ii)
 	    {
 		excllist[nexcllist] = dih_idx[jj][3];
 		nexcllist++;
 	    }
-	    else if (dih_idx[jj][3] == ii)
+	    else if (dih_idx[jj][3] == ii && dih_idx[jj][0] > ii)
 	    {
 		excllist[nexcllist] = dih_idx[jj][0];
 		nexcllist++;
@@ -789,6 +808,8 @@ int make_exclude_list()
 	}
     }
     pointexcl[natom] = nexcllist;
+
+    fprintf(fpouts,"%d excluded pairs\n",nexcllist);
 
     // check the exclude list
     /*
@@ -804,7 +825,7 @@ int make_exclude_list()
        }
        printf("\n");
        }
-       */
+     */
 }
 
 int velinit()
