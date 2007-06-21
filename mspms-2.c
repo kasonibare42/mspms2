@@ -28,6 +28,8 @@ extern int init_sf_hypergeo();
 extern int init_sf_atom_explicit();
 extern int init_tasos_grid();
 extern int init_my_interp();
+extern int init_npt_respa();
+extern int npt_respa();
 
 
 /* Initiate variables */
@@ -60,12 +62,16 @@ int init_vars()
     // set the starting step to 1, will be changed by load it if it is continue run
     nstep_start = 1;
 
+    // initiate counters and accumulators
     for (ii=0;ii<num_counter_max;ii++)
     {
 	icounter[ii] = 0;
 	for (jj=0;jj<5;jj++)
 	    accumulator[ii][jj] = 0.0;
     }
+    // set the counter for equilibrium
+    // it will decrease during the run
+    icounter[11] = nstep_eq;
 
     /* long range corrections */
 
@@ -81,16 +87,25 @@ int init_vars()
     rcutonsq = rcuton*rcuton;
     roff2_minus_ron2_cube = (rcutoffsq-rcutonsq)*(rcutoffsq-rcutonsq)*(rcutoffsq-rcutonsq);
 
+    // volume
+    boxv = boxlx*boxly*boxlz;
+
     // delt
     deltby2 = delt/2.0;
     delts = delt/nstep_inner;
     deltsby2 = delts/2.0;
 
+    dt_outer2 = deltby2;
+    dt_outer4 = delt/4.0;
+    dt_outer8 = delt/8.0;
+
+    // initialize thermostat/baron stat input data
+    if (what_ensemble == npt_run)
+	init_npt_respa();
+
     // nose hoover
     // following for Dr. Maginn's nose hoover
     // they are not used anymore
-    // dt_outer2 = deltby2;
-    // dt_outer4 = dt_outer2/2.0;
     // ukin_nhts = 0.0;
     // upot_nhts = 0.0;
     // NRT = Rgas*treq*nfree;
@@ -356,6 +371,18 @@ int ending()
     fprintf(fpouts,"   std. dev.                %15.4lf\n",accumulator[17][6]);
     fprintf(fpouts,"   fluctuation              %15.4lf\n",accumulator[17][7]);
 
+    fprintf(fpouts,"Ideal pressure              %15.6le\n",accumulator[20][5]);
+    fprintf(fpouts,"   std. dev.                %15.4lf\n",accumulator[20][6]);
+    fprintf(fpouts,"   fluctuation              %15.4lf\n",accumulator[20][7]);
+
+    fprintf(fpouts,"Pressure                    %15.6le\n",accumulator[18][5]);
+    fprintf(fpouts,"   std. dev.                %15.4lf\n",accumulator[18][6]);
+    fprintf(fpouts,"   fluctuation              %15.4lf\n",accumulator[18][7]);
+
+    fprintf(fpouts,"Box volume                  %15.6le\n",accumulator[19][5]);
+    fprintf(fpouts,"   std. dev.                %15.4lf\n",accumulator[19][6]);
+    fprintf(fpouts,"   fluctuation              %15.4lf\n",accumulator[19][7]);
+
     fprintf(fpouts,"=========================================================\n");
 
     if (isSFon)
@@ -544,12 +571,12 @@ int readins()
     sscanf(fgets(buffer,datalen,fpins), "%lf %lf %lf", &boxlx, &boxly, &boxlz);
     sscanf(fgets(buffer,datalen,fpins), "%lf %lf %lf", &rcuton, &rcutoff, &rcutoffelec);
     // sscanf(fgets(buffer,datalen,fpins), "%s", coords_file);
-    sscanf(fgets(buffer,datalen,fpins), "%d %d", &nstep, &fStart_option);
+    sscanf(fgets(buffer,datalen,fpins), "%d %d %d", &nstep, &fStart_option, &nstep_eq);
     sscanf(fgets(buffer,datalen,fpins), "%d %d %d %d %d", 
 	    &nstep_ave, &nstep_print, &nstep_save, &nstep_ss, &nstep_trj);
     sscanf(fgets(buffer,datalen,fpins), "%lf %d", &delt, &nstep_inner);
     sscanf(fgets(buffer,datalen,fpins), "%lf", &f0);
-    sscanf(fgets(buffer,datalen,fpins), "%d %d", &isNVTnh, &whichNH);
+    sscanf(fgets(buffer,datalen,fpins), "%d %d", &what_ensemble, &whichNH);
     sscanf(fgets(buffer,datalen,fpins), "%lf %lf", &qq, &qqs);
     sscanf(fgets(buffer,datalen,fpins), "%d", &isLJswitchOn);
     sscanf(fgets(buffer,datalen,fpins), "%d %d %d", &isEwaldOn,&fEwald_BC,&fEwald_Dim);
@@ -714,6 +741,7 @@ int echo()
     fprintf(fpouts,"%d nonbonded pairs.\n",nnbp);
     fprintf(fpouts,"%lf kappa\n",kappa);
     fprintf(fpouts,"%d %d %d %d KMAX etc.\n",KMAXX,KMAXY,KMAXZ,KSQMAX);
+    fprintf(fpouts,"preq=%lf   Qts=%lf  Qbs=%lf\n",preq,Qts,Qbs);
     // nvt
     // charge on
     // sf on
@@ -836,7 +864,7 @@ int make_exclude_list()
     }
     pointexcl[natom] = nexcllist;
 
-    fprintf(fpouts,"%d excluded pairs\n",nexcllist);
+    fprintf(fpouts,"%d excluding pairs\n",nexcllist);
 
     // check the exclude list
     /*
@@ -852,7 +880,7 @@ int make_exclude_list()
        }
        printf("\n");
        }
-     */
+       */
 }
 
 int velinit()
@@ -921,12 +949,18 @@ int printit()
     utot = upot + ukin;
     virial = virial_inter + virial_intra;
     // add energy of thermostat, if nose hoover is not used, they will just be zero
-    utot = utot + upot_nhts + unhts + unhtss;
-    fprintf(stderr,"%10d %10.4le %10.4le %10.4le %10.4le %10.4le\n",istep,utot,upot,ukin,tinst,virial);
-    fprintf(fplog,"%10d %10.4le %10.4le %10.4le %10.4le %10.4le %10.4le %10.4le %10.4le %10.4le \
-%10.4le %10.4le %10.4le %10.4le %10.4le %10.4le %10.4le %10.4le %10.4le\n",
-	    istep,utot,upot,ukin,tinst,uinter,uintra,uvdw,ubond,uangle,udih,uimp,uewald,usflj,unhts,unhtss,
-	    virial,virial_inter,virial_intra);
+    utot = utot + unhts + unhtss + utsbs;
+    pideal=natom/(boxlx*boxly*boxlz)*tinst*kb_1e30;
+    pinst = pideal+(virial_inter+virial_intra)*virial_to_pressure/(boxlx*boxly*boxlz);
+    fprintf(stderr,"%10d %10.4le %10.4le %10.4le %10.4le %10.4le %10.4le\n",istep,utot,upot,ukin,tinst,virial,pinst);
+    fprintf(fplog,"%10d %10.4le %10.4le %10.4le %10.4le %10.4le %10.4le %10.4le %10.4le %10.4le\n",
+	    istep,utot,upot,ukin,tinst,uinter,uintra,uvdw,ubond,uangle);
+
+    fprintf(fplog,"            %10.4le %10.4le %10.4le %10.4le %10.4le %10.4le %10.4le %10.4le %10.4le\n",
+	    uangle,udih,uimp,uewald,usflj,unhts,unhtss,virial,virial_inter,virial_intra,utsbs);
+
+    fprintf(fplog,"            %10.4le %10.4le\n",
+	    utsbs,boxv);
 }
 
 int vver() // velocity verlet
@@ -1026,6 +1060,10 @@ int saveit()
     fwrite(&ggs,sizeof(double),1,fpsave);
     fwrite(&sss,sizeof(double),1,fpsave);
 
+    fwrite(&vts,sizeof(double),1,fpsave);
+    fwrite(&rts,sizeof(double),1,fpsave);
+
+
     fwrite(&istep,sizeof(int),1,fpsave);
     fwrite(icounter,sizeof(int),num_counter_max,fpsave);
     fwrite(accumulator,sizeof(double),num_counter_max,fpsave);
@@ -1057,6 +1095,9 @@ int loadit()
     fread(&pss,sizeof(double),1,fpload);
     fread(&ggs,sizeof(double),1,fpload);
     fread(&sss,sizeof(double),1,fpload);
+
+    fread(&vts,sizeof(double),1,fpload);
+    fread(&rts,sizeof(double),1,fpload);
 
     fread(&istep,sizeof(int),1,fpload);
     fread(icounter,sizeof(int),num_counter_max,fpload);
@@ -1145,8 +1186,10 @@ int main (int argc, char *argv[])
 
     for (istep=nstep_start;istep<=nstep;istep++) // NOTE: start from 1 and <=
     {
-	if (isNVTnh) // velocity verlet with nose hoover
+	if (what_ensemble == nvt_run) // velocity verlet with nose hoover for NVT
 	{
+	    vver_nh_3();
+	    /*
 	    switch (whichNH)
 	    {
 		case 1:
@@ -1159,9 +1202,28 @@ int main (int argc, char *argv[])
 		    vver_nh_3();
 		    break;
 	    }	
+	    */
+	}
+	else if (what_ensemble == npt_run)
+	{
+	    npt_respa();
 	}
 	else 
 	    vver(); // velocity verlet
+
+	// print out, snapshot, trajectory, save
+	if (istep%nstep_print == 0) printit();
+
+	if (nstep_ss && istep%nstep_ss == 0) snapshot();
+
+	if (nstep_trj && istep%nstep_trj==0) trajectory();
+
+	if (istep%nstep_save==0) saveit();
+
+	icounter[11]--;
+	// if still in equilibrium run
+	// do not do averages
+	if (icounter[11]<0) continue;
 
 	// accumulators
 	accumulator[0][0] += utot;
@@ -1200,18 +1262,16 @@ int main (int argc, char *argv[])
 	accumulator[16][1] += uvacuum*uvacuum;
 	accumulator[17][0] += uwolf;
 	accumulator[17][1] += uwolf*uwolf;
+	accumulator[18][0] += pinst;
+	accumulator[18][1] += pinst*pinst;
+	accumulator[19][0] += boxv;
+	accumulator[19][1] += boxv*boxv;
+	accumulator[20][0] += pideal;
+	accumulator[20][1] += pideal*pideal;
 
-	if (istep%nstep_print == 0) printit();
+	if ((istep-nstep_eq)%nstep_ave==0) averages();
 
-	if (nstep_ss && istep%nstep_ss == 0) snapshot();
-
-	if (nstep_trj && istep%nstep_trj==0) trajectory();
-
-	if (istep%nstep_ave==0) averages();
-
-	if (istep%nstep_save==0) saveit();
-
-    }
+    } // loop through all simulation time
 
     snapshot();
 

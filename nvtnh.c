@@ -608,6 +608,7 @@ int nvtnh()
 {
     int ii;
     double mvsq;
+    double AA;
 
     mvsq = 2.0*ukin;
     // compute the driving force for the thermostat

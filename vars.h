@@ -17,11 +17,13 @@
 #define true		1
 #define false		0
 
+#define nve_run		0
+#define nvt_run		1
+#define npt_run		2
+
 #define not_ghost	0
 #define lj_ghost	1
 #define all_ghost	2
-
-#define num_counter_max	30
 
 #define new_run		1
 #define continue_run	2
@@ -67,11 +69,12 @@
 #define nimp_max	2000
 #define nnbp_max	4000
 #define exclude_max	4000
-
+#define num_counter_max	30
 #define nunique_atom_max	5 // number of unqiue atoms for grid interpolation
 
 #define Rgas		8.314472 /* J/mol/K */
 #define rRgas		0.120272219 /* reciprocal of Rgas */
+#define Avogadro	6.0221415e23    // mol^-1
 #define const_columb	1389355.1051  // unit is J/mol. Na*(1.602177e-19)^2/4/PI/epsilon0/(1.0e-10)
 #define kb_1e30		1.3806505e7   // kb/1e-30  
 #define virial_to_pressure	553512.954376   // 1.0/(3.0*6.0221415e-7)
@@ -150,7 +153,7 @@ double delt; /* time step */
 double deltby2, delts, deltsby2;
 int ij, jk;
 double treq, preq; /* input required temperature, pressure */
-double boxlx, boxly, boxlz; /* box size */
+double boxv, boxlx, boxly, boxlz; /* box size */
 int nconstraint; // constraint, 3 for periodic, 6 for aperiodic
 double rcutoff, rcutoffsq, rcuton, rcutonsq;
 double rcutoffelec, rcutoffelecsq;
@@ -164,7 +167,7 @@ double kappa, kappasq; // sqrt(alpha) in ewald summation.
 int KMAXX, KMAXY, KMAXZ; // ewald parameters
 int KSQMAX; // ewald parameter
 char coords_file[100]; // name of the coordinates file
-int isNVTnh; // use nose hoover for NVT ensemble or not
+int what_ensemble; // what type of ensemble, NVT, NPT etc.
 int whichNH; // which nose hoover subroutine to use? usually 3 for molecule, 2 for atoms, see more details in nvtnh.c
 int isSFon; // is solid-fluid interaction on
 int sf_type; // solid-fluid type. for different nanotube potentials and future possible other materials
@@ -210,9 +213,14 @@ double wolfvcon1, wolfvcon2, wolffcon1, wolffcon2;
 double roff2_minus_ron2_cube; // used for switch potential
 
 // following variables are for nose hoover method
-double Gts, Qts, vts, rts, AA;
+double Gts, Qts, vts, rts;
 double dt_outer2, dt_outer4, NRT;
 double ukin_nhts, upot_nhts;
+// NPT 
+double Gbs, Qbs, vbs, rbs;
+double dt_outer8;
+double utsbs; // extra energy for the barostat NPT
+
 // frenkel and smit's nose hoover method
 double qq, ps, gg, ss;
 double delt_sqby2, delts_sqby2;
@@ -301,8 +309,12 @@ accumulator[14]   usflj
 accumulator[15]   tinst
 accumulator[16]   uvacuum
 accumulator[17]   uwolf
+accumulator[18]   pressure
+accumulator[19]   boxv
+accumulator[20]   pideal
 
 icounter[10]   number of average cycles
+icounter[11]  decrease, for equilibrium
 
 */
 
