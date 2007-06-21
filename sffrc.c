@@ -1124,6 +1124,9 @@ int sffrc()
     // reset energy
     usflj = 0.0;
 
+    // virial for solid-fluid with solid fixed
+    // is not well defined
+
     if (sf_type==nanotube_hypergeo)
     {
 	cal_sf_hypergeo();

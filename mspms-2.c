@@ -698,6 +698,8 @@ int echo()
     fprintf(fpouts,"Units:\n");
     fprintf(fpouts,"  Energy(J/mol)\n  Temperature(K)\n  Velocity(m/s)\n  Distance(Angstrom)\n");
     fprintf(fpouts,"  Force(J/Angstrom/mol)\n");
+    fprintf(fpouts,"  virial(J/mol)\n");
+    fprintf(fpouts,"  Pressure(Pascal)\n");
     fprintf(fpouts,"=====================================\n");
     fprintf(fpouts,"%s\n",sysname);
     fprintf(fpouts,"natom=%d\n",natom);
@@ -742,6 +744,14 @@ int echo()
     fprintf(fpouts,"uwolf=%lf\n",uwolf);
     fprintf(fpouts,"uwolf_real=%lf\n",uwolf_real);
     fprintf(fpouts,"uwolf_con=%lf\n",uwolf_con);
+
+    fprintf(fpouts,"tinst=%lf\n",tinst);
+
+    fprintf(fpouts,"virial=%lf\n",virial_inter+virial_intra);
+    fprintf(fpouts,"virial_inter=%lf\n",virial_inter);
+    fprintf(fpouts,"virial_intra=%lf\n",virial_intra);
+    fprintf(fpouts,"pideal=%lf\n",pideal=natom/(boxlx*boxly*boxlz)*tinst*kb_1e30);
+    fprintf(fpouts,"pressure=%lf\n",pinst=pideal+(virial_inter+virial_intra)*virial_to_pressure/(boxlx*boxly*boxlz));
 
     fflush(fpouts);
 }
@@ -909,11 +919,14 @@ int printit()
 {
     upot = uinter + uintra;
     utot = upot + ukin;
+    virial = virial_inter + virial_intra;
     // add energy of thermostat, if nose hoover is not used, they will just be zero
     utot = utot + upot_nhts + unhts + unhtss;
-    fprintf(stderr,"%10d %10.4le %10.4le %10.4le %10.4le\n",istep,utot,upot,ukin,tinst);
-    fprintf(fplog,"%10d %10.4le %10.4le %10.4le %10.4le %10.4le %10.4le %10.4le %10.4le %10.4le %10.4le %10.4le %10.4le %10.4le %10.4le %10.4le\n",
-	    istep,utot,upot,ukin,tinst,uinter,uintra,uvdw,ubond,uangle,udih,uimp,uewald,usflj,unhts,unhtss);
+    fprintf(stderr,"%10d %10.4le %10.4le %10.4le %10.4le %10.4le\n",istep,utot,upot,ukin,tinst,virial);
+    fprintf(fplog,"%10d %10.4le %10.4le %10.4le %10.4le %10.4le %10.4le %10.4le %10.4le %10.4le \
+%10.4le %10.4le %10.4le %10.4le %10.4le %10.4le %10.4le %10.4le %10.4le\n",
+	    istep,utot,upot,ukin,tinst,uinter,uintra,uvdw,ubond,uangle,udih,uimp,uewald,usflj,unhts,unhtss,
+	    virial,virial_inter,virial_intra);
 }
 
 int vver() // velocity verlet

@@ -213,6 +213,8 @@ int loop_ij()
 		    fxij = fij*rxij;
 		    fyij = fij*ryij;
 		    fzij = fij*rzij;
+		    // contribution to the virial
+		    virial_inter = virial_inter + fxij*rxij + fyij*ryij + fzij*rzij;
 		    // force on atom ii
 		    fxi += fxij;
 		    fyi += fyij;
@@ -256,6 +258,8 @@ int loop_ij()
 		    fxij = fij*rxij;
 		    fyij = fij*ryij;
 		    fzij = fij*rzij;
+		    // contribution to the virial
+		    virial_inter = virial_inter + fxij*rxij + fyij*ryij + fzij*rzij;
 		    // force on atom ii
 		    fxi += fxij;
 		    fyi += fyij;
@@ -411,6 +415,8 @@ int loop_14()
 		fxij = fij*rxij;
 		fyij = fij*ryij;
 		fzij = fij*rzij;
+	       	// contribution to the virial
+		virial_inter = virial_inter + fxij*rxij + fyij*ryij + fzij*rzij;
 		// force on atom ii1
 		fxl[ii1] += fxij;
 		fyl[ii1] += fyij;
@@ -456,6 +462,8 @@ int loop_14()
 		fxij = fij*rxij;
 		fyij = fij*ryij;
 		fzij = fij*rzij;
+	       	// contribution to the virial
+		virial_inter = virial_inter + fxij*rxij + fyij*ryij + fzij*rzij;
 		// force on atom ii
 		fxl[ii1] += fxij;
 		fyl[ii1] += fyij;
@@ -596,11 +604,15 @@ int loop_13()
 		    fxij = fij*rxij;
 		    fyij = fij*ryij;
 		    fzij = fij*rzij;
-		    // force on atom ii
+
+		    if (isWolfOn) // contribution to the virial
+		       	virial_inter = virial_inter + fxij*rxij + fyij*ryij + fzij*rzij;
+
+		    // force on atom ii1
 		    fxl[ii1] += fxij;
 		    fyl[ii1] += fyij;
 		    fzl[ii1] += fzij;
-		    // force on atom jj
+		    // force on atom ii2
 		    fxl[ii2] -= fxij;
 		    fyl[ii2] -= fyij;
 		    fzl[ii2] -= fzij;
@@ -662,6 +674,8 @@ int loop_13()
 		    fxij = fij*rxij;
 		    fyij = fij*ryij;
 		    fzij = fij*rzij;
+		    // contribution to the virial
+		    virial_inter = virial_inter + fxij*rxij + fyij*ryij + fzij*rzij;
 		    // force on atom ii1
 		    fxl[ii1] += fxij;
 		    fyl[ii1] += fyij;
@@ -796,6 +810,10 @@ int loop_12()
 		fxij = fij*rxij;
 		fyij = fij*ryij;
 		fzij = fij*rzij;
+
+		if (isWolfOn) // contribution to the virial
+		    virial_inter = virial_inter + fxij*rxij + fyij*ryij + fzij*rzij;
+
 		// force on atom ii1
 		fxl[ii1] += fxij;
 		fyl[ii1] += fyij;
@@ -862,6 +880,8 @@ int loop_12()
 		fxij = fij*rxij;
 		fyij = fij*ryij;
 		fzij = fij*rzij;
+	       	// contribution to the virial
+		virial_inter = virial_inter + fxij*rxij + fyij*ryij + fzij*rzij;
 		// force on atom ii1
 		fxl[ii1] += fxij;
 		fyl[ii1] += fyij;
@@ -1011,6 +1031,8 @@ int loop_nbp()
 		fxij = fij*rxij;
 		fyij = fij*ryij;
 		fzij = fij*rzij;
+	       	// contribution to the virial
+		virial_inter = virial_inter + fxij*rxij + fyij*ryij + fzij*rzij;
 		// force on atom ii1
 		fxl[ii1] += fxij;
 		fyl[ii1] += fyij;
@@ -1091,6 +1113,8 @@ int loop_nbp()
 		fxij = fij*rxij;
 		fyij = fij*ryij;
 		fzij = fij*rzij;
+	       	// contribution to the virial
+		virial_inter = virial_inter + fxij*rxij + fyij*ryij + fzij*rzij;
 		// force on atom ii1
 		fxl[ii1] += fxij;
 		fyl[ii1] += fyij;
@@ -1235,6 +1259,9 @@ int ewald_vacuum()
 	fyl[ii] += fij*qry;
 	fzl[ii] += fij*qrz;
     }
+
+    // Does this term have additional contribution to the pressure?
+    // Or is it already included in the ewald??
 }
 
 int wolf_con()
@@ -1268,6 +1295,9 @@ int erfrc()
     usflj = 0.0;
     uvacuum = 0.0;
     uGz0 = 0.0;
+
+    // pressure related
+    virial_inter = 0.0;
 
     // zero forces
     for (ii=0;ii<natom;ii++)
@@ -1304,6 +1334,8 @@ int erfrc()
 	    uGz0 *= const_columb;
 	    uewald += uGz0; // add Gz=0 term into total ewald energy for 1D ewald
 	}
+	// add the virial contribution from ewald
+	virial_inter = virial_inter + uewald;
     }
     else if (isWolfOn) // if wolf is on
 	wolf_con();

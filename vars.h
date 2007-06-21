@@ -73,6 +73,8 @@
 #define Rgas		8.314472 /* J/mol/K */
 #define rRgas		0.120272219 /* reciprocal of Rgas */
 #define const_columb	1389355.1051  // unit is J/mol. Na*(1.602177e-19)^2/4/PI/epsilon0/(1.0e-10)
+#define kb_1e30		1.3806505e7   // kb/1e-30  
+#define virial_to_pressure	553512.954376   // 1.0/(3.0*6.0221415e-7)
 #define pi		3.141592653589793
 #define Euler_const	0.577215665
 #define tolerant_err	1.0e-8
@@ -186,17 +188,11 @@ double uGz0; // 1D ewald Gz=0 term
 double LJswitch; // switch factor for LJ
 double usflj; // solid-fluid LJ energy
 
+double virial;
+double virial_inter;
+double virial_intra;
+double pideal;
 double pinst; // instantaneous pressure
-double pvdw;
-double pbond, pangle, pdih, pimp;
-double pewald;
-double preal; // pressure contribution from real part of ewald
-double pfourier;
-double pself;
-double pexcl;
-double pvacuum;
-double pGz0;
-double pusflj;
 
 int nfree; // freedom
 double tinst; // instantaneous temperature

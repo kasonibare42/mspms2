@@ -42,6 +42,8 @@ int bndfrc()
 		fxij = fij*rxij;
 		fyij = fij*ryij;
 		fzij = fij*rzij;
+		// contribution to virial
+		virial_intra = virial_intra + fxij*rxij + fyij*ryij + fzij*rzij;
 		// force on atom 1
 		fxs[ii1] += fxij;
 		fys[ii1] += fyij;
@@ -62,6 +64,8 @@ int bndfrc()
 		fxij = fij*rxij;
 		fyij = fij*ryij;
 		fzij = fij*rzij;
+		// contribution to virial
+		virial_intra = virial_intra + fxij*rxij + fyij*ryij + fzij*rzij;
 		// force on atom 1
 		fxs[ii1] += fxij;
 		fys[ii1] += fyij;
@@ -79,6 +83,8 @@ int bndfrc()
 		fxij = fij*rxij;
 		fyij = fij*ryij;
 		fzij = fij*rzij;
+		// contribution to virial
+		virial_intra = virial_intra + fxij*rxij + fyij*ryij + fzij*rzij;
 		// force on atom 1
 		fxs[ii1] += fxij;
 		fys[ii1] += fyij;
@@ -171,6 +177,8 @@ int aglfrc()
 		fxc = gamma*(xab-xbc*cost)*rrbc; // vector 2
 		fyc = gamma*(yab-ybc*cost)*rrbc;
 		fzc = gamma*(zab-zbc*cost)*rrbc;
+		// for angle potentials without r as variable
+		// the net contribution to virial is zero
 		fxs[iia] += fxa;
 		fys[iia] += fya;
 		fzs[iia] += fza;
@@ -182,6 +190,8 @@ int aglfrc()
 		fzs[iic] += fzc;
 		break;
 	    case angle_TRwater: // Toukan & Rhaman water potential
+		// Not sure how virial should be calculated for
+		// this angle potential form. prolly zero?? 
 		// H-H
 		vec_13_x = xx[iia] - xx[iic];
 		vec_13_y = yy[iia] - yy[iic];
@@ -271,6 +281,7 @@ int dihfrc()
     double fij;
 
     // dihedral torsion calculations
+    // dihedral has no contribution to virial
     for (ii=0;ii<ndih;ii++)
     {
 	// The atom list of dihedrals must be ordered as 0-1-2-3
@@ -513,6 +524,8 @@ int impfrc() // improper energy/force calculations
     double phi, alpha_temp;
     double fij;
 
+    // improper dihedral makes no contribution
+    // to virial according to DL_POLY manual
     for (ii=0;ii<nimp;ii++)
     {
 	switch (imp_type[ii])
@@ -664,11 +677,15 @@ int rafrc()
 {
     int ii;
 
+    // energies
     uintra = 0.0;
     ubond = 0.0;
     uangle = 0.0;
     udih = 0.0;
     uimp = 0.0;
+
+    // pressure related
+    virial_intra = 0.0;
 
     for (ii=0;ii<natom;ii++)
 	fxs[ii] = fys[ii] = fzs[ii] = 0.0;
