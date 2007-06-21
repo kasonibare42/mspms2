@@ -60,6 +60,7 @@ int init_vars()
     nframe = 0; // number of frames in trajectory file
 
     // set the starting step to 1, will be changed by load it if it is continue run
+    istep = 0; // istep is used for printit, the first print should be at step zero
     nstep_start = 1;
 
     // initiate counters and accumulators
@@ -1062,7 +1063,12 @@ int saveit()
 
     fwrite(&vts,sizeof(double),1,fpsave);
     fwrite(&rts,sizeof(double),1,fpsave);
+    fwrite(&vbs,sizeof(double),1,fpsave);
 
+    fwrite(&boxlx,sizeof(double),1,fpsave);
+    fwrite(&boxly,sizeof(double),1,fpsave);
+    fwrite(&boxlz,sizeof(double),1,fpsave);
+    fwrite(&boxv,sizeof(double),1,fpsave);
 
     fwrite(&istep,sizeof(int),1,fpsave);
     fwrite(icounter,sizeof(int),num_counter_max,fpsave);
@@ -1087,6 +1093,14 @@ int loadit()
     fread(vy,sizeof(double),natom,fpload);
     fread(vz,sizeof(double),natom,fpload);
 
+    // recaculate kinetic energy and temperature using the loaded velocities
+    ukin = 0.0;
+    for (ii=0;ii<natom;ii++)
+	ukin += aw[ii]*(vx[ii]*vx[ii]+vy[ii]*vy[ii]+vz[ii]*vz[ii]);
+    ukin = 0.5*ukin;
+    tinst = 2.0*ukin/(Rgas*nfree);
+
+    // calculate instant temperature
     fread(&qq,sizeof(double),1,fpload);
     fread(&ps,sizeof(double),1,fpload);
     fread(&gg,sizeof(double),1,fpload);
@@ -1098,10 +1112,24 @@ int loadit()
 
     fread(&vts,sizeof(double),1,fpload);
     fread(&rts,sizeof(double),1,fpload);
+    fread(&vbs,sizeof(double),1,fpload);
 
-    fread(&istep,sizeof(int),1,fpload);
-    fread(icounter,sizeof(int),num_counter_max,fpload);
-    fread(accumulator,sizeof(double),num_counter_max,fpload);
+    fread(&boxlx,sizeof(double),1,fpload);
+    fread(&boxly,sizeof(double),1,fpload);
+    fread(&boxlz,sizeof(double),1,fpload);
+    fread(&boxv,sizeof(double),1,fpload);
+
+    // recalculate the thermostat energy
+    utsbs = 0.5*Qbs*vbs*vbs + 0.5*Qts*vts*vts + (nfree+1)*Rgas*treq*rts + preq*boxv*6.0221415e-7;
+
+    // read counters and accumulators only if its a continue run
+    if (fStart_option==continue_run)
+    {
+       	fread(&istep,sizeof(int),1,fpload);
+	nstep_start = istep + 1;
+       	fread(icounter,sizeof(int),num_counter_max,fpload);
+       	fread(accumulator,sizeof(double),num_counter_max,fpload);
+    }
 
     fclose(fpload);
 }
