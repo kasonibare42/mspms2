@@ -1223,7 +1223,7 @@ int main (int argc, char *argv[])
 	icounter[11]--;
 	// if still in equilibrium run
 	// do not do averages
-	if (icounter[11]<0) continue;
+	if (icounter[11]>=0) continue;
 
 	// accumulators
 	accumulator[0][0] += utot;
