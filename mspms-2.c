@@ -724,6 +724,8 @@ int echo()
     fprintf(fpouts,"uinter=%lf\n",uinter);
     fprintf(fpouts,"uintra=%lf\n",uintra);
     fprintf(fpouts,"uvdw=%lf\n",uvdw);
+    fprintf(fpouts,"uer_vdw=%lf\n",uvdw-unbp_vdw);
+    fprintf(fpouts,"unbp_vdw=%lf\n",unbp_vdw);
     fprintf(fpouts,"ubond=%lf\n",ubond);
     fprintf(fpouts,"uangle=%lf\n",uangle);
     fprintf(fpouts,"udih=%lf\n",udih);
@@ -802,6 +804,21 @@ int make_exclude_list()
 	    else if (dih_idx[jj][3] == ii && dih_idx[jj][0] > ii)
 	    {
 		excllist[nexcllist] = dih_idx[jj][0];
+		nexcllist++;
+	    }
+	    assert(nexcllist<exclude_max);
+	}
+	// exclude non-bonded atoms
+	for (jj=0;jj<nnbp;jj++)
+	{
+	    if (nbp_idx[jj][0] == ii && nbp_idx[jj][1] > ii)
+	    {
+		excllist[nexcllist] = nbp_idx[jj][1];
+		nexcllist++;
+	    }
+	    else if (nbp_idx[jj][1] == ii && nbp_idx[jj][0] > ii)
+	    {
+		excllist[nexcllist] = nbp_idx[jj][0];
 		nexcllist++;
 	    }
 	    assert(nexcllist<exclude_max);

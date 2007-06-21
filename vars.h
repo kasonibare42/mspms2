@@ -173,7 +173,8 @@ int istep; // counter of step, current step
 double utot;
 double upot, ukin;
 double uinter, uintra; // inter and intra molecular energy
-double uvdw; // van der wall energy, LJ energy
+double uvdw; // van der wall energy, LJ energy, include unbp
+double unbp_vdw; // nonbonded pair energy
 double ubond, uangle, udih, uimp;
 double uewald; // total ewald energy, refer to Frenkel and Smit, eq. 12.1.25
 double ureal; // real part of ewald, term 3 in 12.1.25

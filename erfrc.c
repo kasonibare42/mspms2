@@ -1107,15 +1107,10 @@ int loop_nbp()
 
     // add into total energy
     uvdw += uij_vdwnbp; // still need 4.0
+    unbp_vdw += uij_vdwnbp; // still need 4.0
     ureal += uij_realnbp; // still neeed constant
     uGz0 += uij_Gz0nbp/(2.0*boxlz); // still need constant
 }
-
-
-
-
-
-
 
 
 
@@ -1262,6 +1257,7 @@ int erfrc()
 
     // zero energies
     uvdw = 0.0;
+    unbp_vdw = 0.0;
     ureal = 0.0;
     uexcl = 0.0;
     ufourier = 0.0;
@@ -1277,13 +1273,15 @@ int erfrc()
     for (ii=0;ii<natom;ii++)
 	fxl[ii] = fyl[ii] = fzl[ii] = 0.0;
 
-    // i-j loop, 1-4 loop, 1-3 loop and 1-2 loop
+    // i-j loop, nonboned loop, 1-4 loop, 1-3 loop and 1-2 loop
     loop_ij();
+    loop_nbp();
     loop_14();
     loop_13();
     loop_12();
     // add 4.0 and constant to LJ and real part ewald energy
     uvdw *= 4.0;
+    unbp_vdw *= 4.0;
     ureal *= const_columb;
     uexcl *= const_columb;
 
