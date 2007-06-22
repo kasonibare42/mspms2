@@ -601,18 +601,18 @@ int vver_nh_3()
 }
 
 // Following codes are modified from Dr. Maginn's sample codes.
-// However, the codes seem to be wrong or at least I do not understand
-// the sample code very well.
-// They are not used now
-int nvtnh()
+int nvt_nh_operator()
 {
     int ii;
     double mvsq;
     double AA;
 
-    mvsq = 2.0*ukin;
+    mvsq = 0.0;
+    for (ii=0;ii<natom;ii++)
+	mvsq += aw[ii]*(vx[ii]*vx[ii]+vy[ii]*vy[ii]+vz[ii]*vz[ii]);
+
     // compute the driving force for the thermostat
-    Gts = (mvsq - NRT)/Qts;
+    Gts = (mvsq - nfree*Rgas*treq)/Qts;
 
     // advance the thermostat velocity 1/4 time step
     vts = vts + dt_outer4*Gts;
@@ -632,11 +632,68 @@ int nvtnh()
 
     // compute new driving force for the thermostat and advance velocities @ 1/4 time step
     mvsq = mvsq*AA*AA;
-    Gts = (mvsq - NRT)/Qts;
+
+    Gts = (mvsq - nfree*Rgas*treq)/Qts;
+
     vts = vts + dt_outer4*Gts;
 
-    ukin = 0.5*mvsq;
+    // extra energy for the thermostat for conserving energy
+    unhts = 0.5*Gts*vts*vts + treq*Rgas*rts*nfree;
 
-    ukin_nhts = 0.5*Gts*vts*vts;
-    upot_nhts = treq*Rgas*rts*nfree;
+    // calculate kinetic energy and temperature
+    ukin = 0.5*mvsq;
+    tinst = 2.0*ukin*rRgas/nfree;
+}
+
+int nvt_respa() // velocity verlet
+{
+    int ii, ll;
+
+    nvt_nh_operator();
+
+    for (ii=0;ii<natom;ii++)
+    {
+	// the factor of 1.0e-5 is based on Angstrom (from the force)
+	// and femto second (from delt)
+	vx[ii] += (deltby2*fxl[ii]*1.0e-5/aw[ii]);
+	vy[ii] += (deltby2*fyl[ii]*1.0e-5/aw[ii]);
+	vz[ii] += (deltby2*fzl[ii]*1.0e-5/aw[ii]);
+    }
+
+    for (ll=0;ll<nstep_inner;ll++)
+    {
+	for (ii=0;ii<natom;ii++)
+	{
+	    vx[ii] += (deltsby2*fxs[ii]*1.0e-5/aw[ii]);
+	    vy[ii] += (deltsby2*fys[ii]*1.0e-5/aw[ii]);
+	    vz[ii] += (deltsby2*fzs[ii]*1.0e-5/aw[ii]);
+	    xx[ii] = xx[ii] + delts*vx[ii]*1.0e-5;
+	    yy[ii] = yy[ii] + delts*vy[ii]*1.0e-5;
+	    zz[ii] = zz[ii] + delts*vz[ii]*1.0e-5;
+	}
+
+	// intra forces, short ranged
+	rafrc();
+
+	// compute the pseudo velocity at delts
+	for (ii=0;ii<natom;ii++)
+	{
+	    vx[ii] += (deltsby2*fxs[ii]*1.0e-5/aw[ii]);
+	    vy[ii] += (deltsby2*fys[ii]*1.0e-5/aw[ii]);
+	    vz[ii] += (deltsby2*fzs[ii]*1.0e-5/aw[ii]);
+	}
+    }
+
+    // inter forces, long ranged
+    erfrc();
+
+    // use the new forces to calculate the new velocities at t+delt
+    for (ii=0;ii<natom;ii++)
+    {
+	vx[ii] += (deltby2*fxl[ii]*1.0e-5/aw[ii]);
+	vy[ii] += (deltby2*fyl[ii]*1.0e-5/aw[ii]);
+	vz[ii] += (deltby2*fzl[ii]*1.0e-5/aw[ii]);
+    }
+
+    nvt_nh_operator();
 }

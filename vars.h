@@ -214,8 +214,7 @@ double roff2_minus_ron2_cube; // used for switch potential
 
 // following variables are for nose hoover method
 double Gts, Qts, vts, rts;
-double dt_outer2, dt_outer4, NRT;
-double ukin_nhts, upot_nhts;
+double dt_outer2, dt_outer4;
 // NPT 
 double Gbs, Qbs, vbs, rbs;
 double dt_outer8;

@@ -106,10 +106,6 @@ int init_vars()
 
     // nose hoover
     // following for Dr. Maginn's nose hoover
-    // they are not used anymore
-    // ukin_nhts = 0.0;
-    // upot_nhts = 0.0;
-    // NRT = Rgas*treq*nfree;
     // Gts = 0.0;
     // vts = 0.0;
     // rts = 0.0;
@@ -118,6 +114,8 @@ int init_vars()
      * where Omega is a parameter related to the mass of the thermostat
      * for this program, we read in the Qts directly.
      */
+    
+    // variables for nose-hoover NVT, see frenkel and smit
     delt_sqby2 = delt*delt/2.0;
     delts_sqby2 = delts*delts/2.0;
     unhts = 0.0;
