@@ -32,6 +32,8 @@ extern int init_npt_respa();
 extern int npt_respa();
 
 
+int calculate_ljlrc();
+
 /* Initiate variables */
 int init_vars()
 {
@@ -40,13 +42,14 @@ int init_vars()
     char buffer[200];
     const int datalen = 200;
 
+    fprintf(stderr,"Initializing variables...\n");
+    fprintf(fpouts,"Initializing variables...\n");
+
     // initiate files
     // output file is initialized already at the very beginning of the run
     fplog = fopen(LOGFILE,"w");
     fptrj = fopen(MOVIE,"wb");
 
-    fprintf(stderr,"Initializing variables...\n");
-    fprintf(fpouts,"Initializing variables...\n");
     for (ii=0;ii<nmole;ii++)
     {
 	mw[ii] = 0.0;
@@ -283,6 +286,8 @@ int init_vars()
 
     // read in coordinates
     fpcoords = fopen(COORDSIN,"r");
+    fprintf(stderr,"reading initial coordinates of the system...\n");
+    fprintf(fpouts,"reading initial coordinates of the system...\n");
     // fscanf(fpcoords, "%[^\n]", buffer);
     fgets(buffer,datalen,fpcoords);
     fgets(buffer,datalen,fpcoords);
@@ -291,6 +296,75 @@ int init_vars()
 	fscanf(fpcoords,"%s %lf %lf %lf\n",buffer,&xx[ii],&yy[ii],&zz[ii]);
     }
     fclose(fpcoords);
+
+    double uljlrc_term1, uljlrc_term2;
+    double pljlrc_term1, pljlrc_term2;
+    int mm, nn;
+    int atomid_1, atomid_2;
+    double sigmaij, epsilonij;
+    int isSameSpecie;
+    double temp1, temp2, temp3;
+
+    fprintf(stderr,"calculating LJ long range corrections...\n");
+    fprintf(fpouts,"calculating LJ long range corrections...\n");
+
+    uljlrc_term1 = (8.0/9.0)*pi*pow(rcutoff,-9.0);
+    uljlrc_term2 = -(8.0/3.0)*pi*pow(rcutoff,-3.0); 
+    pljlrc_term1 = (32.0/9.0)*pi*pow(rcutoff,-9.0);
+    pljlrc_term2 = -(16.0/3.0)*pi*pow(rcutoff,-3.0);
+    // calculate long range correction terms for single molecules
+    for (mm=0;mm<nspecie;mm++)
+    {
+	for (nn=0;nn<nspecie;nn++)
+	{
+	    uljlrc_term[mm][nn] = 0.0;
+	    pljlrc_term[mm][nn] = 0.0;
+	    // loop through the atoms in one molecule of specie mm
+	    for (ii=0;ii<natom_per_mole[mm];ii++)
+	    {
+		// use the first molecule of one specie to do the calculation
+		atomid_1 = specie_first_atom_idx[mm] + ii;
+		// loop through all the atoms in one molecule of specie nn
+		for (jj=0;jj<natom_per_mole[nn];jj++)
+		{
+		    atomid_2 = specie_first_atom_idx[nn] + ii;
+		    sigmaij = 0.5*(sigma[atomid_1]+sigma[atomid_2]);
+		    epsilonij = sqrt(epsilon[atomid_1]*epsilon[atomid_2]);
+		    temp1 = pow(sigmaij,9.0)*uljlrc_term1 + pow(sigmaij,3.0)*uljlrc_term2;
+		    temp2 = epsilonij*pow(sigmaij,3.0);
+		    temp3 = pow(sigmaij,9.0)*pljlrc_term1 + pow(sigmaij,3.0)*pljlrc_term2;
+		    uljlrc_term[mm][nn] += temp1*temp2;
+		    pljlrc_term[mm][nn] += temp3*temp2;
+
+		} // through all atom in one molecule of specie 2
+	    } // through all atom in one molecule of specie 1
+
+	} // loop through specie 2
+    } // loop through speice 1
+
+    // calculate the total lj lrc
+    calculate_ljlrc();
+
+}
+
+int calculate_ljlrc()
+{
+    int mm, nn;
+
+    // calculate the lrc for the real system
+    uljlrc = 0.0;
+    pljlrc = 0.0;
+    for (mm=0;mm<nspecie;mm++)
+    {
+	for (nn=0;nn<nspecie;nn++)
+	{
+	    uljlrc += (uljlrc_term[mm][nn]*nmole_per_specie[mm]*nmole_per_specie[nn]/boxv);
+	    pljlrc += 
+		(pljlrc_term[mm][nn]*nmole_per_specie[mm]*nmole_per_specie[nn]/boxv/boxv);
+	}
+    }
+    pljlrc = pljlrc*J_mol_A3_to_Pascal; // convert J/mol/A^3 to Pascal
+
 }
 
 int ending()
@@ -841,7 +915,13 @@ int echo()
     fprintf(fpouts,"virial_inter=%lf\n",virial_inter);
     fprintf(fpouts,"virial_intra=%lf\n",virial_intra);
     fprintf(fpouts,"pideal=%lf\n",pideal=natom/(boxlx*boxly*boxlz)*tinst*kb_1e30);
-    fprintf(fpouts,"pressure=%lf\n",pinst=pideal+(virial_inter+virial_intra)*virial_to_pressure/(boxlx*boxly*boxlz));
+    calculate_ljlrc();
+    pinst = pideal
+	+ (virial_inter+virial_intra)*virial_to_pressure/(boxlx*boxly*boxlz)
+	+ pljlrc;
+    fprintf(fpouts,"pressure=%lf\n",pinst);
+
+    fprintf(fpouts,"uljlrc=%lf\npljlrc=%lf\n",uljlrc,pljlrc);
 
     fflush(fpouts);
 }
@@ -1013,15 +1093,20 @@ int printit()
     // add energy of thermostat, if nose hoover is not used, they will just be zero
     utot = utot + unhts + unhtss + utsbs;
     pideal=natom/(boxlx*boxly*boxlz)*tinst*kb_1e30;
-    pinst = pideal+(virial_inter+virial_intra)*virial_to_pressure/(boxlx*boxly*boxlz);
-    fprintf(stderr,"%10d %10.4le %10.4le %10.4le %10.4le %10.4le %10.4le\n",istep,utot,upot,ukin,tinst,virial,pinst);
-    fprintf(fplog,"%10d %10.4le %10.4le %10.4le %10.4le %10.4le %10.4le %10.4le %10.4le %10.4le\n",
+    calculate_ljlrc();
+    pinst = pideal
+	+ (virial_inter+virial_intra)*virial_to_pressure/(boxlx*boxly*boxlz)
+	+ pljlrc;
+    fprintf(stderr,"%10d %10.4le %10.4le %10.4le %10.4le %10.4le %10.4le %10.4le\n",
+	    istep,utot,upot,ukin,tinst,virial,pinst,boxv);
+
+    fprintf(fplog,"%10d %10.4le %10.4le %10.4le %10.4le %10.4le %10.4le %10.4le %10.4le %10.4le ",
 	    istep,utot,upot,ukin,tinst,uinter,uintra,uvdw,ubond,uangle);
 
-    fprintf(fplog,"            %10.4le %10.4le %10.4le %10.4le %10.4le %10.4le %10.4le %10.4le %10.4le\n",
+    fprintf(fplog,"%10.4le %10.4le %10.4le %10.4le %10.4le %10.4le %10.4le %10.4le %10.4le ",
 	    uangle,udih,uimp,uewald,usflj,unhts,unhtss,virial,virial_inter,virial_intra,utsbs);
 
-    fprintf(fplog,"            %10.4le %10.4le\n",
+    fprintf(fplog,"%10.4le %10.4le\n",
 	    utsbs,boxv);
 }
 
@@ -1181,7 +1266,7 @@ int loadit()
     fread(&boxv,sizeof(double),1,fpload);
 
     // recalculate the thermostat energy
-    utsbs = 0.5*Qbs*vbs*vbs + 0.5*Qts*vts*vts + (nfree+1)*Rgas*treq*rts + preq*boxv*6.0221415e-7;
+    utsbs = 0.5*Qbs*vbs*vbs + 0.5*Qts*vts*vts + (nfree+1)*Rgas*treq*rts + preq*boxv*PascalA3_to_J_mol;
 
     // read counters and accumulators only if its a continue run
     if (fStart_option==continue_run)

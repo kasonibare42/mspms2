@@ -84,6 +84,8 @@
 #define parallel_to_z_err		1.0e-6
 // 3*pi^2*theta, assume the same charge density as graphite, theta=0.382 A^-2, used for hypergeo nanotube
 #define c3_pisq_theta 	11.3105666436484 
+#define PascalA3_to_J_mol	6.0221415e-7 // Na*1e-30 turn preq*boxv to J/mol
+#define J_mol_A3_to_Pascal	1660538.86313 // 1/6.0221415e-7 = 1.0/(6.0221415e23*1.0e-30)
 
 
 int nspecie, nmole, natom; /* total number of molecules, atoms, species */
@@ -291,6 +293,13 @@ int ngrid_x, ngrid_y, ngrid_z, ngrid_total;
 int ncube_x, ncube_y, ncube_z, ncube_total;
 double xcenter, ycenter, zcenter;
 double xmin, xmax, ymin, ymax, zmin, zmax;
+
+// long range correction related variables
+// every unique molecule should have two types of long range corrections
+// one is intra-specie and the other is cross-specie(inter-specie)
+double uljlrc, pljlrc;
+double uljlrc_term[nspecie_max][nspecie_max];
+double pljlrc_term[nspecie_max][nspecie_max];
 
 // counters and accumulators
 int icounter[num_counter_max];

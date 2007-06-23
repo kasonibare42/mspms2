@@ -9,6 +9,7 @@
 
 extern int erfrc();
 extern int rafrc();
+extern int calculate_ljlrc();
 
 int init_npt_respa()
 {
@@ -42,9 +43,9 @@ int init_npt_respa()
 	    rts = 0.0;
 
 	    // extra enery from the thermo/barostat for conserve energy
-	    // utsbs = 0.5*Qbs*vbs*vbs + 0.5*Qts*vts*vts + (nfree+1)*Rgas*treq*rts*1.0e-10 + preq*boxv*6.0221415e-7;
+	    // utsbs = 0.5*Qbs*vbs*vbs + 0.5*Qts*vts*vts + (nfree+1)*Rgas*treq*rts*1.0e-10 + preq*boxv*PascalA3_to_J_mol;
 
-	    utsbs = 0.5*Qbs*vbs*vbs + 0.5*Qts*vts*vts + (nfree+1)*Rgas*treq*rts + preq*boxv*6.0221415e-7;
+	    utsbs = 0.5*Qbs*vbs*vbs + 0.5*Qts*vts*vts + (nfree+1)*Rgas*treq*rts + preq*boxv*PascalA3_to_J_mol;
  
 	    // printf("initiate   vts=%lf  vbs=%lf  utsbs=%lf\n",vts,vbs,utsbs);
 
@@ -75,8 +76,13 @@ int npt_nh_operator()
 
     // the virial is 3.0*real_virial, unit is J/mol
     // preq here should be just the external pressure?
-    pdiff = virial_inter + virial_intra
-	- preq*boxv*3.0*6.0221415e-7; //6.0221415e-7 is Na*1e-30 turn preq*boxv to J/mol
+
+    // calculate the long range corrections
+    calculate_ljlrc();
+
+    // calculate the difference 3*V*(P_internal - P_external)
+    pdiff = virial_inter + virial_intra + pljlrc*boxv*3.0*PascalA3_to_J_mol // turn pascal to J/mol
+	- preq*boxv*3.0*PascalA3_to_J_mol; //6.0221415e-7 is Na*1e-30 turn preq*boxv to J/mol
 
     // printf("0   pdiff=%lf Gts=%lf vts=%lf vbs=%lf\n",pdiff,Gts,vts,vbs);
 
@@ -156,9 +162,9 @@ int npt_nh_operator()
     vts  = vts + dt_outer4*Gts;
 
     // extra enery from the thermo/barostat for conserve energy
-    // utsbs = 0.5*Qbs*vbs*vbs + 0.5*Qts*vts*vts + (nfree+1)*Rgas*treq*rts*1.0e-10 + preq*boxv*6.0221415e-7;
+    // utsbs = 0.5*Qbs*vbs*vbs + 0.5*Qts*vts*vts + (nfree+1)*Rgas*treq*rts*1.0e-10 + preq*boxv*PascalA3_to_J_mol;
 
-    utsbs = 0.5*Qbs*vbs*vbs + 0.5*Qts*vts*vts + (nfree+1)*Rgas*treq*rts + preq*boxv*6.0221415e-7;
+    utsbs = 0.5*Qbs*vbs*vbs + 0.5*Qts*vts*vts + (nfree+1)*Rgas*treq*rts + preq*boxv*PascalA3_to_J_mol;
 
     // printf("3   utsbs=%lf Gts=%lf Gbs=%lf vts=%lf BB=%lf vbs=%lf\n",utsbs,Gts,Gbs,vts,BB,vbs);
 
@@ -168,7 +174,11 @@ int npt_nh_operator()
 
     // calculate the total pressure
     pideal=natom/boxv*tinst*kb_1e30;
-    pinst = pideal+(virial_inter+virial_intra)*virial_to_pressure/boxv;
+    // pljlrc is calculated already at the beginning of this function
+    // and did not change during above calculations
+    pinst = pideal
+	+ (virial_inter+virial_intra)*virial_to_pressure/boxv
+	+ pljlrc;
 
     // printf("tinst=%lf  vts=%lf  vbs=%lf\n",tinst,vts,vbs);
 
