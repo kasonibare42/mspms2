@@ -2,8 +2,8 @@
 298.0                  Temperature
 300.0 300.0 300.0      box length, width, height
 150.0 150.0 150.0      rcuton, rcutoff, rcutoffelec
-100 1 5             number of total steps, starting option (1-new;2-continue;3-new from old), equilibrium steps
-10 10 100 100 0        number of steps for averages, print, save, snapshots, trajectory
+100000 1 5000             number of total steps, starting option (1-new;2-continue;3-new from old), equilibrium steps
+1000 100 1000 1000 0        number of steps for averages, print, save, snapshots, trajectory
 1.0 5                  delt (fs), number of inner steps (cant be zero, 1 is the minimum)
 0.0                    1,4 LJ modifier (0.0 for no 14 TraPPE, 0.5 for OPLS)
 2 3                    ensemble type, 0-nve, 1-nvt, 2-npt; NH function number (always 3, no longer used)
@@ -20,7 +20,7 @@
 
    MDnpt
 8000.0                 required pressure (pascal)
-1.0e8 1.0e7           Qts Qbs (mass of thermostat, barostat), larger number = weaker coupling
+1.0e8 1.0e8           Qts Qbs (mass of thermostat, barostat), larger number = weaker coupling
 
    hypergeo
 1 3.4 232.805216       number of tubes, sigma, epsilon(J/mol)
