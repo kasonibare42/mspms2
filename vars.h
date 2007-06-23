@@ -87,6 +87,14 @@
 
 
 int nspecie, nmole, natom; /* total number of molecules, atoms, species */
+int nmole_per_specie[nspecie_max]; // number of molecules in a certain specie
+int natom_per_mole[nspecie_max];  // number of atoms in a molecule, which is belong to a certain specie
+int nbond_per_mole[nspecie_max];
+int nangle_per_mole[nspecie_max];
+int ndih_per_mole[nspecie_max];
+int nimp_per_mole[nspecie_max];
+int nnbp_per_mole[nspecie_max];
+int specie_first_atom_idx[nspecie_max+1];
 int mole_first_atom_idx[nmole_max+1]; // index of the first atom in a molecule
 double mole_xx[nmole_max], mole_yy[nmole_max], mole_zz[nmole_max];
 int mole_status[nmole_max]; // the status of the molecule, e.g. vacancy etc.

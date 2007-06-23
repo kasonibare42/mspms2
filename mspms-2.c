@@ -559,6 +559,9 @@ int readins()
     int isFirstAtom;
     int last_mole_id;
 
+    int position_counter;
+    int starting_position;
+
     fprintf(stderr,"Reading input file...\n");
     fprintf(fpouts,"Reading input file...\n");
 
@@ -602,8 +605,25 @@ int readins()
     assert(nspecie<=nspecie_max);
 
     // read in atom list
-    fscanf(fpcfg, "%d atoms\n", &natom);
+    fgets(buffer,datalen,fpcfg);
+    sscanf(buffer,"%d atoms%n",&natom,&position_counter);
+    // printf("natom=%d  counter=%d\n",natom,position_counter);
+    // printf("%s",&buffer[position_counter]);
+    // fscanf(fpcfg, "%d atoms%n", &natom,&position_counter);
     assert(natom<=natom_max);
+    // read in the information of how many molecules in one specie and
+    // how many atoms in one molecule for a certain specie
+    specie_first_atom_idx[0] = 0;
+    starting_position = position_counter;
+    for (ii=0;ii<nspecie;ii++)
+    {
+	sscanf(&buffer[starting_position],"%d %d%n",&nmole_per_specie[ii],&natom_per_mole[ii],&position_counter);
+	// advance the reading position in the string to next data section
+	starting_position += position_counter;
+	// printf("%d %d ",nmole_per_specie[ii],natom_per_mole[ii]);
+	specie_first_atom_idx[ii+1] = specie_first_atom_idx[ii] + nmole_per_specie[ii]*natom_per_mole[ii];
+    }
+    // readin detailed atom information
     nmole = 0;
     isFirstAtom = 1;
     last_mole_id = 0;
@@ -630,8 +650,17 @@ int readins()
     mole_first_atom_idx[nmole] = atomid + 1; // set the boundary of the last molecule
 
     // read in bond list
-    fscanf(fpcfg, "%d bonds\n", &nbond);
+    // fscanf(fpcfg, "%d bonds\n", &nbond);
+    sscanf(fgets(buffer,datalen,fpcfg),"%d bonds%n",&nbond,&position_counter);
     assert(nbond<=nbond_max);
+    // readin in how many bonds in a molecule of a certain specie
+    starting_position = position_counter;
+    for (ii=0;ii<nspecie;ii++)
+    {
+	sscanf(&buffer[starting_position],"%d%n",&nbond_per_mole[ii],&position_counter);
+	starting_position += position_counter;
+    }
+    // readin detailed bond information
     last_mole_id = 0;
     for (ii=0;ii<nbond;ii++)
     {
@@ -651,8 +680,17 @@ int readins()
     mole_first_bond_idx[last_mole_id] = ii;
 
     // read in angle list
-    fscanf(fpcfg, "%d angles\n", &nangle);
+    // fscanf(fpcfg, "%d angles\n", &nangle);
+    sscanf(fgets(buffer,datalen,fpcfg),"%d angles%n",&nangle,&position_counter);
     assert(nangle<=nangle_max);
+    // readin in how many angles in a molecule of a certain specie
+    starting_position = position_counter;
+    for (ii=0;ii<nspecie;ii++)
+    {
+	sscanf(&buffer[starting_position],"%d%n",&nangle_per_mole[ii],&position_counter);
+	starting_position += position_counter;
+    }
+    // read in detailed angle information
     last_mole_id = 0;
     for (ii=0;ii<nangle;ii++)
     {
@@ -674,8 +712,17 @@ int readins()
     mole_first_angle_idx[last_mole_id] = ii;
 
     // read in dihedral list
-    fscanf(fpcfg, "%d dihedrals\n", &ndih);
+    // fscanf(fpcfg, "%d dihedrals\n", &ndih);
+    sscanf(fgets(buffer,datalen,fpcfg),"%d dihedrals%n",&ndih,&position_counter);
     assert(ndih<=ndih_max);
+    // read in how many angles in a molecule of a certain specie
+    starting_position = position_counter;
+    for (ii=0;ii<nspecie;ii++)
+    {
+	sscanf(&buffer[starting_position],"%d%n",&nangle_per_mole[ii],&position_counter);
+	starting_position += position_counter;
+    }
+    // readin detailed dihedral information
     last_mole_id = 0;
     for (ii=0;ii<ndih;ii++)
     {
@@ -695,12 +742,29 @@ int readins()
     mole_first_dih_idx[last_mole_id] = ii;
 
     // read in improper list
-    fscanf(fpcfg, "%d impropers\n", &nimp);
+    // fscanf(fpcfg, "%d impropers\n", &nimp);
+    sscanf(fgets(buffer,datalen,fpcfg),"%d impropers%n",&nimp,&position_counter);
     assert(nimp<=nimp_max);
+    // readin how many impropers in a molecule of a certain specie
+    starting_position = position_counter;
+    for (ii=0;ii<nspecie;ii++)
+    {
+	sscanf(&buffer[starting_position],"%d%n",&nimp_per_mole[ii],&position_counter);
+	starting_position += position_counter;
+    }
 
     // read in nonbonded pair list
-    fscanf(fpcfg, "%d nonbonded\n", &nnbp);
+    // fscanf(fpcfg, "%d nonbonded\n", &nnbp);
+    sscanf(fgets(buffer,datalen,fpcfg),"%d nonbonded%n",&nnbp,&position_counter);
     assert(nnbp<=nnbp_max);
+    // read in how many nonbonded pairs in a molecule of a certain specie
+    starting_position = position_counter;
+    for (ii=0;ii<nspecie;ii++)
+    {
+	sscanf(&buffer[starting_position],"%d%n",&nnbp_per_mole[ii],&position_counter);
+	starting_position += position_counter;
+    }
+    // readin detailed nonbonded pair information
     last_mole_id = 0;
     for (ii=0;ii<nnbp;ii++)
     {
@@ -713,7 +777,6 @@ int readins()
 	    assert(last_mole_id<nmole_max+1);
 	}
     }
-
 
     fclose(fpcfg);
 }
