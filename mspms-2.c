@@ -881,7 +881,7 @@ int echo()
     fprintf(fpouts,"%d nonbonded pairs.\n",nnbp);
     fprintf(fpouts,"%lf kappa\n",kappa);
     fprintf(fpouts,"%d %d %d %d KMAX etc.\n",KMAXX,KMAXY,KMAXZ,KSQMAX);
-    fprintf(fpouts,"preq=%lf   Qts=%lf  Qbs=%lf\n",preq,Qts,Qbs);
+    fprintf(fpouts,"preq=%lf\nQts=%lf\nQbs=%lf\n",preq,Qts,Qbs);
     // nvt
     // charge on
     // sf on
@@ -1105,8 +1105,8 @@ int printit()
     pinst = pideal
 	+ (virial_inter+virial_intra)*virial_to_pressure/(boxlx*boxly*boxlz)
 	+ pljlrc;
-    fprintf(stderr,"%10d %10.4le %10.4le %10.4le %10.4le %10.4le %10.4le %10.4le\n",
-	    istep,utot,upot,ukin,tinst,virial,pinst,boxv);
+    fprintf(stderr,"%10d %10.4le %10.4le %10.4le %10.4le %10.4le %10.4le\n",
+	    istep,utot,upot,ukin,tinst,pinst,boxv);
 
     fprintf(fplog,"%10d %10.4le %10.4le %10.4le %10.4le %10.4le %10.4le %10.4le %10.4le %10.4le ",
 	    istep,utot,upot,ukin,tinst,uinter,uintra,uvdw,ubond,uangle);
@@ -1275,6 +1275,8 @@ int loadit()
 
     // recalculate the thermostat energy
     utsbs = 0.5*Qbs*vbs*vbs + 0.5*Qts*vts*vts + (nfree+1)*Rgas*treq*rts + preq*boxv*PascalA3_to_J_mol;
+    // recalculate the long range corrections since the box size may be changed
+    calculate_ljlrc();
 
     // read counters and accumulators only if its a continue run
     if (fStart_option==continue_run)
