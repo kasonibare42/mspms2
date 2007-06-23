@@ -444,10 +444,6 @@ int ending()
     fprintf(fpouts,"   std. dev.                %15.4lf\n",accumulator[17][6]);
     fprintf(fpouts,"   fluctuation              %15.4lf\n",accumulator[17][7]);
 
-    fprintf(fpouts,"Ideal pressure              %15.6le\n",accumulator[20][5]);
-    fprintf(fpouts,"   std. dev.                %15.4lf\n",accumulator[20][6]);
-    fprintf(fpouts,"   fluctuation              %15.4lf\n",accumulator[20][7]);
-
     fprintf(fpouts,"Pressure                    %15.6le\n",accumulator[18][5]);
     fprintf(fpouts,"   std. dev.                %15.4lf\n",accumulator[18][6]);
     fprintf(fpouts,"   fluctuation              %15.4lf\n",accumulator[18][7]);
@@ -455,6 +451,10 @@ int ending()
     fprintf(fpouts,"Box volume                  %15.6le\n",accumulator[19][5]);
     fprintf(fpouts,"   std. dev.                %15.4lf\n",accumulator[19][6]);
     fprintf(fpouts,"   fluctuation              %15.4lf\n",accumulator[19][7]);
+
+    fprintf(fpouts,"Ideal pressure              %15.6le\n",accumulator[20][5]);
+    fprintf(fpouts,"   std. dev.                %15.4lf\n",accumulator[20][6]);
+    fprintf(fpouts,"   fluctuation              %15.4lf\n",accumulator[20][7]);
 
     fprintf(fpouts,"=========================================================\n");
 
@@ -857,13 +857,17 @@ int readins()
 
 int echo()
 {
-    fprintf(fpouts,"=====================================\n");
+    fprintf(fpouts,"==================================================\n");
+    fprintf(fpouts,"Energies are for all molecules.\n");
+    fprintf(fpouts,"Only total energy contains long range corrections.\n");
+    fprintf(fpouts,"Pressure is with long range corrections.\n");
+    fprintf(fpouts,"==================================================\n");
     fprintf(fpouts,"Units:\n");
     fprintf(fpouts,"  Energy(J/mol)\n  Temperature(K)\n  Velocity(m/s)\n  Distance(Angstrom)\n");
     fprintf(fpouts,"  Force(J/Angstrom/mol)\n");
     fprintf(fpouts,"  virial(J/mol)\n");
     fprintf(fpouts,"  Pressure(Pascal)\n");
-    fprintf(fpouts,"=====================================\n");
+    fprintf(fpouts,"==================================================\n");
     fprintf(fpouts,"%s\n",sysname);
     fprintf(fpouts,"natom=%d\n",natom);
     fprintf(fpouts,"nmole = %d\n",nmole);
@@ -915,7 +919,7 @@ int echo()
     fprintf(fpouts,"virial_inter=%lf\n",virial_inter);
     fprintf(fpouts,"virial_intra=%lf\n",virial_intra);
     fprintf(fpouts,"pideal=%lf\n",pideal=natom/(boxlx*boxly*boxlz)*tinst*kb_1e30);
-    calculate_ljlrc();
+    // pljlrc already calculated in initialization part
     pinst = pideal
 	+ (virial_inter+virial_intra)*virial_to_pressure/(boxlx*boxly*boxlz)
 	+ pljlrc;
@@ -1092,8 +1096,12 @@ int printit()
     virial = virial_inter + virial_intra;
     // add energy of thermostat, if nose hoover is not used, they will just be zero
     utot = utot + unhts + unhtss + utsbs;
+    // add long range corrections into total energy
+    utot = utot + uljlrc;
+    // calculate ideal pressure part
     pideal=natom/(boxlx*boxly*boxlz)*tinst*kb_1e30;
-    calculate_ljlrc();
+    // do not need to recalculate lrc here, it should be calculated
+    // elsewhere when variables changed
     pinst = pideal
 	+ (virial_inter+virial_intra)*virial_to_pressure/(boxlx*boxly*boxlz)
 	+ pljlrc;
@@ -1331,7 +1339,7 @@ int opening()
     fprintf(fpouts,"WWWWWWWWWWWWWWWWWW..WWWWWWWWWWWWWWWWWWWWWWW\n");
     fprintf(fpouts,"WWWWWWWWWWWWWWWWWW..WWWWWWWWWWWWWWWWWWWWWWW\n");
     fprintf(fpouts,"WWWWWWWWWWWWWWWWWW..WWWWWWWWWWWWWWWWWWWWWWW\n");
-    fprintf(fpouts,"WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWYANG\n");
+    fprintf(fpouts,"WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWYANG\n\n");
 }
 
 extern int get_values_from_grid(double, double, double, int, double*, double*);
