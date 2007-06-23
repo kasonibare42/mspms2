@@ -50,6 +50,10 @@
 #define nanotube_tasos		3
 #define nanotube_my_interp	4 // my interpolation grid
 
+#define elec_ewald		1
+#define elec_wolf		2
+#define elec_simple_coulomb	3
+
 #define ewald_bc_tinfoil	1
 #define ewald_bc_vacuum		2
 
@@ -169,10 +173,12 @@ double rcutoff, rcutoffsq, rcuton, rcutonsq;
 double rcutoffelec, rcutoffelecsq;
 double f0; // 1,4 LJ potential modifier for OPLS, set to 1.0 for no modification or 0.5 for OPLS or 0.0 for TraPPE.
 int isLJswitchOn; // use switch potential for LJ or not
+int isChargeOn; // calculate electrostatic?
 int isEwaldOn; // Ewald summation electrostatic interactions
 int fEwald_BC; // flag of boundary condition for ewald summation. 1-tinfoil; 2-vacuum
 int fEwald_Dim; // flag of Ewald method dimension. 1, 2 or 3 dimension.
 int isWolfOn; // wolf method for electrostatic interactions
+int isSimpleCoulomb; // simple coulomb interactions on/off
 double kappa, kappasq; // sqrt(alpha) in ewald summation. 
 int KMAXX, KMAXY, KMAXZ; // ewald parameters
 int KSQMAX; // ewald parameter
@@ -200,6 +206,7 @@ double uvacuum; // vacuum boundary for ewald
 double uGz0; // 1D ewald Gz=0 term
 double LJswitch; // switch factor for LJ
 double usflj; // solid-fluid LJ energy
+double ucoulomb; // direct coulomb energy
 
 double virial;
 double virial_inter;

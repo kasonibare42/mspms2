@@ -293,11 +293,12 @@ int loop_14()
     double uij_vdw14, uij_vdw14_temp, uij_real14, uij_real14_temp;
     double uij_wolf14_temp;
     double rijsq_old;
-    int	fCalculate14;
+    int	fCalculate14_LJ, fCalculate14_elec;
     double fij, fxij, fyij, fzij;
     double temp1, temp2;
     double rhoklsq, kapparhokl_sq;
     double uij_Gz0; // 1D ewald
+    double uij_coulomb14_temp;
     gsl_function FF;
 
     FF.function = &deriv_inc_gamma;
@@ -313,7 +314,7 @@ int loop_14()
 	{
 	    ii1 = dih_idx[ii][0];
 	    ii2 = dih_idx[ii][3];
-	    // not ghost check needed here since 1,4 are in the same molecule
+	    // no ghost check needed here since 1,4 are in the same molecule
 	    // and ghost check is only for inter molecules or solid-fluid
 	    rxij = xx[ii1] - xx[ii2];
 	    ryij = yy[ii1] - yy[ii2];
@@ -348,7 +349,7 @@ int loop_14()
 	    } // if 1D ewald is used
 
 	    // check for necessary 1,4 parameter modifiers
-	    // and calculate the corresponding sigmaij and epsilonij;
+	    // and calculate the corresponding sigmaij and epsilonij
 	    // OPLS modifier
 	    sigmaij = 0.5*(sigma[ii1]+sigma[ii2]);
 	    epsilonij = f0*sqrt(epsilon[ii1]*epsilon[ii2]);
@@ -372,17 +373,33 @@ int loop_14()
 		fprintf(stderr,"Warning: long 1,4 non-bonded pair %d-%d found...\n",ii1,ii2);
 		fprintf(fpouts,"Warning: long 1,4 non-bonded pair %d-%d found...\n",ii1,ii2);
 		// ghost check for 1,4'
-		if (isghost[ii1]==lj_ghost || isghost[ii2]==lj_ghost)
-		    fCalculate14 == false;
+		if (isghost[ii1]==all_ghost || isghost[ii2]==all_ghost)
+		{
+		    // full ghost
+		    fCalculate14_LJ = false;
+		    fCalculate14_elec = false;
+		}
+		else if (isghost[ii1]==lj_ghost || isghost[ii2]==lj_ghost)
+		{
+		    // LJ ghost
+		    fCalculate14_LJ = false;
+		    fCalculate14_elec = true;
+		}
 		else
-		    fCalculate14 == true;
+		{
+		    // not ghost
+		    fCalculate14_LJ = true;
+		    fCalculate14_elec = true;
+		}
 	    }
-	    else // 1,4 found, always calculate LJ for them
-		fCalculate14 = true;
+	    else // 1,4 found, always calculate interactions for them, in same molecule
+	    {
+		fCalculate14_LJ = true;
+		fCalculate14_elec = true;
+	    }
 
-	    // LJ part, do not need check ghost here. 
-	    // since 1,4 is in the same molecule
-	    if (fCalculate14==true && rijsq<rcutoffsq)
+	    // LJ part, 
+	    if (fCalculate14_LJ==true && rijsq<rcutoffsq)
 	    {
 		if (isLJswitchOn)  // if use switch for LJ
 		{
@@ -415,7 +432,7 @@ int loop_14()
 		fxij = fij*rxij;
 		fyij = fij*ryij;
 		fzij = fij*rzij;
-	       	// contribution to the virial
+		// contribution to the virial
 		virial_inter = virial_inter + fxij*rxij + fyij*ryij + fzij*rzij;
 		// force on atom ii1
 		fxl[ii1] += fxij;
@@ -428,7 +445,7 @@ int loop_14()
 	    } // rcutoffsq
 
 	    // electrostatic part
-	    if (isEwaldOn && rijsq<rcutoffelecsq)
+	    if (fCalculate14_elec && isEwaldOn && rijsq<rcutoffelecsq)
 	    {
 		uij_real14_temp = charge[ii1]*charge[ii2]/rij;
 		uij_real14 += uij_real14_temp*erfc(kappa*rij); // real part ewald energy, still need 1/4*pi*epsilon0
@@ -450,7 +467,7 @@ int loop_14()
 	    } // is charge on check and rcutoffelecsq
 
 	    // wolf method for electrostatic
-	    if (isWolfOn && rijsq<rcutoffelecsq)
+	    if (fCalculate14_elec && isWolfOn && rijsq<rcutoffelecsq)
 	    {
 		uwolf_real = uwolf_real
 		    + charge[ii1]*charge[ii2]*(erfc(kappa*rij)/rij + wolfvcon1 + wolfvcon2*(rij-rcutoffelec));
@@ -462,16 +479,37 @@ int loop_14()
 		fxij = fij*rxij;
 		fyij = fij*ryij;
 		fzij = fij*rzij;
-	       	// contribution to the virial
+		// contribution to the virial
 		virial_inter = virial_inter + fxij*rxij + fyij*ryij + fzij*rzij;
-		// force on atom ii
+		// force on atom ii1
 		fxl[ii1] += fxij;
 		fyl[ii1] += fyij;
 		fzl[ii1] += fzij;
-		// force on atom jj
+		// force on atom ii2
 		fxl[ii2] -= fxij;
 		fyl[ii2] -= fyij;
 		fzl[ii2] -= fzij;
+	    }
+
+	    // simple coulomb 
+	    if (fCalculate14_elec && isSimpleCoulomb && rijsq<rcutoffelecsq)
+	    {
+		uij_coulomb14_temp = charge[ii1]*charge[ii2]/rij; // need constant
+		ucoulomb += uij_coulomb14_temp; // need constant
+		fij = const_columb*uij_coulomb14_temp/rijsq;
+	       	fxij = fij*rxij;
+	       	fyij = fij*ryij;
+	       	fzij = fij*rzij;
+		// contribution to the virial
+		virial_inter = virial_inter + fxij*rxij + fyij*ryij + fzij*rzij;
+	       	// force on atom ii1
+		fxl[ii1] += fxij;
+	       	fyl[ii1] += fyij;
+	       	fzl[ii1] += fzij;
+	       	// force on atom ii2
+		fxl[ii2] -= fxij;
+	       	fyl[ii2] -= fyij;
+	       	fzl[ii2] -= fzij;
 	    }
 
 	} // unique 1,4 pair check
@@ -569,9 +607,13 @@ int loop_13()
 		fxij = fij*rxij;
 		fyij = fij*ryij;
 		fzij = fij*rzij;
+	       	if (isWolfOn) // negative contribution to the virial
+		    virial_inter = virial_inter + fxij*rxij + fyij*ryij + fzij*rzij;
+		// forces on ii1
 		fxl[ii1] += fxij;
 		fyl[ii1] += fyij;
 		fzl[ii1] += fzij;
+		// forces on ii2
 		fxl[ii2] -= fxij;
 		fyl[ii2] -= fyij;
 		fzl[ii2] -= fzij;
@@ -606,7 +648,7 @@ int loop_13()
 		    fzij = fij*rzij;
 
 		    if (isWolfOn) // contribution to the virial
-		       	virial_inter = virial_inter + fxij*rxij + fyij*ryij + fzij*rzij;
+			virial_inter = virial_inter + fxij*rxij + fyij*ryij + fzij*rzij;
 
 		    // force on atom ii1
 		    fxl[ii1] += fxij;
@@ -776,9 +818,13 @@ int loop_12()
 	    fxij = fij*rxij;
 	    fyij = fij*ryij;
 	    fzij = fij*rzij;
+	    if (isWolfOn) // negative contribution to the virial
+	       	virial_inter = virial_inter + fxij*rxij + fyij*ryij + fzij*rzij;
+	    // forces on ii1
 	    fxl[ii1] += fxij;
 	    fyl[ii1] += fyij;
 	    fzl[ii1] += fzij;
+	    // forces on ii2
 	    fxl[ii2] -= fxij;
 	    fyl[ii2] -= fyij;
 	    fzl[ii2] -= fzij;
@@ -880,7 +926,7 @@ int loop_12()
 		fxij = fij*rxij;
 		fyij = fij*ryij;
 		fzij = fij*rzij;
-	       	// contribution to the virial
+		// contribution to the virial
 		virial_inter = virial_inter + fxij*rxij + fyij*ryij + fzij*rzij;
 		// force on atom ii1
 		fxl[ii1] += fxij;
@@ -920,6 +966,7 @@ int loop_nbp()
     double rijsq_old;
     int isSameMole;
     int fCalculate_nbpLJ, fCalculate_nbpelec;
+    double uij_coulombnbp_temp;
     gsl_function FF;
 
     FF.function = &deriv_inc_gamma;
@@ -959,6 +1006,8 @@ int loop_nbp()
 	// check if the position changed after the minimum image convention
 	if (fabs(rijsq-rijsq_old)>tolerant_err)
 	{
+	    fprintf(stderr,"Warning: long nonbonded pair %d-%d found...\n",ii1,ii2);
+	    fprintf(fpouts,"Warning: long nonbonded pair %d-%d found...\n",ii1,ii2);
 	    // image found, check ghost
 	    // only calculate if they are not ghost atoms
 	    isSameMole = false;
@@ -1031,7 +1080,7 @@ int loop_nbp()
 		fxij = fij*rxij;
 		fyij = fij*ryij;
 		fzij = fij*rzij;
-	       	// contribution to the virial
+		// contribution to the virial
 		virial_inter = virial_inter + fxij*rxij + fyij*ryij + fzij*rzij;
 		// force on atom ii1
 		fxl[ii1] += fxij;
@@ -1113,7 +1162,7 @@ int loop_nbp()
 		fxij = fij*rxij;
 		fyij = fij*ryij;
 		fzij = fij*rzij;
-	       	// contribution to the virial
+		// contribution to the virial
 		virial_inter = virial_inter + fxij*rxij + fyij*ryij + fzij*rzij;
 		// force on atom ii1
 		fxl[ii1] += fxij;
@@ -1125,8 +1174,28 @@ int loop_nbp()
 		fzl[ii2] -= fzij;
 	    } // if ewald is needed
 
-	} // if electrostatic is needed
+	    // simple coulomb method
+	    if (isSimpleCoulomb && rijsq<rcutoffelecsq)
+	    {
+		uij_coulombnbp_temp = charge[ii1]*charge[ii2]/rij; // need constant
+		ucoulomb += uij_coulombnbp_temp; // need constant
+		fij = const_columb*uij_coulombnbp_temp/rijsq;
+	       	fxij = fij*rxij;
+	       	fyij = fij*ryij;
+	       	fzij = fij*rzij;
+		// contribution to the virial
+		virial_inter = virial_inter + fxij*rxij + fyij*ryij + fzij*rzij;
+	       	// force on atom ii1
+		fxl[ii1] += fxij;
+	       	fyl[ii1] += fyij;
+	       	fzl[ii1] += fzij;
+	       	// force on atom ii2
+		fxl[ii2] -= fxij;
+	       	fyl[ii2] -= fyij;
+	       	fzl[ii2] -= fzij;
+	    }
 
+	} // if electrostatic is needed
     } // nonbonded pair loop
 
     // add into total energy
@@ -1264,6 +1333,7 @@ int ewald_vacuum()
     // Or is it already included in the ewald??
 }
 
+// calculate the wolf self interaction part
 int wolf_con()
 {
     int ii;
@@ -1273,10 +1343,113 @@ int wolf_con()
     }
     uwolf_con = uwolf_con*const_columb*(kappa/sqrt(pi)+erfc(kappa*rcutoffelec)/(2.0*rcutoffelec));
     uwolf_real = uwolf_real*const_columb;
-    // uexcl already got constant factor in erfrc function
+    uexcl *= const_columb;
+    // total wolf
     uwolf = uwolf_real - uwolf_con - uexcl;
-
 }
+
+// calculate simple direct coulomb interactions between different molecules
+// the cutoff is based on molecular center (center of mass)
+int simple_coulomb_inter_mole()
+{
+    int ii, jj;
+    int mm, nn;
+    int first_atom_of_mole_mm, first_atom_of_mole_mm_plus_one;
+    int first_atom_of_mole_nn, first_atom_of_mole_nn_plus_one;
+    double uij_coulomb_temp;
+    double rxmn, rymn, rzmn, rmnsq, rmn; // distance between molecular center of mass
+    double rxij, ryij, rzij, rijsq, rij; // distance between atoms
+    double fij, fxij, fyij, fzij;
+    int ii1, ii2;
+
+    // first calculate all molecules center of mass
+    cal_com_and_inner_coords();
+
+    // calculate coulomb energy
+    // for cross molecules
+    for (mm=0;mm<nmole-1;mm++)
+    {
+	for (nn=mm+1;nn<nmole;nn++)
+	{
+	    // calculate the distance between molecular center of mass
+	    rxmn = mole_xx[mm] - mole_xx[nn];
+	    rymn = mole_yy[mm] - mole_yy[nn];
+	    rzmn = mole_zz[mm] - mole_zz[nn];
+	    // minimum image convention
+	    rxmn = rxmn - boxlx*rint(rxmn/boxlx);
+	    rymn = rymn - boxly*rint(rymn/boxly);
+	    rzmn = rzmn - boxlz*rint(rzmn/boxlz);
+	    rmnsq = rxmn*rxmn + rymn*rymn + rzmn*rzmn;
+	    // the cut off check is based on the molecular center of mass
+	    // there could be different types of the check
+	    // e.g. based on distances of any sites between 2 molecules
+	    //      based on distances of any groups between 2 molecules
+	    // cutoff check
+	    if (rmnsq < rcutoffelecsq)
+	    {
+		// get index for the atoms from each molecules
+		first_atom_of_mole_mm = mole_first_atom_idx[mm];
+		first_atom_of_mole_mm_plus_one = mole_first_atom_idx[mm+1];
+		first_atom_of_mole_nn = mole_first_atom_idx[nn];
+		first_atom_of_mole_nn_plus_one = mole_first_atom_idx[nn+1];
+		// distance between two center of mass
+		rmn = sqrt(rmnsq);
+		// first atom
+		for (ii=first_atom_of_mole_mm;ii<first_atom_of_mole_mm_plus_one;ii++)
+		{
+		    // ghost check
+		    if (isghost[ii]==all_ghost)
+			continue;
+		    // second atom
+		    for (jj=first_atom_of_mole_nn;jj<first_atom_of_mole_nn_plus_one;jj++)
+		    {
+			// ghost check
+			if (isghost[jj]==all_ghost)
+			    continue;
+			// i         j
+			//  \       /
+			//   m-----n
+			//  
+			//  (i<-j) = (i<-m) + (m<-n) + (n<-j)
+			//
+			//  where x<-y = x - y, x and y are vectors
+			// 
+			// calculate the distance between atoms
+			// based on the minimum image convention'd centers of mass
+			rxij = ex[ii] + rxmn - ex[jj] ;
+			ryij = fy[ii] + rymn - fy[jj];
+			rzij = gz[ii] + rzmn - gz[jj];
+			rijsq = rxij*rxij + ryij*ryij + rzij*rzij;
+			rij = sqrt(rijsq);
+			uij_coulomb_temp = charge[ii]*charge[jj]/rij; // need constant
+			ucoulomb += uij_coulomb_temp;  // need constant
+			fij = const_columb*uij_coulomb_temp/rijsq;
+			fxij = fij*rxij;
+			fyij = fij*ryij;
+			fzij = fij*rzij;
+		       	// contribution to the virial
+			virial_inter = virial_inter + fxij*rxij + fyij*ryij + fzij*rzij;
+			// force on atom ii
+			fxl[ii] += fxij;
+			fyl[ii] += fyij;
+			fzl[ii] += fzij;
+			// force on atom jj
+			fxl[jj] -= fxij;
+			fyl[jj] -= fyij;
+			fzl[jj] -= fzij;
+		    } // second atom jj
+		} // first atom ii
+	    } // cut off check
+	} // inner layer molecules
+    } // outer layer molecules
+
+    // coulomb interactions from 1,4 and nonbonded atom pairs
+    // are calculated via loop_14 and loop_nbp
+
+    // constant for coulomb energy
+    ucoulomb *= const_columb;
+}
+
 
 int erfrc()
 {
@@ -1295,6 +1468,7 @@ int erfrc()
     usflj = 0.0;
     uvacuum = 0.0;
     uGz0 = 0.0;
+    ucoulomb = 0.0;
 
     // pressure related
     virial_inter = 0.0;
@@ -1309,15 +1483,18 @@ int erfrc()
     loop_14();
     loop_13();
     loop_12();
-    // add 4.0 and constant to LJ and real part ewald energy
+
+    // 4.0 factor for LJ energies
     uvdw *= 4.0;
     unbp_vdw *= 4.0;
-    ureal *= const_columb;
-    uexcl *= const_columb;
 
     if (isEwaldOn) // if ewald is on, calculate the fourier and self correction parts
     {
+	// calculate fourier space sum for ewald and self interaction corrections
 	ewald_fourier_and_self(); 
+	// constant for ewald energies
+	ureal *= const_columb;
+       	uexcl *= const_columb;
 	// total 3D ewald energy with tinfoil boundary condition
 	uewald = ureal + ufourier - uself - uexcl;
 
@@ -1338,17 +1515,17 @@ int erfrc()
 	virial_inter = virial_inter + uewald;
     }
     else if (isWolfOn) // if wolf is on
-	wolf_con();
+	wolf_con();  // calculate the self interaction term for wolf
+    else if (isSimpleCoulomb) 
+	simple_coulomb_inter_mole(); // if simple coulomb is used, calculate inter-mole coulomb
 
     // calculate solid fluid energy if necessary
     if (isSFon)
 	sffrc();
 
-    // total inter molecule energy
-    // add up everything
+    // total inter molecule energy add up everything
     // they should be zero if they are not used
-    // so, can NOT turn ewald and wolf both on 
-    uinter = uvdw + uewald + uwolf + usflj;
+    uinter = uvdw + uewald + uwolf + ucoulomb + usflj;
 }
 
 

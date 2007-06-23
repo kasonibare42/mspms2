@@ -15,7 +15,7 @@
 #include <string.h>
 #include <math.h>
 #include <assert.h>
-
+#include <ctype.h>
 #include "vars.h"
 #include "random.h"
 
@@ -629,6 +629,8 @@ int readins()
     int ii;
     const int datalen = 200;
     char buffer[200];
+    char keyword[100];
+    int isDataFound;
     int atomid, moleid;
     int isFirstAtom;
     int last_mole_id;
@@ -655,16 +657,73 @@ int readins()
     sscanf(fgets(buffer,datalen,fpins), "%d %d", &what_ensemble, &whichNH);
     sscanf(fgets(buffer,datalen,fpins), "%lf %lf", &qq, &qqs);
     sscanf(fgets(buffer,datalen,fpins), "%d", &isLJswitchOn);
-    sscanf(fgets(buffer,datalen,fpins), "%d %d %d", &isEwaldOn,&fEwald_BC,&fEwald_Dim);
-    sscanf(fgets(buffer,datalen,fpins), "%d", &isWolfOn);
-    sscanf(fgets(buffer,datalen,fpins), "%d %d %d", &KMAXX, &KMAXY, &KMAXZ);
-    sscanf(fgets(buffer,datalen,fpins), "%d", &KSQMAX);
-    sscanf(fgets(buffer,datalen,fpins), "%lf", &kappa);
+    sscanf(fgets(buffer,datalen,fpins), "%d", &isChargeOn);
+    // sscanf(fgets(buffer,datalen,fpins), "%d", &isWolfOn);
+    // sscanf(fgets(buffer,datalen,fpins), "%d %d %d", &KMAXX, &KMAXY, &KMAXZ);
+    // sscanf(fgets(buffer,datalen,fpins), "%d", &KSQMAX);
+    // sscanf(fgets(buffer,datalen,fpins), "%lf", &kappa);
 
     sscanf(fgets(buffer,datalen,fpins), "%d", &nconstraint);
 
     sscanf(fgets(buffer,datalen,fpins), "%d", &isSFon);
     sscanf(fgets(buffer,datalen,fpins), "%d", &sf_type);
+
+
+    // read in electrostatic parametes if needed
+    int electype; // type of electrostatic
+    if (isChargeOn)
+    {
+	// rewind the input file stream
+	rewind(fpins);
+	isDataFound = false;
+       	while (fgets(buffer,datalen,fpins)!=NULL)
+       	{
+	    sscanf(buffer,"%s",keyword);
+	    for (ii=0;ii<strlen(keyword);ii++)
+	       	keyword[ii] = toupper(keyword[ii]);
+	    if (!strcmp(keyword,"ELECTROSTATIC"))
+	    {
+	       	fprintf(stderr,"Data section for electrostatics found...\n");
+	       	fprintf(fpouts,"Data section for electrostatics found...\n");
+		isDataFound = true;
+		// preset all electrostatic methods to false
+		// then turn on them according to the input
+		isEwaldOn = isWolfOn = isSimpleCoulomb = 0;
+		sscanf(fgets(buffer,datalen,fpins),"%d",&electype);
+		if (electype==elec_ewald)
+		{
+		    isEwaldOn = 1;
+		    sscanf(fgets(buffer,datalen,fpins), "%lf", &kappa);
+		    sscanf(fgets(buffer,datalen,fpins), "%d %d %d %d", &KMAXX, &KMAXY, &KMAXZ, &KSQMAX);
+		    sscanf(fgets(buffer,datalen,fpins), "%d %d",&fEwald_BC,&fEwald_Dim);
+		    fprintf(fpouts,"%dD Ewald summation requested...\n",fEwald_Dim);
+		    fprintf(fpouts,"kappa=%lf\n",kappa);
+		    fprintf(fpouts,"kmaxx=%d kmaxy=%d kmaxz=%d kmaxsq=%d\n",KMAXX, KMAXY, KMAXZ, KSQMAX);
+		    fprintf(fpouts,"Boundary condition is %d\n",fEwald_BC);
+		}
+		else if (electype==elec_wolf)
+		{
+		    isWolfOn = 1;
+		    sscanf(fgets(buffer,datalen,fpins), "%lf", &kappa);
+		    fprintf(fpouts,"Wolf method requested...\n");
+		    fprintf(fpouts,"kappa=%lf\n",kappa);
+		}
+		else if (electype==elec_simple_coulomb)
+		{
+		    isSimpleCoulomb = 1;
+		    fprintf(fpouts,"Simple coulomb interaction requested...\n");
+		} 
+		break;
+	    }
+	} // read through lines
+	if (isDataFound==false)
+	{ 
+	    fprintf(stderr,"Error: data for electrostatics not found.\n");
+	    fprintf(fpouts,"Error: data for electrostatics not found.\n");
+	    exit(1);
+	}
+    } // if charge needed
+
 
     fclose(fpins);
 
@@ -912,6 +971,7 @@ int echo()
     fprintf(fpouts,"uwolf=%lf\n",uwolf);
     fprintf(fpouts,"uwolf_real=%lf\n",uwolf_real);
     fprintf(fpouts,"uwolf_con=%lf\n",uwolf_con);
+    fprintf(fpouts,"ucoulomb=%lf\n",ucoulomb);
 
     fprintf(fpouts,"tinst=%lf\n",tinst);
 
