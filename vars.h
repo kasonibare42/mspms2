@@ -308,6 +308,11 @@ double uljlrc, pljlrc;
 double uljlrc_term[nspecie_max][nspecie_max];
 double pljlrc_term[nspecie_max][nspecie_max];
 
+// temporary varaibles for debug
+double tmp_virial;
+double tmp_virial_1, tmp_virial_2;
+
+
 // counters and accumulators
 int icounter[num_counter_max];
 double accumulator[num_counter_max][8];

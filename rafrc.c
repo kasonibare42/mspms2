@@ -112,6 +112,7 @@ int aglfrc()
     double delta_theta;
     double uangle_temp;
     double gamma, fxa, fya, fza, fxc, fyc, fzc;
+    double fxb, fyb, fzb;
 
     double  vec_13_x, vec_13_y, vec_13_z;
     double  vec_12_x, vec_12_y, vec_12_z;
@@ -190,8 +191,6 @@ int aglfrc()
 		fzs[iic] += fzc;
 		break;
 	    case angle_TRwater: // Toukan & Rhaman water potential
-		// Not sure how virial should be calculated for
-		// this angle potential form. prolly zero?? 
 		// H-H
 		vec_13_x = xx[iia] - xx[iic];
 		vec_13_y = yy[iia] - yy[iic];
@@ -225,9 +224,12 @@ int aglfrc()
 		frc_term_2_1 = -k_r_theta*delta_r3/r12;
 		frc_term_2_2 = -k_r_theta*(delta_r1+delta_r2)/r13;
 		frc_term_3 = -k_r_rprime*delta_r2/r12;
-		fxs[iia] += (frc_term_1*vec_13_x + frc_term_2_1*vec_12_x + frc_term_2_2*vec_13_x + frc_term_3*vec_12_x);
-		fys[iia] += (frc_term_1*vec_13_y + frc_term_2_1*vec_12_y + frc_term_2_2*vec_13_y + frc_term_3*vec_12_y);
-		fzs[iia] += (frc_term_1*vec_13_z + frc_term_2_1*vec_12_z + frc_term_2_2*vec_13_z + frc_term_3*vec_12_z);
+		fxa = (frc_term_1*vec_13_x + frc_term_2_1*vec_12_x + frc_term_2_2*vec_13_x + frc_term_3*vec_12_x);
+		fya = (frc_term_1*vec_13_y + frc_term_2_1*vec_12_y + frc_term_2_2*vec_13_y + frc_term_3*vec_12_y);
+		fza = (frc_term_1*vec_13_z + frc_term_2_1*vec_12_z + frc_term_2_2*vec_13_z + frc_term_3*vec_12_z);
+		fxs[iia] += fxa;
+		fys[iia] += fya;
+		fzs[iia] += fza;
 
 		// atom 2 (b)
 		// frc_term_1 = 0.0;
@@ -235,18 +237,30 @@ int aglfrc()
 		frc_term_2_2 = k_r_theta*delta_r3/r12;
 		frc_term_3_1 = -k_r_rprime*delta_r1/r23;
 		frc_term_3_2 = k_r_rprime*delta_r2/r12;
-		fxs[iib] += (frc_term_2_1*vec_23_x + frc_term_2_2*vec_12_x + frc_term_3_1*vec_23_x + frc_term_3_2*vec_12_x);
-		fys[iib] += (frc_term_2_1*vec_23_y + frc_term_2_2*vec_12_y + frc_term_3_1*vec_23_y + frc_term_3_2*vec_12_y);
-		fzs[iib] += (frc_term_2_1*vec_23_z + frc_term_2_2*vec_12_z + frc_term_3_1*vec_23_z + frc_term_3_2*vec_12_z);
+		fxb = (frc_term_2_1*vec_23_x + frc_term_2_2*vec_12_x + frc_term_3_1*vec_23_x + frc_term_3_2*vec_12_x);
+		fyb = (frc_term_2_1*vec_23_y + frc_term_2_2*vec_12_y + frc_term_3_1*vec_23_y + frc_term_3_2*vec_12_y);
+		fzb = (frc_term_2_1*vec_23_z + frc_term_2_2*vec_12_z + frc_term_3_1*vec_23_z + frc_term_3_2*vec_12_z);
+		fxs[iib] += fxb;
+		fys[iib] += fyb;
+		fzs[iib] += fzb;
 
 		// atom 3 (c)
 		frc_term_1 = k_theta*delta_r3/r13;
 		frc_term_2_1 = k_r_theta*delta_r3/r23;
 		frc_term_2_2 = k_r_theta*(delta_r1+delta_r2)/r13;
 		frc_term_3 = k_r_rprime*delta_r1/r23;
-		fxs[iic] += (frc_term_1*vec_13_x + frc_term_2_1*vec_23_x + frc_term_2_2*vec_13_x + frc_term_3*vec_23_x);
-		fys[iic] += (frc_term_1*vec_13_y + frc_term_2_1*vec_23_y + frc_term_2_2*vec_13_y + frc_term_3*vec_23_y);
-		fzs[iic] += (frc_term_1*vec_13_z + frc_term_2_1*vec_23_z + frc_term_2_2*vec_13_z + frc_term_3*vec_23_z);
+		fxc = (frc_term_1*vec_13_x + frc_term_2_1*vec_23_x + frc_term_2_2*vec_13_x + frc_term_3*vec_23_x);
+		fyc = (frc_term_1*vec_13_y + frc_term_2_1*vec_23_y + frc_term_2_2*vec_13_y + frc_term_3*vec_23_y);
+		fzc = (frc_term_1*vec_13_z + frc_term_2_1*vec_23_z + frc_term_2_2*vec_13_z + frc_term_3*vec_23_z);
+		fxs[iic] += fxc;
+		fys[iic] += fyc;
+		fzs[iic] += fzc;
+
+		// contribution to virial
+		// Not sure. need double check
+		virial_intra = virial_intra + fxa*vec_12_x + fya*vec_12_y + fza*vec_12_z;
+		virial_intra = virial_intra - fxc*vec_23_x - fyc*vec_23_y - fzc*vec_23_z;
+
 		break;
 	    default:
 		printf("unknown angle type.\n");
@@ -687,6 +701,10 @@ int rafrc()
     // pressure related
     virial_intra = 0.0;
 
+    tmp_virial = 0.0;
+    tmp_virial_1 = 0.0;
+    tmp_virial_2 = 0.0;
+
     for (ii=0;ii<natom;ii++)
 	fxs[ii] = fys[ii] = fzs[ii] = 0.0;
 
@@ -706,5 +724,6 @@ int rafrc()
 
     // total intra energy
     uintra = ubond + uangle + udih + uimp;
+
 }
 

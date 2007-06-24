@@ -2,11 +2,11 @@
 298.0                  Temperature
 100.0 100.0 100.0      box length, width, height
 20.0 20.0 20.0      rcuton, rcutoff, rcutoffelec
-10000 3 0             number of total steps, starting option (1-new;2-continue;3-new from old), equilibrium steps
-1000 10 1000 1000 0        number of steps for averages, print, save, snapshots, trajectory
+1000 1 0             number of total steps, starting option (1-new;2-continue;3-new from old), equilibrium steps
+100 1 100 100 0        number of steps for averages, print, save, snapshots, trajectory
 1.0 5                  delt (fs), number of inner steps (cant be zero, 1 is the minimum)
 0.0                    1,4 LJ modifier (0.0 for no 14 TraPPE, 0.5 for OPLS)
-2 3                    ensemble type, 0-nve, 1-nvt, 2-npt; NH function number (always 3, no longer used)
+0 3                    ensemble type, 0-nve, 1-nvt, 2-npt; NH function number (always 3, no longer used)
 1e14 1e9               qq qqs (outer and inner) Nose hoover thermostat mass, qq goes to infinity->NVE
 0                      isLJswitchOn
 1                      isChargeOn, need additional data sections for different methods
@@ -15,7 +15,7 @@
 1                      sf_type different nanotube potentials or others, 1-hypergeo,2-atomexplicit,3-tasos,4-my interp
 
    Electrostatic
-1                     type (1-ewald, 2-wolf, 3-simple coulomb)
+3                     type (1-ewald, 2-wolf, 3-simple coulomb)
 0.2              kappa ~4/cutoff
 20 20 20 800          kmaxx,kmaxy,kmaxz,ksqmax ~kappa*box length,  kmax^2<ksqmax<3*kmax^2
 1 3                    Boundary conditions(1-tinfoil,2-vaccum), Dimension(1,2,3 D)
