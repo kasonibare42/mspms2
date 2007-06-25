@@ -1174,8 +1174,8 @@ int printit()
     fprintf(fplog,"%10.4le %10.4le %10.4le %10.4le %10.4le %10.4le %10.4le %10.4le %10.4le ",
 	    uangle,udih,uimp,uewald,usflj,unhts,unhtss,virial,virial_inter,virial_intra,utsbs);
 
-    fprintf(fplog,"%10.4le %10.4le\n",
-	    utsbs,boxv);
+    fprintf(fplog,"%10.4le %10.4le %10.4le\n",
+	    utsbs,pinst,boxv);
 }
 
 int vver() // velocity verlet
