@@ -1172,7 +1172,7 @@ int printit()
 	    istep,utot,upot,ukin,tinst,uinter,uintra,uvdw,ubond,uangle);
 
     fprintf(fplog,"%10.4le %10.4le %10.4le %10.4le %10.4le %10.4le %10.4le %10.4le %10.4le ",
-	    uangle,udih,uimp,uewald,usflj,unhts,unhtss,virial,virial_inter,virial_intra,utsbs);
+	    udih,uimp,uewald,usflj,unhts,unhtss,virial,virial_inter,virial_intra);
 
     fprintf(fplog,"%10.4le %10.4le %10.4le\n",
 	    utsbs,pinst,boxv);
