@@ -1000,6 +1000,11 @@ int make_exclude_list()
     for (ii=0;ii<natom;ii++)
     {
 	pointexcl[ii] = nexcllist;
+
+	// self-exclusion
+	excllist[nexcllist] = ii;
+	nexcllist++;
+
 	// exclude bonded atoms
 	// In order to improve it and save the memory usage
 	// Only set atom jj to be an exclude atom for atom ii
