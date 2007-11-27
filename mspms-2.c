@@ -6,6 +6,9 @@
  * Use common names for input files. So the every job must
  * have its own working directory.
  * 
+ * NOTE:
+ *      Test move from CVS to SVN: 112607
+ * 
  * 
  * Written by Yang Wang 2007
  */
