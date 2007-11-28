@@ -8,6 +8,7 @@
  * 
  * NOTE:
  *      Test move from CVS to SVN: 112607
+ *      Successfully imported the SVN repository to Google Code host
  * 
  * 
  * Written by Yang Wang 2007
