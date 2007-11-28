@@ -1405,11 +1405,11 @@ int opening()
     fprintf(fpouts,"WW..W.W..WW....WWW..WW..WW..W.W..WW....WWWW\n");
     fprintf(fpouts,"WW..W.W..WWWWW..WW..WW..WW..W.W..WWWWW..WWW\n");
     fprintf(fpouts,"WW..W.W..WWWWW..WW..WW..WW..W.W..WWWWW..WWW\n");
-    fprintf(fpouts,"WW..WWW..W.....WWW.....WWW..WWW..W.....WW-2\n");
+    fprintf(fpouts,"WW..WWW..W.....WWW.....WWW..WWW..W.....WWW2\n");
     fprintf(fpouts,"WWWWWWWWWWWWWWWWWW..WWWWWWWWWWWWWWWWWWWWWWW\n");
     fprintf(fpouts,"WWWWWWWWWWWWWWWWWW..WWWWWWWWWWWWWWWWWWWWWWW\n");
     fprintf(fpouts,"WWWWWWWWWWWWWWWWWW..WWWWWWWWWWWWWWWWWWWWWWW\n");
-    fprintf(fpouts,"WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWYANG\n");
+    fprintf(fpouts,"WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWYWANG\n");
 }
 
 extern int get_values_from_grid(double, double, double, int, double*, double*);
