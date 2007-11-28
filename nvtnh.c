@@ -6,6 +6,65 @@
 extern int erfrc();
 extern int rafrc();
 
+// init the variables needed for NVT simulation
+// Also read parameters from the input file
+int init_nvt()
+{
+    int ii, jj;
+    const int datalen = 200;
+    char buffer[200];
+    char keyword[100];
+
+    fprintf(stderr,"Reading input data for MD NVT simulation...\n");
+    fprintf(fpouts,"Reading input data for MD NVT simulation...\n");
+
+    // re-open input file to read extra data section
+    fpins = fopen(INPUT,"r");
+
+    while (fgets(buffer,datalen,fpins)!=NULL)
+    {
+	sscanf(buffer,"%s",keyword);
+	for (ii=0;ii<strlen(keyword);ii++)
+	    keyword[ii] = toupper(keyword[ii]);
+	if (!strcmp(keyword,"MDNVT"))
+	{
+	    fprintf(stderr,"Data section for MD NVT simulation found...\n");
+	    fprintf(fpouts,"Data section for MD NVT simulation found...\n");
+	    sscanf(fgets(buffer,datalen,fpins), "%lf %lf", &qq, &qqs);
+
+	    // nose hoover
+	    // following for Dr. Maginn's nose hoover
+	    // Gts = 0.0;
+	    // vts = 0.0;
+	    // rts = 0.0;
+	    /*
+	     * Qts = Rgas*treq*nfree/Omega
+	     * where Omega is a parameter related to the mass of the thermostat
+	     * for this program, we read in the Qts directly.
+	     */
+
+	    // variables for nose-hoover NVT, see frenkel and smit
+	    delt_sqby2 = delt*delt/2.0;
+	    delts_sqby2 = delts*delts/2.0;
+	    unhts = 0.0;
+	    gg = nfree; // need double check
+	    ss = 0.0;
+	    ps = 0.0;
+	    ggs = nfree;
+	    sss = 0.0;
+	    pss = 0.0;
+	    unhtss = 0.0;
+
+	    fclose(fpins);
+	    return 0;
+	} // if keyword found
+    } // read through lines
+    fprintf(stderr,"Error: data for MD NVT not found.\n");
+    fprintf(fpouts,"Error: data for MD NVT not found.\n");
+    fclose(fpins);
+    exit(1);
+}
+
 
 // velocity verlet with nose hoover thermostat
 // based on Frenkel and Smit's codes
@@ -104,7 +163,7 @@ int vver_nh_2()
 	}
 	di = -(pso*deltby2 + 1.0);
 	delps = delps - di*((-sumv2+gg*treq*Rgas)*deltby2/qq - (ps-pso));
-       	delps = delps/(-delt*deltby2*sumv2/qq + di);
+	delps = delps/(-delt*deltby2*sumv2/qq + di);
 
 	sumv2 = 0.0;
 	for (ii=0;ii<natom;ii++)
@@ -119,7 +178,7 @@ int vver_nh_2()
 	ready = true;
 	ipart = 0;
 	while (ipart<=natom && ready==true) // NOTE: <=
-       	{
+	{
 	    ipart++;
 	    if (ipart<=natom)
 	    {
@@ -127,7 +186,7 @@ int vver_nh_2()
 		    ready = false;
 		if (fabs((vyn[ii]-vyo[ii])/vyn[ii]) > err)
 		    ready = false;
-	       	if (fabs((vzn[ii]-vzo[ii])/vzn[ii]) > err)
+		if (fabs((vzn[ii]-vzo[ii])/vzn[ii]) > err)
 		    ready = false;
 	    }
 	    else if (fabs((psn-pso)/psn) > err)
@@ -199,8 +258,8 @@ int vver_nh_1()
 	    zz[ii] = zz[ii] + delts*vz[ii]*1.0e-5;
 
 	}
-       	ss = ss + ps*delts + (sumv2-gg*treq*Rgas)*delts_sqby2/qq;
-       	ps = ps + (sumv2-gg*treq*Rgas)*deltsby2/qq;
+	ss = ss + ps*delts + (sumv2-gg*treq*Rgas)*delts_sqby2/qq;
+	ps = ps + (sumv2-gg*treq*Rgas)*deltsby2/qq;
 
 	// intra forces, short ranged
 	rafrc();
@@ -324,7 +383,7 @@ int vver_nh_1()
 	}
 	di = -(pso*deltby2 + 1.0);
 	delps = delps - di*((-sumv2+gg*treq*Rgas)*deltby2/qq - (ps-pso));
-       	delps = delps/(-delt*deltby2*sumv2/qq + di);
+	delps = delps/(-delt*deltby2*sumv2/qq + di);
 
 	sumv2 = 0.0;
 	for (ii=0;ii<natom;ii++)
@@ -339,7 +398,7 @@ int vver_nh_1()
 	ready = true;
 	ipart = 0;
 	while (ipart<=natom && ready==true) // NOTE: <=
-       	{
+	{
 	    ipart++;
 	    if (ipart<=natom)
 	    {
@@ -347,7 +406,7 @@ int vver_nh_1()
 		    ready = false;
 		if (fabs((vyn[ii]-vyo[ii])/vyn[ii]) > err)
 		    ready = false;
-	       	if (fabs((vzn[ii]-vzo[ii])/vzn[ii]) > err)
+		if (fabs((vzn[ii]-vzo[ii])/vzn[ii]) > err)
 		    ready = false;
 	    }
 	    else if (fabs((psn-pso)/psn) > err)
@@ -422,8 +481,8 @@ int vver_nh_3()
 	    yy[ii] = yy[ii] + delts*vy[ii]*1.0e-5;
 	    zz[ii] = zz[ii] + delts*vz[ii]*1.0e-5;
 	}
-       	sss = sss + pss*delts + (sumv2-ggs*treq*Rgas)*delts_sqby2/qqs;
-       	pss = pss + (sumv2-ggs*treq*Rgas)*deltsby2/qqs;
+	sss = sss + pss*delts + (sumv2-ggs*treq*Rgas)*delts_sqby2/qqs;
+	pss = pss + (sumv2-ggs*treq*Rgas)*deltsby2/qqs;
 
 	// intra forces, short ranged
 	rafrc();
@@ -503,7 +562,7 @@ int vver_nh_3()
 	    vz[ii] = vzn[ii];
 	}
 	pss = pssn;
-	
+
 	// energy of inner thermostat
 	unhtss = (pss*pss*qqs)/2.0 + ggs*treq*Rgas*sss;
     }
@@ -552,7 +611,7 @@ int vver_nh_3()
 	}
 	di = -(pso*deltby2 + 1.0);
 	delps = delps - di*((-sumv2+gg*treq*Rgas)*deltby2/qq - (ps-pso));
-       	delps = delps/(-delt*deltby2*sumv2/qq + di);
+	delps = delps/(-delt*deltby2*sumv2/qq + di);
 
 	sumv2 = 0.0;
 	for (ii=0;ii<natom;ii++)
@@ -567,7 +626,7 @@ int vver_nh_3()
 	ready = true;
 	ipart = 0;
 	while (ipart<=natom && ready==true) // NOTE: <=
-       	{
+	{
 	    ipart++;
 	    if (ipart<=natom)
 	    {
@@ -575,7 +634,7 @@ int vver_nh_3()
 		    ready = false;
 		if (fabs((vyn[ii]-vyo[ii])/vyn[ii]) > err)
 		    ready = false;
-	       	if (fabs((vzn[ii]-vzo[ii])/vzn[ii]) > err)
+		if (fabs((vzn[ii]-vzo[ii])/vzn[ii]) > err)
 		    ready = false;
 	    }
 	    else if (fabs((psn-pso)/psn) > err)

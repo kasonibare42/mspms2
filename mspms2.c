@@ -7,8 +7,8 @@
  * have its own working directory.
  * 
  * NOTE:
- *      Test move from CVS to SVN: 112607
- *      Successfully imported the SVN repository to Google Code host
+ *      112607: Test move from CVS to SVN
+ *      112707: Successfully imported the SVN repository to Google Code host
  * 
  * 
  * Written by Yang Wang 2007
@@ -110,29 +110,8 @@ int init_vars()
     // initialize thermostat/baron stat input data
     if (what_ensemble == npt_run)
 	init_npt_respa();
-
-    // nose hoover
-    // following for Dr. Maginn's nose hoover
-    // Gts = 0.0;
-    // vts = 0.0;
-    // rts = 0.0;
-    /*
-     * Qts = Rgas*treq*nfree/Omega
-     * where Omega is a parameter related to the mass of the thermostat
-     * for this program, we read in the Qts directly.
-     */
-    
-    // variables for nose-hoover NVT, see frenkel and smit
-    delt_sqby2 = delt*delt/2.0;
-    delts_sqby2 = delts*delts/2.0;
-    unhts = 0.0;
-    gg = nfree; // need double check
-    ss = 0.0;
-    ps = 0.0;
-    ggs = nfree;
-    sss = 0.0;
-    pss = 0.0;
-    unhtss = 0.0;
+    else if (what_ensemble == nvt_run)
+	init_nvt();
 
     // sf energy, tasos initiate part
     if (isSFon)
@@ -659,7 +638,6 @@ int readins()
     sscanf(fgets(buffer,datalen,fpins), "%lf %d", &delt, &nstep_inner);
     sscanf(fgets(buffer,datalen,fpins), "%lf", &f0);
     sscanf(fgets(buffer,datalen,fpins), "%d %d", &what_ensemble, &whichNH);
-    sscanf(fgets(buffer,datalen,fpins), "%lf %lf", &qq, &qqs);
     sscanf(fgets(buffer,datalen,fpins), "%d", &isLJswitchOn);
     sscanf(fgets(buffer,datalen,fpins), "%d", &isChargeOn);
     // sscanf(fgets(buffer,datalen,fpins), "%d", &isWolfOn);
