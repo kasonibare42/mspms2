@@ -1,4 +1,4 @@
-# Project: mspms-2
+# Project: mspms2
 
 CC = gcc
 

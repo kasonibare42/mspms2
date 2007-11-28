@@ -1,4 +1,4 @@
-readme.xls
-mspms-2.x
+*.x
+*.exe
 *.o
 *.swp
