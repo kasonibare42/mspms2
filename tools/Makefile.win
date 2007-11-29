@@ -1,0 +1,55 @@
+# Project: cfgmaker
+
+CPP  = g++
+CC   = gcc
+RES  = 
+OBJ  = atom.o box.o inirw.o mole.o specie.o nanotube.o cfgmaker.o
+HISTOBJ = histogramtube.o
+LIBS = -L"C:/Dev-Cpp/lib" -L"C:/Program Files/GnuWin32/lib"
+INCS =  -I"C:/Dev-Cpp/include"  -I"C:/Program Files/GnuWin32/include" 
+CXXINCS =  -I"C:/Dev-Cpp/lib/gcc/mingw32/3.4.2/include"  -I"C:/Dev-Cpp/include/c++/3.4.2/backward"  -I"C:/Dev-Cpp/include/c++/3.4.2/mingw32"  -I"C:/Dev-Cpp/include/c++/3.4.2"  -I"C:/Dev-Cpp/include"  -I"C:/Program Files/GnuWin32/include" 
+BIN  = cfgmaker.exe
+CXXFLAGS = $(CXXINCS)  
+CFLAGS = $(INCS)  
+RM = rm -f
+
+.PHONY: all all-before all-after clean clean-custom
+
+all: all-before cfgmaker.exe all-after
+
+
+clean: clean-custom
+	${RM} $(OBJ) $(BIN)
+
+$(BIN): $(OBJ) $(HISTOBJ)
+	$(CPP) $(OBJ) -o "cfgmaker.exe" $(LIBS)
+	$(CPP) convertmakefile.cpp -o "convertmakefile.exe" 
+	$(CC) histogramtube.o -o "histogramtube.exe" $(LIBS) -lgsl -lgslcblas -lm
+	$(CC) msd.c -o "msd.exe" -lm
+	$(CC) sfgridgen.c -o "sfgridgen.exe" -lm
+	$(CC) trjparser.c -o "trjparser.exe" -lm
+
+atom.o: atom.cpp
+	$(CPP) -c atom.cpp -o atom.o $(CXXFLAGS)
+
+box.o: box.cpp
+	$(CPP) -c box.cpp -o box.o $(CXXFLAGS)
+
+inirw.o: inirw.cpp
+	$(CPP) -c inirw.cpp -o inirw.o $(CXXFLAGS)
+
+mole.o: mole.cpp
+	$(CPP) -c mole.cpp -o mole.o $(CXXFLAGS)
+
+specie.o: specie.cpp
+	$(CPP) -c specie.cpp -o specie.o $(CXXFLAGS)
+
+nanotube.o: nanotube.cpp
+	$(CPP) -c nanotube.cpp -o nanotube.o $(CXXFLAGS)
+
+cfgmaker.o: cfgmaker.cpp
+	$(CPP) -c cfgmaker.cpp -o cfgmaker.o $(CXXFLAGS)
+
+histogramtube.o: histogramtube.c
+	$(CC) -c histogramtube.c -o histogramtube.o $(CFLAGS)
+
