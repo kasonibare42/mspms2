@@ -1,4 +1,4 @@
-# Project: cfgmaker
+# Project: tools for mspms2
 
 CPP  = g++
 CC   = gcc
@@ -8,18 +8,18 @@ HISTOBJ = histogramtube.o
 LIBS = -L"C:/Dev-Cpp/lib" -L"C:/Program Files/GnuWin32/lib"
 INCS =  -I"C:/Dev-Cpp/include"  -I"C:/Program Files/GnuWin32/include" 
 CXXINCS =  -I"C:/Dev-Cpp/lib/gcc/mingw32/3.4.2/include"  -I"C:/Dev-Cpp/include/c++/3.4.2/backward"  -I"C:/Dev-Cpp/include/c++/3.4.2/mingw32"  -I"C:/Dev-Cpp/include/c++/3.4.2"  -I"C:/Dev-Cpp/include"  -I"C:/Program Files/GnuWin32/include" 
-BIN  = cfgmaker.exe
+BIN  = *.exe
 CXXFLAGS = $(CXXINCS)  
 CFLAGS = $(INCS)  
 RM = rm -f
 
 .PHONY: all all-before all-after clean clean-custom
 
-all: all-before cfgmaker.exe all-after
+all: all-before $(BIN) all-after
 
 
 clean: clean-custom
-	${RM} $(OBJ) $(BIN)
+	${RM} $(OBJ) $(HISTOBJ) $(BIN)
 
 $(BIN): $(OBJ) $(HISTOBJ)
 	$(CPP) $(OBJ) -o "cfgmaker.exe" $(LIBS)

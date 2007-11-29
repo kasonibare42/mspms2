@@ -11,6 +11,7 @@ int main(int argc, char* argv[]) {
     ifstream inFile;
 	ofstream outFile;
 	string strLine;
+	int iTasos;
     
     inFile.open("Makefile.win");
 
@@ -19,7 +20,7 @@ int main(int argc, char* argv[]) {
         exit(1); // terminate with error
     }
 
-	outFile.open("Makefile2",ofstream::out);
+	outFile.open("Makefile",ofstream::out);
     if (!outFile) {
         cout << "Unable to open file";
         exit(1); // terminate with error
@@ -31,13 +32,6 @@ int main(int argc, char* argv[]) {
 		///////////////////////////////////////////////////////
 		// delete
 		//////////////////////////////////////////////////////
-
-		//# Makefile  -> N/A
-		iPos=-1;
-		iPos=strLine.find("# Makefile");
-		if (iPos!=-1) {
-			strLine.erase(iPos);
-	    }
 
 		//$(RES) -> N/A
 		iPos=-1;
@@ -80,7 +74,14 @@ int main(int argc, char* argv[]) {
 		if (iPos!=-1) {
 			strLine.erase(iPos);
 	    }
-
+	    
+		//$(CXXFLAGS) -> N/A
+		iPos=-1;
+		iPos=strLine.find("$(CXXFLAGS)");
+		if (iPos!=-1) {
+			strLine.erase(iPos);
+	    }
+	    
 		//CXXFLAGS -> N/A
 		iPos=-1;
 		iPos=strLine.find("CXXFLAGS");
@@ -91,6 +92,14 @@ int main(int argc, char* argv[]) {
 		//////////////////////////////////////////////////////
 		// replace
 		//////////////////////////////////////////////////////
+
+		//# Makefile  -> convertmakefile comments
+		iPos=-1;
+		iPos=strLine.find("# Makefile");
+		if (iPos!=-1) {
+			strLine.erase(iPos);
+			strLine.append("# Makefile converted by convertmakefile");
+	    }
 
 		//gcc.exe -> gcc
 		iPos=-1;
@@ -105,15 +114,28 @@ int main(int argc, char* argv[]) {
 		if (iPos!=-1) {
 			strLine.replace(iPos,7,"g++");
 		}
-
-		//$(LINKOBJ) ... -> ...
+		
+		// .exe -> .x     this has to be done after gcc and g++ changes
 		iPos=-1;
-		iPos=strLine.find("$(LINKOBJ)");
+		iPos=strLine.find(".exe");
 		if (iPos!=-1) {
-			strLine.erase(iPos);
-			strLine.append("-static $(OBJ) -o mspms2.x $(LIBS) $(CFLAGS) -O2 -lgfortran -lgsl -lgslcblas -lm");
+			strLine.replace(iPos,4,".x");
 		}
-
+		
+		// LIBS -> ...
+		iPos=-1;
+		iPos=strLine.find("LIBS =");
+		if (iPos!=-1) {
+			iTasos=-1;
+            iTasos=strLine.find("libtasos.a");
+			strLine.erase(iPos);
+			strLine.append("LIBS = ");
+			if (iTasos!=-1){
+               strLine.append("mylibtasos/libtasos.a ");
+            }
+			strLine.append("-static -lgfortran -lgsl -lgslcblas -lm");
+		}
+				
 		cout<<strLine<<endl;
 		outFile<<strLine<<endl;
 	}
