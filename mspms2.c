@@ -33,6 +33,7 @@ extern int init_sf_atom_explicit();
 extern int init_tasos_grid();
 extern int init_my_interp();
 extern int init_npt_respa();
+extern int init_nvt();
 extern int npt_respa();
 
 
