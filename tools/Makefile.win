@@ -1,4 +1,5 @@
 # Project: tools for mspms2
+# Makefile created by Yang Wang 112907
 
 CPP  = g++
 CC   = gcc
