@@ -48,6 +48,7 @@ int cal_com_and_inner_coords()
 	    gz[jj] = zz[jj] - mole_zz[ii];
 	}
     }
+    return 0;
 }
 
 // calculate the atom position according to the PBC'd center of mass
@@ -65,6 +66,7 @@ int reconstruct_coords_from_com()
 	    gz[jj] = gz[jj] + mole_zz[ii];
 	}
     }
+    return 0;
 }
 
 // calculate the PBC'd atom coordinates
@@ -78,6 +80,7 @@ int cal_coords_PBC()
 	fy[ii] = yy[ii] - boxlx*rint(yy[ii]/boxlx);
 	gz[ii] = zz[ii] - boxlx*rint(zz[ii]/boxlx);
     }
+    return 0;
 }
 
 // calcualte interaction between atom ii and jj, exclude those from excluding list
@@ -279,6 +282,7 @@ int loop_ij()
     uvdw += uij_vdw; // still need 4.0
     ureal += uij_real; // still neeed constant
     uGz0 += uij_Gz0/(2.0*boxlz); // still need constant
+    return 0;
 }
 
 // calculate the interactions between dihedral ending atom 1 and 4
@@ -519,6 +523,8 @@ int loop_14()
     uvdw += uij_vdw14; // still need 4.0
     ureal += uij_real14; // still need constant
     uGz0 += uij_Gz0/(2.0*boxlz); // still need constant
+    
+    return 0;
 }
 
 int loop_13()
@@ -531,7 +537,7 @@ int loop_13()
     double sigmaij, epsilonij;
     double fij, fxij, fyij, fzij;
     double uij_vdw13img, uij_vdw13img_temp;
-    double uij_real13, uij_real13_temp;
+    double uij_real13;
     double uij_excl_13;
     double rxij_old, ryij_old, rzij_old;
     double temp1, temp2, temp3;
@@ -736,6 +742,7 @@ int loop_13()
     uvdw += uij_vdw13img; // still need 4.0
     ureal += uij_real13; // still need constant
     uGz0 += uij_Gz0/(2.0*boxlz);
+    return 0;
 }
 
 int loop_12()
@@ -748,7 +755,7 @@ int loop_12()
     double sigmaij, epsilonij;
     double fij, fxij, fyij, fzij;
     double uij_vdw12img, uij_vdw12img_temp;
-    double uij_real12, uij_real12_temp;
+    double uij_real12;
     double uij_excl_12;
     double rxij_old, ryij_old, rzij_old;
     double temp1, temp2, temp3;
@@ -945,6 +952,7 @@ int loop_12()
     uvdw += uij_vdw12img; // still need 4.0
     ureal += uij_real12; // still need constant
     uGz0 += uij_Gz0/(2.0*boxlz);
+    return 0;
 }
 
 // calcualte interaction between nonbonded pairs
@@ -1203,6 +1211,7 @@ int loop_nbp()
     unbp_vdw += uij_vdwnbp; // still need 4.0
     ureal += uij_realnbp; // still neeed constant
     uGz0 += uij_Gz0nbp/(2.0*boxlz); // still need constant
+    return 0;
 }
 
 
@@ -1273,6 +1282,8 @@ int ewald_fourier_and_self()
     for (ii=0;ii<natom;ii++)
 	uself += charge[ii]*charge[ii];
     uself = uself*const_columb*sqrt(kappa*kappa/pi);
+    
+    return 0;
 }
 
 int ewald_vacuum()
@@ -1331,6 +1342,8 @@ int ewald_vacuum()
 
     // Does this term have additional contribution to the pressure?
     // Or is it already included in the ewald??
+    
+    return 0;
 }
 
 // calculate the wolf self interaction part
@@ -1346,6 +1359,8 @@ int wolf_con()
     uexcl *= const_columb;
     // total wolf
     uwolf = uwolf_real - uwolf_con - uexcl;
+    
+    return 0;
 }
 
 // calculate simple direct coulomb interactions between different molecules
@@ -1360,7 +1375,6 @@ int simple_coulomb_inter_mole()
     double rxmn, rymn, rzmn, rmnsq, rmn; // distance between molecular center of mass
     double rxij, ryij, rzij, rijsq, rij; // distance between atoms
     double fij, fxij, fyij, fzij;
-    int ii1, ii2;
 
     // first calculate all molecules center of mass
     cal_com_and_inner_coords();
@@ -1448,6 +1462,8 @@ int simple_coulomb_inter_mole()
 
     // constant for coulomb energy
     ucoulomb *= const_columb;
+    
+    return 0;
 }
 
 
@@ -1526,6 +1542,8 @@ int erfrc()
     // total inter molecule energy add up everything
     // they should be zero if they are not used
     uinter = uvdw + uewald + uwolf + ucoulomb + usflj;
+    
+    return 0;
 }
 
 

@@ -99,6 +99,8 @@ int bndfrc()
 		exit(1);
 	} // switch for different bond type
     } // end of bond stretching term calculations
+    
+    return 0;
 }
 
 int aglfrc()
@@ -268,6 +270,7 @@ int aglfrc()
 	} // ending of switch for different angle types
     } // end of angle bending calculations
 
+    return 0;
 }
 
 int dihfrc()
@@ -521,6 +524,8 @@ int dihfrc()
 		exit(1);
 	} // switch for different dihedral type
     } // end of dihedral list loop
+    
+    return 0;
 }
 
 int impfrc() // improper energy/force calculations
@@ -678,6 +683,8 @@ int impfrc() // improper energy/force calculations
 
     if (imp_type[ii]==imp_charmm)
        	uimp = uimp*(pi/180)*(pi/180);
+    
+    return 0;
 }
 
 
@@ -725,5 +732,6 @@ int rafrc()
     // total intra energy
     uintra = ubond + uangle + udih + uimp;
 
+    return 0;
 }
 

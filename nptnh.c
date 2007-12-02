@@ -13,7 +13,7 @@ extern int calculate_ljlrc();
 
 int init_npt_respa()
 {
-    int ii, jj;
+    int ii;
     const int datalen = 200;
     char buffer[200];
     char keyword[100];
@@ -182,6 +182,7 @@ int npt_nh_operator()
 
     // printf("tinst=%lf  vts=%lf  vbs=%lf\n",tinst,vts,vbs);
 
+    return 0;
 }
 
 int npt_respa() 
@@ -264,4 +265,5 @@ int npt_respa()
 
     npt_nh_operator();
 
+    return 0;
 }

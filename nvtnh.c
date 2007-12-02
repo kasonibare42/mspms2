@@ -12,7 +12,7 @@ extern int rafrc();
 // Also read parameters from the input file
 int init_nvt()
 {
-    int ii, jj;
+    int ii;
     const int datalen = 200;
     char buffer[200];
     char keyword[100];
@@ -211,6 +211,8 @@ int vver_nh_2()
 
     // calculate instant temperature
     tinst = 2.0*ukin*rRgas/nfree;
+    
+    return 0;
 }
 
 
@@ -431,6 +433,8 @@ int vver_nh_1()
 
     // calculate instant temperature
     tinst = 2.0*ukin*rRgas/nfree;
+    
+    return 0;
 }
 
 
@@ -659,6 +663,8 @@ int vver_nh_3()
 
     // calculate instant temperature
     tinst = 2.0*ukin*rRgas/nfree;
+    
+    return 0;
 }
 
 // Following codes are modified from Dr. Maginn's sample codes.
@@ -704,6 +710,8 @@ int nvt_nh_operator()
     // calculate kinetic energy and temperature
     ukin = 0.5*mvsq;
     tinst = 2.0*ukin*rRgas/nfree;
+    
+    return 0;
 }
 
 int nvt_respa() // velocity verlet
@@ -757,4 +765,6 @@ int nvt_respa() // velocity verlet
     }
 
     nvt_nh_operator();
+    
+    return 0;
 }

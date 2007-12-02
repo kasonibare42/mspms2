@@ -495,6 +495,8 @@ int Amatrix_ele_assign_value(double *line, double x, double y, double z)
     line[29] = x2*y*z;
     line[30] = x*y2*z;
     line[31] = x*y*z2;
+    
+    return 0;
 }
 
 int Amatrix_ele_assign_dx(double *line, double x, double y, double z)
@@ -539,6 +541,8 @@ int Amatrix_ele_assign_dx(double *line, double x, double y, double z)
     line[29] = 2*x*y*z;
     line[30] = y2*z;
     line[31] = y*z2;
+    
+    return 0;
 }
 
 
@@ -584,6 +588,8 @@ int Amatrix_ele_assign_dy(double *line, double x, double y, double z)
     line[29] = x2*z;
     line[30] = 2*x*y*z;
     line[31] = x*z2;
+    
+    return 0;
 }
 
 int Amatrix_ele_assign_dz(double *line, double x, double y, double z)
@@ -628,6 +634,8 @@ int Amatrix_ele_assign_dz(double *line, double x, double y, double z)
     line[29] = x2*y;
     line[30] = x*y2;
     line[31] = 2*x*y*z;
+    
+    return 0;
 }
 
 
@@ -803,6 +811,7 @@ int get_values_from_grid(double fxx,double fyy, double fzz, int type, double *us
 	+ fza30[type][cubeidx]*interp_vector[30]
 	+ fza31[type][cubeidx]*interp_vector[31];
 
+    return 0;
 }
 
 int init_sf_hypergeo()
@@ -877,6 +886,7 @@ int hypergeo(double a, double b, double c,double z, double rr, double *sumV, dou
 	*sumF = *sumF - 2.0*(i+1.0)*an1*zn/rr;
     }
 
+    return 0;
 }
 
 // calculate the hypergeometric nanotube potentials
@@ -969,6 +979,8 @@ int cal_sf_hypergeo()
 	fxl[ii] = fxi;
 	fyl[ii] = fyi;
     } // loop through all fluid atoms
+    
+    return 0;
 }
 
 int init_sf_atom_explicit()
@@ -1113,7 +1125,10 @@ int cal_sf_atom_explicit()
 
     // factor
     usflj += usf_vdw*4.0;
+    
+    return 0;
 }
+
 
 int sffrc()
 {
@@ -1169,5 +1184,7 @@ int sffrc()
 
 	}
     }
+    
+    return 0;
 }
 

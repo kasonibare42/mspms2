@@ -283,7 +283,6 @@ int init_vars()
     int mm, nn;
     int atomid_1, atomid_2;
     double sigmaij, epsilonij;
-    int isSameSpecie;
     double temp1, temp2, temp3;
 
     fprintf(stderr,"calculating LJ long range corrections...\n");
@@ -326,6 +325,7 @@ int init_vars()
     // calculate the total lj lrc
     calculate_ljlrc();
 
+    return 0;
 }
 
 int calculate_ljlrc()
@@ -346,6 +346,7 @@ int calculate_ljlrc()
     }
     pljlrc = pljlrc*J_mol_A3_to_Pascal; // convert J/mol/A^3 to Pascal
 
+    return 0;
 }
 
 int ending()
@@ -602,6 +603,8 @@ int ending()
     fclose(fplog);
     fclose(fptrj);
     fclose(fpouts);
+    
+    return 0;
 }
 
 /* Read in input and config files */
@@ -892,6 +895,8 @@ int readins()
     }
 
     fclose(fpcfg);
+    
+    return 0;
 }
 
 int echo()
@@ -968,6 +973,8 @@ int echo()
     fprintf(fpouts,"uljlrc=%lf\npljlrc=%lf\n",uljlrc,pljlrc);
 
     fflush(fpouts);
+    
+    return 0;
 }
 
 int make_exclude_list()
@@ -1072,11 +1079,13 @@ int make_exclude_list()
        printf("\n");
        }
        */
+    
+    return 0;
 }
 
 int velinit()
 {
-    int ii, jj, kk;
+    int ii;
     double px, py, pz;
     double stdvtmp, stdv;
     double totalmass;
@@ -1132,6 +1141,8 @@ int velinit()
 	ukin += aw[ii]*(vx[ii]*vx[ii]+vy[ii]*vy[ii]+vz[ii]*vz[ii]);
     ukin = 0.5*ukin;
     tinst = 2.0*ukin/(Rgas*nfree);
+    
+    return 0;
 }
 
 int printit()
@@ -1161,6 +1172,8 @@ int printit()
 
     fprintf(fplog,"%10.4le %10.4le %10.4le\n",
 	    utsbs,pinst,boxv);
+    
+    return 0;
 }
 
 int vver() // velocity verlet
@@ -1216,6 +1229,8 @@ int vver() // velocity verlet
 
     // calculate instant temperature
     tinst = 2.0*ukin*rRgas/nfree;
+    
+    return 0;
 }
 
 int snapshot()
@@ -1228,6 +1243,8 @@ int snapshot()
     for (ii=0;ii<natom;ii++)
 	fprintf(fpss,"%s  %lf  %lf  %lf\n",atomname[ii],xx[ii],yy[ii],zz[ii]);
     fclose(fpss);
+    
+    return 0;
 }
 
 int trajectory()
@@ -1236,12 +1253,12 @@ int trajectory()
     fwrite(xx,sizeof(double),natom,fptrj);
     fwrite(yy,sizeof(double),natom,fptrj);
     fwrite(zz,sizeof(double),natom,fptrj);
+    
+    return 0;
 }
 
 int saveit()
 {
-    int ii;
-
     fpsave = fopen(SAVEFILE,"wb");
 
     fwrite(xx,sizeof(double),natom,fpsave);
@@ -1274,6 +1291,8 @@ int saveit()
     fwrite(accumulator,sizeof(double),num_counter_max,fpsave);
 
     fclose(fpsave);
+    
+    return 0;
 }
 
 int loadit()
@@ -1333,6 +1352,8 @@ int loadit()
     }
 
     fclose(fpload);
+    
+    return 0;
 }
 
 int averages()
@@ -1351,6 +1372,8 @@ int averages()
 	accumulator[ii][1] = 0.0;
     }
     icounter[10]++; // number of average cycles
+    
+    return 0;
 }
 
 int calres()
@@ -1367,6 +1390,8 @@ int calres()
 	fluc = accumulator[ii][7] = sqrt(fabs(ave_of_square-ave*ave)); // fluc
 	// rezero?
     }
+    
+    return 0;
 }
 
 int opening()
@@ -1387,6 +1412,8 @@ int opening()
     fprintf(fpouts,"WWWWWWWWWWWWWWWWWW..WWWWWWWWWWWWWWWWWWWWWWW\n");
     fprintf(fpouts,"WWWWWWWWWWWWWWWWWW..WWWWWWWWWWWWWWWWWWWWWWW\n");
     fprintf(fpouts,"WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWYWANG\n");
+    
+    return 0;
 }
 
 int main (int argc, char *argv[])
@@ -1409,5 +1436,6 @@ int main (int argc, char *argv[])
     // write out results and clean up
     ending();
 
+    return 0;
 }
 
