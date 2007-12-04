@@ -54,12 +54,12 @@ int init_vars()
 
     for (ii=0;ii<nmole;ii++)
     {
-	mw[ii] = 0.0;
-	for (jj=mole_first_atom_idx[ii];jj<mole_first_atom_idx[ii+1];jj++)
-	    mw[ii] += aw[jj];
-	// fprintf(fpouts,"molecule %d: %d-%d :  mw=%lf : 1st bond id=%d : 1st angle id=%d : 1st dih id=%d\n",
-	// ii,mole_first_atom_idx[ii],mole_first_atom_idx[ii+1]-1,mw[ii],
-	// mole_first_bond_idx[ii],mole_first_angle_idx[ii],mole_first_dih_idx[ii]);
+		mw[ii] = 0.0;
+		for (jj=mole_first_atom_idx[ii];jj<mole_first_atom_idx[ii+1];jj++)
+		    mw[ii] += aw[jj];
+		// fprintf(fpouts,"molecule %d: %d-%d :  mw=%lf : 1st bond id=%d : 1st angle id=%d : 1st dih id=%d\n",
+		// ii,mole_first_atom_idx[ii],mole_first_atom_idx[ii+1]-1,mw[ii],
+		// mole_first_bond_idx[ii],mole_first_angle_idx[ii],mole_first_dih_idx[ii]);
     }
 
     nframe = 0; // number of frames in trajectory file
@@ -71,9 +71,9 @@ int init_vars()
     // initiate counters and accumulators
     for (ii=0;ii<num_counter_max;ii++)
     {
-	icounter[ii] = 0;
-	for (jj=0;jj<5;jj++)
-	    accumulator[ii][jj] = 0.0;
+		icounter[ii] = 0;
+		for (jj=0;jj<5;jj++)
+		    accumulator[ii][jj] = 0.0;
     }
     // set the counter for equilibrium
     // it will decrease during the run
@@ -114,14 +114,18 @@ int init_vars()
     // sf energy, tasos initiate part
     if (isSFon)
     {
-	if (sf_type==nanotube_hypergeo)
-	    init_sf_hypergeo();
-	else if (sf_type==nanotube_atom_explicit)
-	    init_sf_atom_explicit();
-	else if (sf_type==nanotube_tasos)
-	    init_tasos_grid();
-	else if (sf_type==nanotube_my_interp)
-	    init_my_interp();
+		if (sf_type==nanotube_hypergeo) {
+		    init_sf_hypergeo();
+		}
+		else if (sf_type==nanotube_atom_explicit) {
+		    init_sf_atom_explicit();
+		}
+		else if (sf_type==nanotube_tasos) {
+		    init_tasos_grid();
+		}
+		else if (sf_type==nanotube_my_interp) {
+		    init_my_interp();
+		}
     }
 
     // check unique for dihedrals
@@ -135,68 +139,68 @@ int init_vars()
 	isDih_unique[ii] = true;
     for (ii=0;ii<ndih-1;ii++)
     {
-	if (isDih_unique[ii])
-	{
-	    for (jj=ii+1;jj<ndih;jj++)
-	    {
-		if (isDih_unique[jj])
+		if (isDih_unique[ii])
 		{
-		    if (dih_idx[ii][0]==dih_idx[jj][0] && dih_idx[ii][3]==dih_idx[jj][3])
+		    for (jj=ii+1;jj<ndih;jj++)
 		    {
-			isDih_unique[jj] = false;
-			fprintf(fpouts,"Dihedral %d and dihedral %d have the same ending pairs.\n",ii,jj);
-		    }
-		    else if (dih_idx[ii][0]==dih_idx[jj][3] && dih_idx[ii][3]==dih_idx[jj][0])
-		    {
-			isDih_unique[jj] = false;
-			fprintf(fpouts,"Dihedral %d and dihedral %d have the same ending pairs.\n",ii,jj);
+				if (isDih_unique[jj])
+				{
+				    if (dih_idx[ii][0]==dih_idx[jj][0] && dih_idx[ii][3]==dih_idx[jj][3])
+				    {
+					isDih_unique[jj] = false;
+					fprintf(fpouts,"Dihedral %d and dihedral %d have the same ending pairs.\n",ii,jj);
+				    }
+				    else if (dih_idx[ii][0]==dih_idx[jj][3] && dih_idx[ii][3]==dih_idx[jj][0])
+				    {
+					isDih_unique[jj] = false;
+					fprintf(fpouts,"Dihedral %d and dihedral %d have the same ending pairs.\n",ii,jj);
+				    }
+				}
 		    }
 		}
-	    }
-	}
     }
 
     // following codes make sure 14 and 13 do not share same ending pairs
     // this is also for ring kind structures
     for (ii=0;ii<ndih;ii++)
     {
-	if (isDih_unique[ii])
-	{
-	    for (jj=0;jj<nangle;jj++)
-	    {
-		if (dih_idx[ii][0]==angle_idx[jj][0] && dih_idx[ii][3]==angle_idx[jj][2])
+		if (isDih_unique[ii])
 		{
-		    isDih_unique[jj] = false; 
-		    fprintf(fpouts,"Dihedral %d and angle %d have the same ending pairs.\n",ii,jj);
+		    for (jj=0;jj<nangle;jj++)
+		    {
+				if (dih_idx[ii][0]==angle_idx[jj][0] && dih_idx[ii][3]==angle_idx[jj][2])
+				{
+				    isDih_unique[jj] = false; 
+				    fprintf(fpouts,"Dihedral %d and angle %d have the same ending pairs.\n",ii,jj);
+				}
+				else if (dih_idx[ii][0]==angle_idx[jj][2] && dih_idx[ii][3]==angle_idx[jj][0])
+				{
+				    isDih_unique[jj] = false;
+				    fprintf(fpouts,"Dihedral %d and angle %d have the same ending pairs.\n",ii,jj);
+				}
+		    }
 		}
-		else if (dih_idx[ii][0]==angle_idx[jj][2] && dih_idx[ii][3]==angle_idx[jj][0])
-		{
-		    isDih_unique[jj] = false;
-		    fprintf(fpouts,"Dihedral %d and angle %d have the same ending pairs.\n",ii,jj);
-		}
-	    }
-	}
     }
 
     // following codes make sure 14 and 12 do not share the same ending pairs
     for (ii=0;ii<ndih;ii++)
     {
-	if (isDih_unique[ii])
-	{
-	    for (jj=0;jj<nbond;jj++)
-	    {
-		if (dih_idx[ii][0]==bond_idx[jj][0] && dih_idx[ii][3]==bond_idx[jj][1])
+		if (isDih_unique[ii])
 		{
-		    isDih_unique[jj] = false;
-		    fprintf(fpouts,"Dihedral %d and bond %d have the same ending pairs.\n",ii,jj);
+		    for (jj=0;jj<nbond;jj++)
+		    {
+				if (dih_idx[ii][0]==bond_idx[jj][0] && dih_idx[ii][3]==bond_idx[jj][1])
+				{
+				    isDih_unique[jj] = false;
+				    fprintf(fpouts,"Dihedral %d and bond %d have the same ending pairs.\n",ii,jj);
+				}
+				else if (dih_idx[ii][0]==bond_idx[jj][1] && dih_idx[ii][3]==bond_idx[jj][0])
+				{
+				    isDih_unique[jj] = false;
+				    fprintf(fpouts,"Dihedral %d and bond %d have the same ending pairs.\n",ii,jj);
+				}
+		    }
 		}
-		else if (dih_idx[ii][0]==bond_idx[jj][1] && dih_idx[ii][3]==bond_idx[jj][0])
-		{
-		    isDih_unique[jj] = false;
-		    fprintf(fpouts,"Dihedral %d and bond %d have the same ending pairs.\n",ii,jj);
-		}
-	    }
-	}
     }
 
     // check unique for angles
@@ -205,46 +209,46 @@ int init_vars()
 	isAngle_unique[ii] = true;
     for (ii=0;ii<nangle-1;ii++)
     {
-	if (isAngle_unique[ii])
-	{
-	    for (jj=ii+1;jj<nangle;jj++)
-	    {
-		if (isAngle_unique[jj])
+		if (isAngle_unique[ii])
 		{
-		    if (angle_idx[ii][0]==angle_idx[jj][0] && angle_idx[ii][2]==angle_idx[jj][2])
+		    for (jj=ii+1;jj<nangle;jj++)
 		    {
-			isAngle_unique[jj] = false;
-			fprintf(fpouts,"Angle %d and angle %d have the same ending pairs.\n",ii,jj);
-		    }
-		    else if (angle_idx[ii][0]==angle_idx[jj][2] && angle_idx[ii][2]==angle_idx[jj][0])
-		    {
-			isAngle_unique[jj] = false;
-			fprintf(fpouts,"Angle %d and angle %d have the same ending pairs.\n",ii,jj);
+				if (isAngle_unique[jj])
+				{
+				    if (angle_idx[ii][0]==angle_idx[jj][0] && angle_idx[ii][2]==angle_idx[jj][2])
+				    {
+						isAngle_unique[jj] = false;
+						fprintf(fpouts,"Angle %d and angle %d have the same ending pairs.\n",ii,jj);
+				    }
+				    else if (angle_idx[ii][0]==angle_idx[jj][2] && angle_idx[ii][2]==angle_idx[jj][0])
+				    {
+						isAngle_unique[jj] = false;
+						fprintf(fpouts,"Angle %d and angle %d have the same ending pairs.\n",ii,jj);
+				    }
+				}
 		    }
 		}
-	    }
-	}
     } // end of checking unique angles
 
     // following codes make sure 13 and 12 do not share the same ending pairs
     for (ii=0;ii<nangle;ii++)
     {
-	if (isAngle_unique[ii])
-	{
-	    for (jj=0;jj<nbond;jj++)
-	    {
-		if (angle_idx[ii][0]==bond_idx[jj][0] && angle_idx[ii][2]==bond_idx[jj][1])
+		if (isAngle_unique[ii])
 		{
-		    isAngle_unique[jj] = false;
-		    fprintf(fpouts,"Angle %d and bond %d have the same ending pairs.\n",ii,jj);
+		    for (jj=0;jj<nbond;jj++)
+		    {
+				if (angle_idx[ii][0]==bond_idx[jj][0] && angle_idx[ii][2]==bond_idx[jj][1])
+				{
+				    isAngle_unique[jj] = false;
+				    fprintf(fpouts,"Angle %d and bond %d have the same ending pairs.\n",ii,jj);
+				}
+				else if (angle_idx[ii][0]==bond_idx[jj][1] && angle_idx[ii][2]==bond_idx[jj][0])
+				{
+				    isAngle_unique[jj] = false;
+				    fprintf(fpouts,"Angle %d and bond %d have the same ending pairs.\n",ii,jj);
+				}
+		    }
 		}
-		else if (angle_idx[ii][0]==bond_idx[jj][1] && angle_idx[ii][2]==bond_idx[jj][0])
-		{
-		    isAngle_unique[jj] = false;
-		    fprintf(fpouts,"Angle %d and bond %d have the same ending pairs.\n",ii,jj);
-		}
-	    }
-	}
     }
 
     // set ewald parameters
@@ -274,7 +278,7 @@ int init_vars()
     fgets(buffer,datalen,fpcoords);
     for (ii=0;ii<natom;ii++)
     {
-	fscanf(fpcoords,"%s %lf %lf %lf\n",buffer,&xx[ii],&yy[ii],&zz[ii]);
+		fscanf(fpcoords,"%s %lf %lf %lf\n",buffer,&xx[ii],&yy[ii],&zz[ii]);
     }
     fclose(fpcoords);
 
@@ -295,31 +299,31 @@ int init_vars()
     // calculate long range correction terms for single molecules
     for (mm=0;mm<nspecie;mm++)
     {
-	for (nn=0;nn<nspecie;nn++)
-	{
-	    uljlrc_term[mm][nn] = 0.0;
-	    pljlrc_term[mm][nn] = 0.0;
-	    // loop through the atoms in one molecule of specie mm
-	    for (ii=0;ii<natom_per_mole[mm];ii++)
-	    {
-		// use the first molecule of one specie to do the calculation
-		atomid_1 = specie_first_atom_idx[mm] + ii;
-		// loop through all the atoms in one molecule of specie nn
-		for (jj=0;jj<natom_per_mole[nn];jj++)
+		for (nn=0;nn<nspecie;nn++)
 		{
-		    atomid_2 = specie_first_atom_idx[nn] + ii;
-		    sigmaij = 0.5*(sigma[atomid_1]+sigma[atomid_2]);
-		    epsilonij = sqrt(epsilon[atomid_1]*epsilon[atomid_2]);
-		    temp1 = pow(sigmaij,9.0)*uljlrc_term1 + pow(sigmaij,3.0)*uljlrc_term2;
-		    temp2 = epsilonij*pow(sigmaij,3.0);
-		    temp3 = pow(sigmaij,9.0)*pljlrc_term1 + pow(sigmaij,3.0)*pljlrc_term2;
-		    uljlrc_term[mm][nn] += temp1*temp2;
-		    pljlrc_term[mm][nn] += temp3*temp2;
-
-		} // through all atom in one molecule of specie 2
-	    } // through all atom in one molecule of specie 1
-
-	} // loop through specie 2
+		    uljlrc_term[mm][nn] = 0.0;
+		    pljlrc_term[mm][nn] = 0.0;
+		    // loop through the atoms in one molecule of specie mm
+		    for (ii=0;ii<natom_per_mole[mm];ii++)
+		    {
+				// use the first molecule of one specie to do the calculation
+				atomid_1 = specie_first_atom_idx[mm] + ii;
+				// loop through all the atoms in one molecule of specie nn
+				for (jj=0;jj<natom_per_mole[nn];jj++)
+				{
+				    atomid_2 = specie_first_atom_idx[nn] + ii;
+				    sigmaij = 0.5*(sigma[atomid_1]+sigma[atomid_2]);
+				    epsilonij = sqrt(epsilon[atomid_1]*epsilon[atomid_2]);
+				    temp1 = pow(sigmaij,9.0)*uljlrc_term1 + pow(sigmaij,3.0)*uljlrc_term2;
+				    temp2 = epsilonij*pow(sigmaij,3.0);
+				    temp3 = pow(sigmaij,9.0)*pljlrc_term1 + pow(sigmaij,3.0)*pljlrc_term2;
+				    uljlrc_term[mm][nn] += temp1*temp2;
+				    pljlrc_term[mm][nn] += temp3*temp2;
+		
+				} // through all atom in one molecule of specie 2
+		    } // through all atom in one molecule of specie 1
+	
+		} // loop through specie 2
     } // loop through speice 1
 
     // calculate the total lj lrc
@@ -337,12 +341,12 @@ int calculate_ljlrc()
     pljlrc = 0.0;
     for (mm=0;mm<nspecie;mm++)
     {
-	for (nn=0;nn<nspecie;nn++)
-	{
-	    uljlrc += (uljlrc_term[mm][nn]*nmole_per_specie[mm]*nmole_per_specie[nn]/boxv);
-	    pljlrc += 
-		(pljlrc_term[mm][nn]*nmole_per_specie[mm]*nmole_per_specie[nn]/boxv/boxv);
-	}
+		for (nn=0;nn<nspecie;nn++)
+		{
+		    uljlrc += (uljlrc_term[mm][nn]*nmole_per_specie[mm]*nmole_per_specie[nn]/boxv);
+		    pljlrc += 
+			(pljlrc_term[mm][nn]*nmole_per_specie[mm]*nmole_per_specie[nn]/boxv/boxv);
+		}
     }
     pljlrc = pljlrc*J_mol_A3_to_Pascal; // convert J/mol/A^3 to Pascal
 
@@ -442,161 +446,160 @@ int ending()
 
     if (isSFon)
     {
-	if (sf_type==nanotube_hypergeo)
-	{
-	    free(hgntc_xx);
-	    free(hgntc_yy);
-	    free(hgnt_radius);
-	}
-	else if (sf_type==nanotube_atom_explicit)
-	{
-	    free(solid_sigma);
-	    free(solid_epsilon);
-	    free(solid_charge);
-	    free(solid_xx);
-	    free(solid_yy);
-	    free(solid_zz);
-	}
-	else if (sf_type==nanotube_my_interp)
-	{
-	    // free memories
-	    free(interp_vector);
-	    for (ii=0;ii<nunique_atom_max;ii++)
-	    {
-		free(ene0[ii]);
-		free(ene1[ii]);
-		free(ene2[ii]);
-		free(ene3[ii]);
-		free(ene4[ii]);
-		free(ene5[ii]);
-		free(ene6[ii]);
-		free(ene7[ii]);
-		free(ene8[ii]);
-		free(ene9[ii]);
-		free(ene10[ii]);
-		free(ene11[ii]);
-		free(ene12[ii]);
-		free(ene13[ii]);
-		free(ene14[ii]);
-		free(ene15[ii]);
-		free(ene16[ii]);
-		free(ene17[ii]);
-		free(ene18[ii]);
-		free(ene19[ii]);
-		free(ene20[ii]);
-		free(ene21[ii]);
-		free(ene22[ii]);
-		free(ene23[ii]);
-		free(ene24[ii]);
-		free(ene25[ii]);
-		free(ene26[ii]);
-		free(ene27[ii]);
-		free(ene28[ii]);
-		free(ene29[ii]);
-		free(ene30[ii]);
-		free(ene31[ii]);
-
-		free(fxa0[ii]);
-		free(fxa1[ii]);
-		free(fxa2[ii]);
-		free(fxa3[ii]);
-		free(fxa4[ii]);
-		free(fxa5[ii]);
-		free(fxa6[ii]);
-		free(fxa7[ii]);
-		free(fxa8[ii]);
-		free(fxa9[ii]);
-		free(fxa10[ii]);
-		free(fxa11[ii]);
-		free(fxa12[ii]);
-		free(fxa13[ii]);
-		free(fxa14[ii]);
-		free(fxa15[ii]);
-		free(fxa16[ii]);
-		free(fxa17[ii]);
-		free(fxa18[ii]);
-		free(fxa19[ii]);
-		free(fxa20[ii]);
-		free(fxa21[ii]);
-		free(fxa22[ii]);
-		free(fxa23[ii]);
-		free(fxa24[ii]);
-		free(fxa25[ii]);
-		free(fxa26[ii]);
-		free(fxa27[ii]);
-		free(fxa28[ii]);
-		free(fxa29[ii]);
-		free(fxa30[ii]);
-		free(fxa31[ii]);
-
-		free(fya0[ii]);
-		free(fya1[ii]);
-		free(fya2[ii]);
-		free(fya3[ii]);
-		free(fya4[ii]);
-		free(fya5[ii]);
-		free(fya6[ii]);
-		free(fya7[ii]);
-		free(fya8[ii]);
-		free(fya9[ii]);
-		free(fya10[ii]);
-		free(fya11[ii]);
-		free(fya12[ii]);
-		free(fya13[ii]);
-		free(fya14[ii]);
-		free(fya15[ii]);
-		free(fya16[ii]);
-		free(fya17[ii]);
-		free(fya18[ii]);
-		free(fya19[ii]);
-		free(fya20[ii]);
-		free(fya21[ii]);
-		free(fya22[ii]);
-		free(fya23[ii]);
-		free(fya24[ii]);
-		free(fya25[ii]);
-		free(fya26[ii]);
-		free(fya27[ii]);
-		free(fya28[ii]);
-		free(fya29[ii]);
-		free(fya30[ii]);
-		free(fya31[ii]);
-
-		free(fza0[ii]);
-		free(fza1[ii]);
-		free(fza2[ii]);
-		free(fza3[ii]);
-		free(fza4[ii]);
-		free(fza5[ii]);
-		free(fza6[ii]);
-		free(fza7[ii]);
-		free(fza8[ii]);
-		free(fza9[ii]);
-		free(fza10[ii]);
-		free(fza11[ii]);
-		free(fza12[ii]);
-		free(fza13[ii]);
-		free(fza14[ii]);
-		free(fza15[ii]);
-		free(fza16[ii]);
-		free(fza17[ii]);
-		free(fza18[ii]);
-		free(fza19[ii]);
-		free(fza20[ii]);
-		free(fza21[ii]);
-		free(fza22[ii]);
-		free(fza23[ii]);
-		free(fza24[ii]);
-		free(fza25[ii]);
-		free(fza26[ii]);
-		free(fza27[ii]);
-		free(fza28[ii]);
-		free(fza29[ii]);
-		free(fza30[ii]);
-		free(fza31[ii]);
-
-	    }
-	}
+		if (sf_type==nanotube_hypergeo)
+		{
+		    free(hgntc_xx);
+		    free(hgntc_yy);
+		    free(hgnt_radius);
+		}
+		else if (sf_type==nanotube_atom_explicit)
+		{
+		    free(solid_sigma);
+		    free(solid_epsilon);
+		    free(solid_charge);
+		    free(solid_xx);
+		    free(solid_yy);
+		    free(solid_zz);
+		}
+		else if (sf_type==nanotube_my_interp)
+		{
+		    // free memories
+		    free(interp_vector);
+		    for (ii=0;ii<nunique_atom_max;ii++)
+		    {
+				free(ene0[ii]);
+				free(ene1[ii]);
+				free(ene2[ii]);
+				free(ene3[ii]);
+				free(ene4[ii]);
+				free(ene5[ii]);
+				free(ene6[ii]);
+				free(ene7[ii]);
+				free(ene8[ii]);
+				free(ene9[ii]);
+				free(ene10[ii]);
+				free(ene11[ii]);
+				free(ene12[ii]);
+				free(ene13[ii]);
+				free(ene14[ii]);
+				free(ene15[ii]);
+				free(ene16[ii]);
+				free(ene17[ii]);
+				free(ene18[ii]);
+				free(ene19[ii]);
+				free(ene20[ii]);
+				free(ene21[ii]);
+				free(ene22[ii]);
+				free(ene23[ii]);
+				free(ene24[ii]);
+				free(ene25[ii]);
+				free(ene26[ii]);
+				free(ene27[ii]);
+				free(ene28[ii]);
+				free(ene29[ii]);
+				free(ene30[ii]);
+				free(ene31[ii]);
+		
+				free(fxa0[ii]);
+				free(fxa1[ii]);
+				free(fxa2[ii]);
+				free(fxa3[ii]);
+				free(fxa4[ii]);
+				free(fxa5[ii]);
+				free(fxa6[ii]);
+				free(fxa7[ii]);
+				free(fxa8[ii]);
+				free(fxa9[ii]);
+				free(fxa10[ii]);
+				free(fxa11[ii]);
+				free(fxa12[ii]);
+				free(fxa13[ii]);
+				free(fxa14[ii]);
+				free(fxa15[ii]);
+				free(fxa16[ii]);
+				free(fxa17[ii]);
+				free(fxa18[ii]);
+				free(fxa19[ii]);
+				free(fxa20[ii]);
+				free(fxa21[ii]);
+				free(fxa22[ii]);
+				free(fxa23[ii]);
+				free(fxa24[ii]);
+				free(fxa25[ii]);
+				free(fxa26[ii]);
+				free(fxa27[ii]);
+				free(fxa28[ii]);
+				free(fxa29[ii]);
+				free(fxa30[ii]);
+				free(fxa31[ii]);
+		
+				free(fya0[ii]);
+				free(fya1[ii]);
+				free(fya2[ii]);
+				free(fya3[ii]);
+				free(fya4[ii]);
+				free(fya5[ii]);
+				free(fya6[ii]);
+				free(fya7[ii]);
+				free(fya8[ii]);
+				free(fya9[ii]);
+				free(fya10[ii]);
+				free(fya11[ii]);
+				free(fya12[ii]);
+				free(fya13[ii]);
+				free(fya14[ii]);
+				free(fya15[ii]);
+				free(fya16[ii]);
+				free(fya17[ii]);
+				free(fya18[ii]);
+				free(fya19[ii]);
+				free(fya20[ii]);
+				free(fya21[ii]);
+				free(fya22[ii]);
+				free(fya23[ii]);
+				free(fya24[ii]);
+				free(fya25[ii]);
+				free(fya26[ii]);
+				free(fya27[ii]);
+				free(fya28[ii]);
+				free(fya29[ii]);
+				free(fya30[ii]);
+				free(fya31[ii]);
+		
+				free(fza0[ii]);
+				free(fza1[ii]);
+				free(fza2[ii]);
+				free(fza3[ii]);
+				free(fza4[ii]);
+				free(fza5[ii]);
+				free(fza6[ii]);
+				free(fza7[ii]);
+				free(fza8[ii]);
+				free(fza9[ii]);
+				free(fza10[ii]);
+				free(fza11[ii]);
+				free(fza12[ii]);
+				free(fza13[ii]);
+				free(fza14[ii]);
+				free(fza15[ii]);
+				free(fza16[ii]);
+				free(fza17[ii]);
+				free(fza18[ii]);
+				free(fza19[ii]);
+				free(fza20[ii]);
+				free(fza21[ii]);
+				free(fza22[ii]);
+				free(fza23[ii]);
+				free(fza24[ii]);
+				free(fza25[ii]);
+				free(fza26[ii]);
+				free(fza27[ii]);
+				free(fza28[ii]);
+				free(fza29[ii]);
+				free(fza30[ii]);
+				free(fza31[ii]);
+		    }
+		}
     }
 
     // close files
@@ -656,55 +659,57 @@ int readins()
     int electype; // type of electrostatic
     if (isChargeOn)
     {
-	// rewind the input file stream
-	rewind(fpins);
-	isDataFound = false;
+		// rewind the input file stream
+		rewind(fpins);
+		isDataFound = false;
        	while (fgets(buffer,datalen,fpins)!=NULL)
        	{
-	    sscanf(buffer,"%s",keyword);
-	    for (ii=0;ii<strlen(keyword);ii++)
-	       	keyword[ii] = toupper(keyword[ii]);
-	    if (!strcmp(keyword,"ELECTROSTATIC"))
-	    {
-	       	fprintf(stderr,"Data section for electrostatics found...\n");
-	       	fprintf(fpouts,"Data section for electrostatics found...\n");
-		isDataFound = true;
-		// preset all electrostatic methods to false
-		// then turn on them according to the input
-		isEwaldOn = isWolfOn = isSimpleCoulomb = 0;
-		sscanf(fgets(buffer,datalen,fpins),"%d",&electype);
-		if (electype==elec_ewald)
-		{
-		    isEwaldOn = 1;
-		    sscanf(fgets(buffer,datalen,fpins), "%lf", &kappa);
-		    sscanf(fgets(buffer,datalen,fpins), "%d %d %d %d", &KMAXX, &KMAXY, &KMAXZ, &KSQMAX);
-		    sscanf(fgets(buffer,datalen,fpins), "%d %d",&fEwald_BC,&fEwald_Dim);
-		    fprintf(fpouts,"%dD Ewald summation requested...\n",fEwald_Dim);
-		    fprintf(fpouts,"kappa=%lf\n",kappa);
-		    fprintf(fpouts,"kmaxx=%d kmaxy=%d kmaxz=%d kmaxsq=%d\n",KMAXX, KMAXY, KMAXZ, KSQMAX);
-		    fprintf(fpouts,"Boundary condition is %d\n",fEwald_BC);
+		    sscanf(buffer,"%s",keyword);
+		    for (ii=0;ii<strlen(keyword);ii++)
+		    {
+		       	keyword[ii] = toupper(keyword[ii]);
+		    }
+		    if (!strcmp(keyword,"ELECTROSTATIC"))
+		    {
+		       	fprintf(stderr,"Data section for electrostatics found...\n");
+		       	fprintf(fpouts,"Data section for electrostatics found...\n");
+				isDataFound = true;
+				// preset all electrostatic methods to false
+				// then turn on them according to the input
+				isEwaldOn = isWolfOn = isSimpleCoulomb = 0;
+				sscanf(fgets(buffer,datalen,fpins),"%d",&electype);
+				if (electype==elec_ewald)
+				{
+				    isEwaldOn = 1;
+				    sscanf(fgets(buffer,datalen,fpins), "%lf", &kappa);
+				    sscanf(fgets(buffer,datalen,fpins), "%d %d %d %d", &KMAXX, &KMAXY, &KMAXZ, &KSQMAX);
+				    sscanf(fgets(buffer,datalen,fpins), "%d %d",&fEwald_BC,&fEwald_Dim);
+				    fprintf(fpouts,"%dD Ewald summation requested...\n",fEwald_Dim);
+				    fprintf(fpouts,"kappa=%lf\n",kappa);
+				    fprintf(fpouts,"kmaxx=%d kmaxy=%d kmaxz=%d kmaxsq=%d\n",KMAXX, KMAXY, KMAXZ, KSQMAX);
+				    fprintf(fpouts,"Boundary condition is %d\n",fEwald_BC);
+				}
+				else if (electype==elec_wolf)
+				{
+				    isWolfOn = 1;
+				    sscanf(fgets(buffer,datalen,fpins), "%lf", &kappa);
+				    fprintf(fpouts,"Wolf method requested...\n");
+				    fprintf(fpouts,"kappa=%lf\n",kappa);
+				}
+				else if (electype==elec_simple_coulomb)
+				{
+				    isSimpleCoulomb = 1;
+				    fprintf(fpouts,"Simple coulomb interaction requested...\n");
+				} 
+				break;
+		    }
+		} // read through lines
+		if (isDataFound==false)
+		{ 
+		    fprintf(stderr,"Error: data for electrostatics not found.\n");
+		    fprintf(fpouts,"Error: data for electrostatics not found.\n");
+		    exit(1);
 		}
-		else if (electype==elec_wolf)
-		{
-		    isWolfOn = 1;
-		    sscanf(fgets(buffer,datalen,fpins), "%lf", &kappa);
-		    fprintf(fpouts,"Wolf method requested...\n");
-		    fprintf(fpouts,"kappa=%lf\n",kappa);
-		}
-		else if (electype==elec_simple_coulomb)
-		{
-		    isSimpleCoulomb = 1;
-		    fprintf(fpouts,"Simple coulomb interaction requested...\n");
-		} 
-		break;
-	    }
-	} // read through lines
-	if (isDataFound==false)
-	{ 
-	    fprintf(stderr,"Error: data for electrostatics not found.\n");
-	    fprintf(fpouts,"Error: data for electrostatics not found.\n");
-	    exit(1);
-	}
     } // if charge needed
 
 
@@ -733,11 +738,11 @@ int readins()
     starting_position = position_counter;
     for (ii=0;ii<nspecie;ii++)
     {
-	sscanf(&buffer[starting_position],"%d %d%n",&nmole_per_specie[ii],&natom_per_mole[ii],&position_counter);
-	// advance the reading position in the string to next data section
-	starting_position += position_counter;
-	// printf("%d %d ",nmole_per_specie[ii],natom_per_mole[ii]);
-	specie_first_atom_idx[ii+1] = specie_first_atom_idx[ii] + nmole_per_specie[ii]*natom_per_mole[ii];
+		sscanf(&buffer[starting_position],"%d %d%n",&nmole_per_specie[ii],&natom_per_mole[ii],&position_counter);
+		// advance the reading position in the string to next data section
+		starting_position += position_counter;
+		// printf("%d %d ",nmole_per_specie[ii],natom_per_mole[ii]);
+		specie_first_atom_idx[ii+1] = specie_first_atom_idx[ii] + nmole_per_specie[ii]*natom_per_mole[ii];
     }
     // readin detailed atom information
     nmole = 0;
@@ -745,23 +750,23 @@ int readins()
     last_mole_id = 0;
     for (ii=0;ii<natom;ii++)
     {
-	fscanf(fpcfg,"%d %d %s %lf %lf %lf %lf %d %d\n",&atomid,&moleid,atomname[ii],&aw[ii],&epsilon[ii],&sigma[ii],
-		&charge[ii],&isghost[ii],&tasostype[ii]);
-	// assign the molecule index to the atom
-	atom_to_mole_idx[ii] = moleid;
-	// assign the correct index of the first atom in a molecule
-	if (moleid == last_mole_id+1)
-	{
-	    isFirstAtom = 1;
-	    last_mole_id = moleid;
-	}
-	if (isFirstAtom)
-	{
-	    mole_first_atom_idx[nmole] = atomid;
-	    nmole++;
-	    assert(nmole<nmole_max+1);
-	    isFirstAtom = 0;
-	}
+		fscanf(fpcfg,"%d %d %s %lf %lf %lf %lf %d %d\n",&atomid,&moleid,atomname[ii],&aw[ii],&epsilon[ii],&sigma[ii],
+			&charge[ii],&isghost[ii],&tasostype[ii]);
+		// assign the molecule index to the atom
+		atom_to_mole_idx[ii] = moleid;
+		// assign the correct index of the first atom in a molecule
+		if (moleid == last_mole_id+1)
+		{
+		    isFirstAtom = 1;
+		    last_mole_id = moleid;
+		}
+		if (isFirstAtom)
+		{
+		    mole_first_atom_idx[nmole] = atomid;
+		    nmole++;
+		    assert(nmole<nmole_max+1);
+		    isFirstAtom = 0;
+		}
     }
     mole_first_atom_idx[nmole] = atomid + 1; // set the boundary of the last molecule
 
@@ -773,24 +778,24 @@ int readins()
     starting_position = position_counter;
     for (ii=0;ii<nspecie;ii++)
     {
-	sscanf(&buffer[starting_position],"%d%n",&nbond_per_mole[ii],&position_counter);
-	starting_position += position_counter;
+		sscanf(&buffer[starting_position],"%d%n",&nbond_per_mole[ii],&position_counter);
+		starting_position += position_counter;
     }
     // readin detailed bond information
     last_mole_id = 0;
     for (ii=0;ii<nbond;ii++)
     {
-	fscanf(fpcfg,"%d %d %d %lf %lf %lf\n",&bond_idx[ii][0],&bond_idx[ii][1],
-		&bond_type[ii],&Kb[ii],&Req[ii],&alpha[ii]);
-	// check if the bond atom is belong to the molecule
-	// if it is, set this bond as the 1st bond of the molecule and increase
-	// the counter of the molecule by 1 to the next molecule
-	if (mole_first_atom_idx[last_mole_id]<=bond_idx[ii][0] && bond_idx[ii][0]< mole_first_atom_idx[last_mole_id+1]) 
-	{
-	    mole_first_bond_idx[last_mole_id] = ii;
-	    last_mole_id++;
-	    assert(last_mole_id<nmole_max+1);
-	}
+		fscanf(fpcfg,"%d %d %d %lf %lf %lf\n",&bond_idx[ii][0],&bond_idx[ii][1],
+			&bond_type[ii],&Kb[ii],&Req[ii],&alpha[ii]);
+		// check if the bond atom is belong to the molecule
+		// if it is, set this bond as the 1st bond of the molecule and increase
+		// the counter of the molecule by 1 to the next molecule
+		if (mole_first_atom_idx[last_mole_id]<=bond_idx[ii][0] && bond_idx[ii][0]< mole_first_atom_idx[last_mole_id+1]) 
+		{
+		    mole_first_bond_idx[last_mole_id] = ii;
+		    last_mole_id++;
+		    assert(last_mole_id<nmole_max+1);
+		}
     }
     // set the upper bound for the last molecule
     mole_first_bond_idx[last_mole_id] = ii;
@@ -803,26 +808,26 @@ int readins()
     starting_position = position_counter;
     for (ii=0;ii<nspecie;ii++)
     {
-	sscanf(&buffer[starting_position],"%d%n",&nangle_per_mole[ii],&position_counter);
-	starting_position += position_counter;
+		sscanf(&buffer[starting_position],"%d%n",&nangle_per_mole[ii],&position_counter);
+		starting_position += position_counter;
     }
     // read in detailed angle information
     last_mole_id = 0;
     for (ii=0;ii<nangle;ii++)
     {
-	fscanf(fpcfg,"%d %d %d %d %lf %lf %lf %lf %lf\n",&angle_idx[ii][0],&angle_idx[ii][1],
-		&angle_idx[ii][2],&angle_type[ii],&Ktheta[ii],&Thetaeq[ii],
-		&agl_para_3[ii], &agl_para_4[ii], &agl_para_5[ii]); // these 3 parameters only for TRwater
-
-	// check if the angle atom is belong to the molecule
-	// if it is, set this angle as the 1st angle of the molecule and increase
-	// the counter of the molecule by 1 to the next molecule
-	if (mole_first_atom_idx[last_mole_id]<=angle_idx[ii][0] && angle_idx[ii][0]< mole_first_atom_idx[last_mole_id+1]) 
-	{
-	    mole_first_angle_idx[last_mole_id] = ii;
-	    last_mole_id++;
-	    assert(last_mole_id<nmole_max+1);
-	}
+		fscanf(fpcfg,"%d %d %d %d %lf %lf %lf %lf %lf\n",&angle_idx[ii][0],&angle_idx[ii][1],
+			&angle_idx[ii][2],&angle_type[ii],&Ktheta[ii],&Thetaeq[ii],
+			&agl_para_3[ii], &agl_para_4[ii], &agl_para_5[ii]); // these 3 parameters only for TRwater
+	
+		// check if the angle atom is belong to the molecule
+		// if it is, set this angle as the 1st angle of the molecule and increase
+		// the counter of the molecule by 1 to the next molecule
+		if (mole_first_atom_idx[last_mole_id]<=angle_idx[ii][0] && angle_idx[ii][0]< mole_first_atom_idx[last_mole_id+1]) 
+		{
+		    mole_first_angle_idx[last_mole_id] = ii;
+		    last_mole_id++;
+		    assert(last_mole_id<nmole_max+1);
+		}
     }
     // set the upper bound for the last molecule
     mole_first_angle_idx[last_mole_id] = ii;
@@ -835,24 +840,24 @@ int readins()
     starting_position = position_counter;
     for (ii=0;ii<nspecie;ii++)
     {
-	sscanf(&buffer[starting_position],"%d%n",&nangle_per_mole[ii],&position_counter);
-	starting_position += position_counter;
+		sscanf(&buffer[starting_position],"%d%n",&nangle_per_mole[ii],&position_counter);
+		starting_position += position_counter;
     }
     // readin detailed dihedral information
     last_mole_id = 0;
     for (ii=0;ii<ndih;ii++)
     {
-	fscanf(fpcfg,"%d %d %d %d %d %lf %lf %lf %lf\n",&dih_idx[ii][0],&dih_idx[ii][1],
-		&dih_idx[ii][2],&dih_idx[ii][3],&dih_type[ii],&c1[ii],&c2[ii],&c3[ii],&c4[ii]);
-	// check if the dihedral atom is belong to the molecule
-	// if it is, set this diheral as the 1st dihedral of the molecule and increase
-	// the counter of the molecule by 1 to the next molecule
-	if (mole_first_atom_idx[last_mole_id]<=dih_idx[ii][0] && dih_idx[ii][0]< mole_first_atom_idx[last_mole_id+1]) 
-	{
-	    mole_first_dih_idx[last_mole_id] = ii;
-	    last_mole_id++;
-	    assert(last_mole_id<nmole_max+1);
-	}
+		fscanf(fpcfg,"%d %d %d %d %d %lf %lf %lf %lf\n",&dih_idx[ii][0],&dih_idx[ii][1],
+			&dih_idx[ii][2],&dih_idx[ii][3],&dih_type[ii],&c1[ii],&c2[ii],&c3[ii],&c4[ii]);
+		// check if the dihedral atom is belong to the molecule
+		// if it is, set this diheral as the 1st dihedral of the molecule and increase
+		// the counter of the molecule by 1 to the next molecule
+		if (mole_first_atom_idx[last_mole_id]<=dih_idx[ii][0] && dih_idx[ii][0]< mole_first_atom_idx[last_mole_id+1]) 
+		{
+		    mole_first_dih_idx[last_mole_id] = ii;
+		    last_mole_id++;
+		    assert(last_mole_id<nmole_max+1);
+		}
     }
     // set the upper bound for the last molecule
     mole_first_dih_idx[last_mole_id] = ii;
@@ -865,8 +870,8 @@ int readins()
     starting_position = position_counter;
     for (ii=0;ii<nspecie;ii++)
     {
-	sscanf(&buffer[starting_position],"%d%n",&nimp_per_mole[ii],&position_counter);
-	starting_position += position_counter;
+		sscanf(&buffer[starting_position],"%d%n",&nimp_per_mole[ii],&position_counter);
+		starting_position += position_counter;
     }
 
     // read in nonbonded pair list
@@ -877,21 +882,21 @@ int readins()
     starting_position = position_counter;
     for (ii=0;ii<nspecie;ii++)
     {
-	sscanf(&buffer[starting_position],"%d%n",&nnbp_per_mole[ii],&position_counter);
-	starting_position += position_counter;
+		sscanf(&buffer[starting_position],"%d%n",&nnbp_per_mole[ii],&position_counter);
+		starting_position += position_counter;
     }
     // readin detailed nonbonded pair information
     last_mole_id = 0;
     for (ii=0;ii<nnbp;ii++)
     {
-	fscanf(fpcfg,"%d %d\n",&nbp_idx[ii][0],&nbp_idx[ii][1]);
-	// check if nonbonded atom is belong to the molecule
-	if (mole_first_atom_idx[last_mole_id]<nbp_idx[ii][0] && nbp_idx[ii][0]< mole_first_atom_idx[last_mole_id+1])
-	{
-	    mole_first_nbp_idx[last_mole_id] = ii;
-	    last_mole_id++;
-	    assert(last_mole_id<nmole_max+1);
-	}
+		fscanf(fpcfg,"%d %d\n",&nbp_idx[ii][0],&nbp_idx[ii][1]);
+		// check if nonbonded atom is belong to the molecule
+		if (mole_first_atom_idx[last_mole_id]<nbp_idx[ii][0] && nbp_idx[ii][0]< mole_first_atom_idx[last_mole_id+1])
+		{
+		    mole_first_nbp_idx[last_mole_id] = ii;
+		    last_mole_id++;
+		    assert(last_mole_id<nmole_max+1);
+		}
     }
 
     fclose(fpcfg);
@@ -986,79 +991,79 @@ int make_exclude_list()
     nexcllist = 0;
     for (ii=0;ii<natom;ii++)
     {
-	pointexcl[ii] = nexcllist;
-
-	// self-exclusion
-	excllist[nexcllist] = ii;
-	nexcllist++;
-
-	// exclude bonded atoms
-	// In order to improve it and save the memory usage
-	// Only set atom jj to be an exclude atom for atom ii
-	// if jj>ii. It should avoid double count of the exclulde pairs.
-	// Since the calculations loop ij is from i=0,n-1 and j=i+1,n
-	// i.e. if 0 and 1 are exclude pair, 1 will be in 0's exclude list
-	// but 0 will not be in 1's exclude list
-	// Be careful of it while coding other interaction functions
-	for (jj=0;jj<nbond;jj++)
-	{
-	    if (bond_idx[jj][0] == ii && bond_idx[jj][1] > ii)
-	    {
-		excllist[nexcllist] = bond_idx[jj][1];
+		pointexcl[ii] = nexcllist;
+	
+		// self-exclusion
+		excllist[nexcllist] = ii;
 		nexcllist++;
-	    }
-	    else if (bond_idx[jj][1] == ii && bond_idx[jj][0] > ii)
-	    {
-		excllist[nexcllist] = bond_idx[jj][0];
-		nexcllist++;
-	    }
-	    assert(nexcllist<exclude_max);
-	}
-	// exclude angled atoms
-	for (jj=0;jj<nangle;jj++)
-	{
-	    if (angle_idx[jj][0] == ii && angle_idx[jj][2] > ii)
-	    {
-		excllist[nexcllist] = angle_idx[jj][2];
-		nexcllist++;
-	    }
-	    else if (angle_idx[jj][2] == ii && angle_idx[jj][0] > ii)
-	    {
-		excllist[nexcllist] = angle_idx[jj][0];
-		nexcllist++;
-	    }
-	    assert(nexcllist<exclude_max);
-	}
-	// exclude dihedraled atoms
-	for (jj=0;jj<ndih;jj++)
-	{
-	    if (dih_idx[jj][0] == ii && dih_idx[jj][3] > ii)
-	    {
-		excllist[nexcllist] = dih_idx[jj][3];
-		nexcllist++;
-	    }
-	    else if (dih_idx[jj][3] == ii && dih_idx[jj][0] > ii)
-	    {
-		excllist[nexcllist] = dih_idx[jj][0];
-		nexcllist++;
-	    }
-	    assert(nexcllist<exclude_max);
-	}
-	// exclude non-bonded atoms
-	for (jj=0;jj<nnbp;jj++)
-	{
-	    if (nbp_idx[jj][0] == ii && nbp_idx[jj][1] > ii)
-	    {
-		excllist[nexcllist] = nbp_idx[jj][1];
-		nexcllist++;
-	    }
-	    else if (nbp_idx[jj][1] == ii && nbp_idx[jj][0] > ii)
-	    {
-		excllist[nexcllist] = nbp_idx[jj][0];
-		nexcllist++;
-	    }
-	    assert(nexcllist<exclude_max);
-	}
+	
+		// exclude bonded atoms
+		// In order to improve it and save the memory usage
+		// Only set atom jj to be an exclude atom for atom ii
+		// if jj>ii. It should avoid double count of the exclulde pairs.
+		// Since the calculations loop ij is from i=0,n-1 and j=i+1,n
+		// i.e. if 0 and 1 are exclude pair, 1 will be in 0's exclude list
+		// but 0 will not be in 1's exclude list
+		// Be careful of it while coding other interaction functions
+		for (jj=0;jj<nbond;jj++)
+		{
+		    if (bond_idx[jj][0] == ii && bond_idx[jj][1] > ii)
+		    {
+				excllist[nexcllist] = bond_idx[jj][1];
+				nexcllist++;
+		    }
+		    else if (bond_idx[jj][1] == ii && bond_idx[jj][0] > ii)
+		    {
+				excllist[nexcllist] = bond_idx[jj][0];
+				nexcllist++;
+		    }
+		    assert(nexcllist<exclude_max);
+		}
+		// exclude angled atoms
+		for (jj=0;jj<nangle;jj++)
+		{
+		    if (angle_idx[jj][0] == ii && angle_idx[jj][2] > ii)
+		    {
+				excllist[nexcllist] = angle_idx[jj][2];
+				nexcllist++;
+		    }
+		    else if (angle_idx[jj][2] == ii && angle_idx[jj][0] > ii)
+		    {
+				excllist[nexcllist] = angle_idx[jj][0];
+				nexcllist++;
+		    }
+		    assert(nexcllist<exclude_max);
+		}
+		// exclude dihedraled atoms
+		for (jj=0;jj<ndih;jj++)
+		{
+		    if (dih_idx[jj][0] == ii && dih_idx[jj][3] > ii)
+		    {
+				excllist[nexcllist] = dih_idx[jj][3];
+				nexcllist++;
+		    }
+		    else if (dih_idx[jj][3] == ii && dih_idx[jj][0] > ii)
+		    {
+				excllist[nexcllist] = dih_idx[jj][0];
+				nexcllist++;
+		    }
+		    assert(nexcllist<exclude_max);
+		}
+		// exclude non-bonded atoms
+		for (jj=0;jj<nnbp;jj++)
+		{
+		    if (nbp_idx[jj][0] == ii && nbp_idx[jj][1] > ii)
+		    {
+				excllist[nexcllist] = nbp_idx[jj][1];
+				nexcllist++;
+		    }
+		    else if (nbp_idx[jj][1] == ii && nbp_idx[jj][0] > ii)
+		    {
+				excllist[nexcllist] = nbp_idx[jj][0];
+				nexcllist++;
+		    }
+		    assert(nexcllist<exclude_max);
+		}
     }
     pointexcl[natom] = nexcllist;
 
@@ -1102,14 +1107,14 @@ int velinit()
     // Temperature is K. R is J/K/mol. m is kg/mol. v is m/s
     for (ii=0;ii<natom;ii++)
     {
-	stdv = stdvtmp/sqrt(aw[ii]);
-	vx[ii] = stdv*gaussran();
-	vy[ii] = stdv*gaussran();
-	vz[ii] = stdv*gaussran();
-	px += vx[ii]*aw[ii];
-	py += vy[ii]*aw[ii];
-	pz += vz[ii]*aw[ii];
-	totalmass += aw[ii];
+		stdv = stdvtmp/sqrt(aw[ii]);
+		vx[ii] = stdv*gaussran();
+		vy[ii] = stdv*gaussran();
+		vz[ii] = stdv*gaussran();
+		px += vx[ii]*aw[ii];
+		py += vy[ii]*aw[ii];
+		pz += vz[ii]*aw[ii];
+		totalmass += aw[ii];
     }
     // zero the momentum
     px /= totalmass;
@@ -1117,9 +1122,9 @@ int velinit()
     pz /= totalmass;
     for (ii=0;ii<natom;ii++)
     {
-	vx[ii] -= px;
-	vy[ii] -= py;
-	vz[ii] -= pz;
+		vx[ii] -= px;
+		vy[ii] -= py;
+		vz[ii] -= pz;
     }
     // rescale velocity for required temperature
     ukin = 0.0;
@@ -1130,9 +1135,9 @@ int velinit()
     scaling = sqrt(treq/tinst);
     for (ii=0;ii<natom;ii++)
     {
-	vx[ii] *= scaling;
-	vy[ii] *= scaling;
-	vz[ii] *= scaling;
+		vx[ii] *= scaling;
+		vy[ii] *= scaling;
+		vz[ii] *= scaling;
     }
     // recalculate the kinetic energy and instantaneous temperature
     // should be exactly the set tempature
@@ -1182,35 +1187,35 @@ int vver() // velocity verlet
 
     for (ii=0;ii<natom;ii++)
     {
-	// the factor of 1.0e-5 is based on Angstrom (from the force)
-	// and femto second (from delt)
-	vx[ii] += (deltby2*fxl[ii]*1.0e-5/aw[ii]);
-	vy[ii] += (deltby2*fyl[ii]*1.0e-5/aw[ii]);
-	vz[ii] += (deltby2*fzl[ii]*1.0e-5/aw[ii]);
+		// the factor of 1.0e-5 is based on Angstrom (from the force)
+		// and femto second (from delt)
+		vx[ii] += (deltby2*fxl[ii]*1.0e-5/aw[ii]);
+		vy[ii] += (deltby2*fyl[ii]*1.0e-5/aw[ii]);
+		vz[ii] += (deltby2*fzl[ii]*1.0e-5/aw[ii]);
     }
 
     for (ll=0;ll<nstep_inner;ll++)
     {
-	for (ii=0;ii<natom;ii++)
-	{
-	    vx[ii] += (deltsby2*fxs[ii]*1.0e-5/aw[ii]);
-	    vy[ii] += (deltsby2*fys[ii]*1.0e-5/aw[ii]);
-	    vz[ii] += (deltsby2*fzs[ii]*1.0e-5/aw[ii]);
-	    xx[ii] = xx[ii] + delts*vx[ii]*1.0e-5;
-	    yy[ii] = yy[ii] + delts*vy[ii]*1.0e-5;
-	    zz[ii] = zz[ii] + delts*vz[ii]*1.0e-5;
-	}
-
-	// intra forces, short ranged
-	rafrc();
-
-	// compute the pseudo velocity at delts
-	for (ii=0;ii<natom;ii++)
-	{
-	    vx[ii] += (deltsby2*fxs[ii]*1.0e-5/aw[ii]);
-	    vy[ii] += (deltsby2*fys[ii]*1.0e-5/aw[ii]);
-	    vz[ii] += (deltsby2*fzs[ii]*1.0e-5/aw[ii]);
-	}
+		for (ii=0;ii<natom;ii++)
+		{
+		    vx[ii] += (deltsby2*fxs[ii]*1.0e-5/aw[ii]);
+		    vy[ii] += (deltsby2*fys[ii]*1.0e-5/aw[ii]);
+		    vz[ii] += (deltsby2*fzs[ii]*1.0e-5/aw[ii]);
+		    xx[ii] = xx[ii] + delts*vx[ii]*1.0e-5;
+		    yy[ii] = yy[ii] + delts*vy[ii]*1.0e-5;
+		    zz[ii] = zz[ii] + delts*vz[ii]*1.0e-5;
+		}
+	
+		// intra forces, short ranged
+		rafrc();
+	
+		// compute the pseudo velocity at delts
+		for (ii=0;ii<natom;ii++)
+		{
+		    vx[ii] += (deltsby2*fxs[ii]*1.0e-5/aw[ii]);
+		    vy[ii] += (deltsby2*fys[ii]*1.0e-5/aw[ii]);
+		    vz[ii] += (deltsby2*fzs[ii]*1.0e-5/aw[ii]);
+		}
     }
 
     // inter forces, long ranged
@@ -1220,10 +1225,10 @@ int vver() // velocity verlet
     ukin = 0.0;
     for (ii=0;ii<natom;ii++)
     {
-	vx[ii] += (deltby2*fxl[ii]*1.0e-5/aw[ii]);
-	vy[ii] += (deltby2*fyl[ii]*1.0e-5/aw[ii]);
-	vz[ii] += (deltby2*fzl[ii]*1.0e-5/aw[ii]);
-	ukin += aw[ii]*(vx[ii]*vx[ii]+vy[ii]*vy[ii]+vz[ii]*vz[ii]);
+		vx[ii] += (deltby2*fxl[ii]*1.0e-5/aw[ii]);
+		vy[ii] += (deltby2*fyl[ii]*1.0e-5/aw[ii]);
+		vz[ii] += (deltby2*fzl[ii]*1.0e-5/aw[ii]);
+		ukin += aw[ii]*(vx[ii]*vx[ii]+vy[ii]*vy[ii]+vz[ii]*vz[ii]);
     }
     ukin = ukin/2.0;
 
@@ -1346,7 +1351,7 @@ int loadit()
     if (fStart_option==continue_run)
     {
        	fread(&istep,sizeof(int),1,fpload);
-	nstep_start = istep + 1;
+		nstep_start = istep + 1;
        	fread(icounter,sizeof(int),num_counter_max,fpload);
        	fread(accumulator,sizeof(double),num_counter_max,fpload);
     }
@@ -1363,13 +1368,13 @@ int averages()
 
     for (ii=0;ii<num_counter_max;ii++)
     {
-	temp1 = accumulator[ii][0]/nstep_ave;
-	accumulator[ii][2] += temp1;
-	accumulator[ii][3] += accumulator[ii][1]/nstep_ave;
-	accumulator[ii][4] += temp1*temp1;
-	// rezero
-	accumulator[ii][0] = 0.0;
-	accumulator[ii][1] = 0.0;
+		temp1 = accumulator[ii][0]/nstep_ave;
+		accumulator[ii][2] += temp1;
+		accumulator[ii][3] += accumulator[ii][1]/nstep_ave;
+		accumulator[ii][4] += temp1*temp1;
+		// rezero
+		accumulator[ii][0] = 0.0;
+		accumulator[ii][1] = 0.0;
     }
     icounter[10]++; // number of average cycles
     
@@ -1383,12 +1388,12 @@ int calres()
     double ave, err, fluc;
     for (ii=0;ii<num_counter_max;ii++)
     {
-	ave = accumulator[ii][5] = accumulator[ii][2]/icounter[10]; // ave
-	ave_of_square = accumulator[ii][3]/icounter[10];
-	ave_of_ave_square = accumulator[ii][4]/icounter[10];
-	err = accumulator[ii][6] = sqrt(fabs(ave_of_ave_square-ave*ave)); // err
-	fluc = accumulator[ii][7] = sqrt(fabs(ave_of_square-ave*ave)); // fluc
-	// rezero?
+		ave = accumulator[ii][5] = accumulator[ii][2]/icounter[10]; // ave
+		ave_of_square = accumulator[ii][3]/icounter[10];
+		ave_of_ave_square = accumulator[ii][4]/icounter[10];
+		err = accumulator[ii][6] = sqrt(fabs(ave_of_ave_square-ave*ave)); // err
+		fluc = accumulator[ii][7] = sqrt(fabs(ave_of_square-ave*ave)); // fluc
+		// rezero?
     }
     
     return 0;

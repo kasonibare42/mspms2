@@ -96,63 +96,63 @@ int md ()
 
     if (what_ensemble == nvt_run) // velocity verlet with nose hoover for NVT MD
     {
-	for (istep=nstep_start;istep<=nstep;istep++) // NOTE: start from 1 and <=
-	{	
-	    vver_nh_3();
-	    // print out, snapshot, trajectory, save
-	    if (istep%nstep_print == 0) printit();
-	    if (nstep_ss && istep%nstep_ss == 0) snapshot();
-	    if (nstep_trj && istep%nstep_trj==0) trajectory();
-	    if (istep%nstep_save==0) saveit();
-
-	    icounter[11]--;
-	    // if still in equilibrium run
-	    // do not do averages
-	    if (icounter[11]>=0) continue;
-	    // accumulators
-	    do_accumu();
-	    if ((istep-nstep_eq)%nstep_ave==0) averages();
-	}
+		for (istep=nstep_start;istep<=nstep;istep++) // NOTE: start from 1 and <=
+		{	
+		    vver_nh_3();
+		    // print out, snapshot, trajectory, save
+		    if (istep%nstep_print == 0) printit();
+		    if (nstep_ss && istep%nstep_ss == 0) snapshot();
+		    if (nstep_trj && istep%nstep_trj==0) trajectory();
+		    if (istep%nstep_save==0) saveit();
+	
+		    icounter[11]--;
+		    // if still in equilibrium run
+		    // do not do averages
+		    if (icounter[11]>=0) continue;
+		    // accumulators
+		    do_accumu();
+		    if ((istep-nstep_eq)%nstep_ave==0) averages();
+		}
     }
     else if (what_ensemble == npt_run) // baronstat for NPT MD
     {
-	for (istep=nstep_start;istep<=nstep;istep++) // NOTE: start from 1 and <=
-	{	
-	    npt_respa();
-	    // print out, snapshot, trajectory, save
-	    if (istep%nstep_print == 0) printit();
-	    if (nstep_ss && istep%nstep_ss == 0) snapshot();
-	    if (nstep_trj && istep%nstep_trj==0) trajectory();
-	    if (istep%nstep_save==0) saveit();
-
-	    icounter[11]--;
-	    // if still in equilibrium run
-	    // do not do averages
-	    if (icounter[11]>=0) continue;
-	    // accumulators
-	    do_accumu();
-	    if ((istep-nstep_eq)%nstep_ave==0) averages();
-	}
+		for (istep=nstep_start;istep<=nstep;istep++) // NOTE: start from 1 and <=
+		{	
+		    npt_respa();
+		    // print out, snapshot, trajectory, save
+		    if (istep%nstep_print == 0) printit();
+		    if (nstep_ss && istep%nstep_ss == 0) snapshot();
+		    if (nstep_trj && istep%nstep_trj==0) trajectory();
+		    if (istep%nstep_save==0) saveit();
+	
+		    icounter[11]--;
+		    // if still in equilibrium run
+		    // do not do averages
+		    if (icounter[11]>=0) continue;
+		    // accumulators
+		    do_accumu();
+		    if ((istep-nstep_eq)%nstep_ave==0) averages();
+		}
     }
     else // velocity verlet for normal NVE MD
     {
-	for (istep=nstep_start;istep<=nstep;istep++) // NOTE: start from 1 and <=
-	{	
-	    vver(); 
-	    // print out, snapshot, trajectory, save
-	    if (istep%nstep_print == 0) printit();
-	    if (nstep_ss && istep%nstep_ss == 0) snapshot();
-	    if (nstep_trj && istep%nstep_trj==0) trajectory();
-	    if (istep%nstep_save==0) saveit();
-
-	    icounter[11]--;
-	    // if still in equilibrium run
-	    // do not do averages
-	    if (icounter[11]>=0) continue;
-	    // accumulators
-	    do_accumu();
-	    if ((istep-nstep_eq)%nstep_ave==0) averages();
-	}
+		for (istep=nstep_start;istep<=nstep;istep++) // NOTE: start from 1 and <=
+		{	
+		    vver(); 
+		    // print out, snapshot, trajectory, save
+		    if (istep%nstep_print == 0) printit();
+		    if (nstep_ss && istep%nstep_ss == 0) snapshot();
+		    if (nstep_trj && istep%nstep_trj==0) trajectory();
+		    if (istep%nstep_save==0) saveit();
+	
+		    icounter[11]--;
+		    // if still in equilibrium run
+		    // do not do averages
+		    if (icounter[11]>=0) continue;
+		    // accumulators
+		    do_accumu();
+		    if ((istep-nstep_eq)%nstep_ave==0) averages();
+		}
     }
 
     return 0;
