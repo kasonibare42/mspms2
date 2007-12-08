@@ -690,7 +690,7 @@ int readins()
 			&nstep_print, &nstep_save, &nstep_ss, &nstep_trj);
 	sscanf(fgets(buffer, datalen, fpins), "%lf %d", &delt, &nstep_inner);
 	sscanf(fgets(buffer, datalen, fpins), "%lf", &f0);
-	sscanf(fgets(buffer, datalen, fpins), "%d %d", &what_ensemble, &whichNH);
+	sscanf(fgets(buffer, datalen, fpins), "%d %d", &what_simulation, &what_ensemble);
 	sscanf(fgets(buffer, datalen, fpins), "%d", &isLJswitchOn);
 	sscanf(fgets(buffer, datalen, fpins), "%d", &isChargeOn);
 	// sscanf(fgets(buffer,datalen,fpins), "%d", &isWolfOn);

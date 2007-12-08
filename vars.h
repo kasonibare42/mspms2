@@ -17,6 +17,9 @@
 #define true		1
 #define false		0
 
+#define md_run		0
+#define hmc_run		1
+
 #define nve_run		0
 #define nvt_run		1
 #define npt_run		2
@@ -175,6 +178,7 @@ double kappa, kappasq; // sqrt(alpha) in ewald summation.
 int KMAXX, KMAXY, KMAXZ; // ewald parameters
 int KSQMAX; // ewald parameter
 char coords_file[100]; // name of the coordinates file
+int what_simulation; // simulation type, MD, HMC, etc.
 int what_ensemble; // what type of ensemble, NVT, NPT etc.
 int whichNH; // which nose hoover subroutine to use? usually 3 for molecule, 2 for atoms, see more details in nvtnh.c
 int isSFon; // is solid-fluid interaction on
