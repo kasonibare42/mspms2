@@ -37,19 +37,15 @@
 #define angle_none		0
 #define angle_harmonic		1
 #define angle_TRwater		2  // Toukan and Rahman water potentials
-
 #define dih_none		0
 #define dih_opls_cosin		1
 #define dih_charmm		2 // charmm type dihedral potential
-
 #define imp_none		0
 #define imp_charmm		1 // charmm type improper potential
-
 #define nanotube_hypergeo  	1
 #define nanotube_atom_explicit	2
 #define nanotube_tasos		3
 #define nanotube_my_interp	4 // my interpolation grid
-
 #define elec_ewald		1
 #define elec_wolf		2
 #define elec_simple_coulomb	3
@@ -63,7 +59,6 @@
 
 #define solid_hetero		0  // solid type, e.g. mof?
 #define solid_uniform		1 // e.g. nanotoubes
-
 #define nspecie_max	3
 #define nmole_max	1000
 #define natom_max	4000
@@ -75,7 +70,6 @@
 #define exclude_max	4000
 #define num_counter_max	30
 #define nunique_atom_max	5 // number of unqiue atoms for grid interpolation
-
 #define Rgas		8.314472 /* J/mol/K */
 #define rRgas		0.120272219 /* reciprocal of Rgas */
 #define Avogadro	6.0221415e23    // mol^-1
@@ -90,11 +84,9 @@
 #define c3_pisq_theta 	11.3105666436484 
 #define PascalA3_to_J_mol	6.0221415e-7 // Na*1e-30 turn preq*boxv to J/mol
 #define J_mol_A3_to_Pascal	1660538.86313 // 1/6.0221415e-7 = 1.0/(6.0221415e23*1.0e-30)
-
-
 int nspecie, nmole, natom; /* total number of molecules, atoms, species */
 int nmole_per_specie[nspecie_max]; // number of molecules in a certain specie
-int natom_per_mole[nspecie_max];  // number of atoms in a molecule, which is belong to a certain specie
+int natom_per_mole[nspecie_max]; // number of atoms in a molecule, which is belong to a certain specie
 int nbond_per_mole[nspecie_max];
 int nangle_per_mole[nspecie_max];
 int ndih_per_mole[nspecie_max];
@@ -112,7 +104,7 @@ int mole_first_nbp_idx[nmole_max+1]; // index of the first nonbonded pair in a m
 double mw[nmole_max]; // molecule weight
 double xx[natom_max], yy[natom_max], zz[natom_max]; /* position */
 // inner coordinates relative to the center of mass, also used for PBC reconstruction of the molecule
-double ex[natom_max], fy[natom_max], gz[natom_max]; 
+double ex[natom_max], fy[natom_max], gz[natom_max];
 double vx[natom_max], vy[natom_max], vz[natom_max]; /* velocity */
 double fxl[natom_max], fyl[natom_max], fzl[natom_max]; /* inter force */
 double fxs[natom_max], fys[natom_max], fzs[natom_max]; /* intra force */
@@ -134,7 +126,7 @@ double *hgntc_xx, *hgntc_yy, *hgnt_radius; // (h)yper(g)eometric (n)ano(t)ube (c
 
 int nbond, nangle, ndih, nimp, nnbp;
 int bond_idx[nbond_max][2];
-int bond_type[nbond_max]; 
+int bond_type[nbond_max];
 double Kb[nbond_max], Req[nbond_max], alpha[nbond_max];
 int angle_idx[nangle_max][3];
 int angle_type[nangle_max];
@@ -189,7 +181,6 @@ int isSFon; // is solid-fluid interaction on
 int sf_type; // solid-fluid type. for different nanotube potentials and future possible other materials
 char atomname[natom_max][5];
 
-
 int istep; // counter of step, current step
 double utot;
 double upot, ukin;
@@ -240,62 +231,94 @@ double utsbs; // extra energy for the barostat NPT
 // frenkel and smit's nose hoover method
 double qq, ps, gg, ss;
 double delt_sqby2, delts_sqby2;
-double vxo[natom_max], vyo[natom_max], vzo[natom_max]; 
-double vxn[natom_max], vyn[natom_max], vzn[natom_max]; 
+double vxo[natom_max], vyo[natom_max], vzo[natom_max];
+double vxn[natom_max], vyn[natom_max], vzn[natom_max];
 double bx[natom_max], by[natom_max], bz[natom_max];
 double unhts;
 double qqs, pss, ggs, sss;
 double unhtss;
 
+// for HMC simulation
+double prob_cm, // canonical move probability
+		prob_vc, // volume change probability
+		prob_id; // insertion/deletion probability
+double ratio_cm_req, // required canonical move accept ratio
+		ratio_vc_req; // required volume change accept ratio
+int nstep_md_per_hmc; // steps of md moves per hmc cycle
+int nstep_delt_adj_cycle; // steps between two delt adjustment
+int nstep_delv_adj_cycle; // steps between two delv adjustment
+double delv;
+
 // my interpolations
 // energy and forces interpolation parameters
-double *ene0[nunique_atom_max], *ene1[nunique_atom_max], *ene2[nunique_atom_max],
-       *ene3[nunique_atom_max], *ene4[nunique_atom_max], *ene5[nunique_atom_max],
-       *ene6[nunique_atom_max], *ene7[nunique_atom_max], *ene8[nunique_atom_max],
-       *ene9[nunique_atom_max], *ene10[nunique_atom_max], *ene11[nunique_atom_max],
-       *ene12[nunique_atom_max], *ene13[nunique_atom_max], *ene14[nunique_atom_max],
-       *ene15[nunique_atom_max], *ene16[nunique_atom_max], *ene17[nunique_atom_max],
-       *ene18[nunique_atom_max], *ene19[nunique_atom_max], *ene20[nunique_atom_max],
-       *ene21[nunique_atom_max], *ene22[nunique_atom_max], *ene23[nunique_atom_max],
-       *ene24[nunique_atom_max], *ene25[nunique_atom_max], *ene26[nunique_atom_max],
-       *ene27[nunique_atom_max], *ene28[nunique_atom_max], *ene29[nunique_atom_max],
-       *ene30[nunique_atom_max], *ene31[nunique_atom_max];
-double *fxa0[nunique_atom_max], *fxa1[nunique_atom_max], *fxa2[nunique_atom_max],
-       *fxa3[nunique_atom_max], *fxa4[nunique_atom_max], *fxa5[nunique_atom_max],
-       *fxa6[nunique_atom_max], *fxa7[nunique_atom_max], *fxa8[nunique_atom_max],
-       *fxa9[nunique_atom_max], *fxa10[nunique_atom_max], *fxa11[nunique_atom_max],
-       *fxa12[nunique_atom_max], *fxa13[nunique_atom_max], *fxa14[nunique_atom_max],
-       *fxa15[nunique_atom_max], *fxa16[nunique_atom_max], *fxa17[nunique_atom_max],
-       *fxa18[nunique_atom_max], *fxa19[nunique_atom_max], *fxa20[nunique_atom_max],
-       *fxa21[nunique_atom_max], *fxa22[nunique_atom_max], *fxa23[nunique_atom_max],
-       *fxa24[nunique_atom_max], *fxa25[nunique_atom_max], *fxa26[nunique_atom_max],
-       *fxa27[nunique_atom_max], *fxa28[nunique_atom_max], *fxa29[nunique_atom_max],
-       *fxa30[nunique_atom_max], *fxa31[nunique_atom_max];
-double *fya0[nunique_atom_max], *fya1[nunique_atom_max], *fya2[nunique_atom_max],
-       *fya3[nunique_atom_max], *fya4[nunique_atom_max], *fya5[nunique_atom_max],
-       *fya6[nunique_atom_max], *fya7[nunique_atom_max], *fya8[nunique_atom_max],
-       *fya9[nunique_atom_max], *fya10[nunique_atom_max], *fya11[nunique_atom_max],
-       *fya12[nunique_atom_max], *fya13[nunique_atom_max], *fya14[nunique_atom_max],
-       *fya15[nunique_atom_max], *fya16[nunique_atom_max], *fya17[nunique_atom_max],
-       *fya18[nunique_atom_max], *fya19[nunique_atom_max], *fya20[nunique_atom_max],
-       *fya21[nunique_atom_max], *fya22[nunique_atom_max], *fya23[nunique_atom_max],
-       *fya24[nunique_atom_max], *fya25[nunique_atom_max], *fya26[nunique_atom_max],
-       *fya27[nunique_atom_max], *fya28[nunique_atom_max], *fya29[nunique_atom_max],
-       *fya30[nunique_atom_max], *fya31[nunique_atom_max];
-double *fza0[nunique_atom_max], *fza1[nunique_atom_max], *fza2[nunique_atom_max],
-       *fza3[nunique_atom_max], *fza4[nunique_atom_max], *fza5[nunique_atom_max],
-       *fza6[nunique_atom_max], *fza7[nunique_atom_max], *fza8[nunique_atom_max],
-       *fza9[nunique_atom_max], *fza10[nunique_atom_max], *fza11[nunique_atom_max],
-       *fza12[nunique_atom_max], *fza13[nunique_atom_max], *fza14[nunique_atom_max],
-       *fza15[nunique_atom_max], *fza16[nunique_atom_max], *fza17[nunique_atom_max],
-       *fza18[nunique_atom_max], *fza19[nunique_atom_max], *fza20[nunique_atom_max],
-       *fza21[nunique_atom_max], *fza22[nunique_atom_max], *fza23[nunique_atom_max],
-       *fza24[nunique_atom_max], *fza25[nunique_atom_max], *fza26[nunique_atom_max],
-       *fza27[nunique_atom_max], *fza28[nunique_atom_max], *fza29[nunique_atom_max],
-       *fza30[nunique_atom_max], *fza31[nunique_atom_max];
+double *ene0[nunique_atom_max], *ene1[nunique_atom_max],
+		*ene2[nunique_atom_max], *ene3[nunique_atom_max],
+		*ene4[nunique_atom_max], *ene5[nunique_atom_max],
+		*ene6[nunique_atom_max], *ene7[nunique_atom_max],
+		*ene8[nunique_atom_max], *ene9[nunique_atom_max],
+		*ene10[nunique_atom_max], *ene11[nunique_atom_max],
+		*ene12[nunique_atom_max], *ene13[nunique_atom_max],
+		*ene14[nunique_atom_max], *ene15[nunique_atom_max],
+		*ene16[nunique_atom_max], *ene17[nunique_atom_max],
+		*ene18[nunique_atom_max], *ene19[nunique_atom_max],
+		*ene20[nunique_atom_max], *ene21[nunique_atom_max],
+		*ene22[nunique_atom_max], *ene23[nunique_atom_max],
+		*ene24[nunique_atom_max], *ene25[nunique_atom_max],
+		*ene26[nunique_atom_max], *ene27[nunique_atom_max],
+		*ene28[nunique_atom_max], *ene29[nunique_atom_max],
+		*ene30[nunique_atom_max], *ene31[nunique_atom_max];
+double *fxa0[nunique_atom_max], *fxa1[nunique_atom_max],
+		*fxa2[nunique_atom_max], *fxa3[nunique_atom_max],
+		*fxa4[nunique_atom_max], *fxa5[nunique_atom_max],
+		*fxa6[nunique_atom_max], *fxa7[nunique_atom_max],
+		*fxa8[nunique_atom_max], *fxa9[nunique_atom_max],
+		*fxa10[nunique_atom_max], *fxa11[nunique_atom_max],
+		*fxa12[nunique_atom_max], *fxa13[nunique_atom_max],
+		*fxa14[nunique_atom_max], *fxa15[nunique_atom_max],
+		*fxa16[nunique_atom_max], *fxa17[nunique_atom_max],
+		*fxa18[nunique_atom_max], *fxa19[nunique_atom_max],
+		*fxa20[nunique_atom_max], *fxa21[nunique_atom_max],
+		*fxa22[nunique_atom_max], *fxa23[nunique_atom_max],
+		*fxa24[nunique_atom_max], *fxa25[nunique_atom_max],
+		*fxa26[nunique_atom_max], *fxa27[nunique_atom_max],
+		*fxa28[nunique_atom_max], *fxa29[nunique_atom_max],
+		*fxa30[nunique_atom_max], *fxa31[nunique_atom_max];
+double *fya0[nunique_atom_max], *fya1[nunique_atom_max],
+		*fya2[nunique_atom_max], *fya3[nunique_atom_max],
+		*fya4[nunique_atom_max], *fya5[nunique_atom_max],
+		*fya6[nunique_atom_max], *fya7[nunique_atom_max],
+		*fya8[nunique_atom_max], *fya9[nunique_atom_max],
+		*fya10[nunique_atom_max], *fya11[nunique_atom_max],
+		*fya12[nunique_atom_max], *fya13[nunique_atom_max],
+		*fya14[nunique_atom_max], *fya15[nunique_atom_max],
+		*fya16[nunique_atom_max], *fya17[nunique_atom_max],
+		*fya18[nunique_atom_max], *fya19[nunique_atom_max],
+		*fya20[nunique_atom_max], *fya21[nunique_atom_max],
+		*fya22[nunique_atom_max], *fya23[nunique_atom_max],
+		*fya24[nunique_atom_max], *fya25[nunique_atom_max],
+		*fya26[nunique_atom_max], *fya27[nunique_atom_max],
+		*fya28[nunique_atom_max], *fya29[nunique_atom_max],
+		*fya30[nunique_atom_max], *fya31[nunique_atom_max];
+double *fza0[nunique_atom_max], *fza1[nunique_atom_max],
+		*fza2[nunique_atom_max], *fza3[nunique_atom_max],
+		*fza4[nunique_atom_max], *fza5[nunique_atom_max],
+		*fza6[nunique_atom_max], *fza7[nunique_atom_max],
+		*fza8[nunique_atom_max], *fza9[nunique_atom_max],
+		*fza10[nunique_atom_max], *fza11[nunique_atom_max],
+		*fza12[nunique_atom_max], *fza13[nunique_atom_max],
+		*fza14[nunique_atom_max], *fza15[nunique_atom_max],
+		*fza16[nunique_atom_max], *fza17[nunique_atom_max],
+		*fza18[nunique_atom_max], *fza19[nunique_atom_max],
+		*fza20[nunique_atom_max], *fza21[nunique_atom_max],
+		*fza22[nunique_atom_max], *fza23[nunique_atom_max],
+		*fza24[nunique_atom_max], *fza25[nunique_atom_max],
+		*fza26[nunique_atom_max], *fza27[nunique_atom_max],
+		*fza28[nunique_atom_max], *fza29[nunique_atom_max],
+		*fza30[nunique_atom_max], *fza31[nunique_atom_max];
 double *interp_vector;
 double uclx, ucly, uclz;
-double grid_itvl_x, grid_itvl_y, grid_itvl_z;;
+double grid_itvl_x, grid_itvl_y, grid_itvl_z;
+
 int ngrid_x, ngrid_y, ngrid_z, ngrid_total;
 int ncube_x, ncube_y, ncube_z, ncube_total;
 double xcenter, ycenter, zcenter;
@@ -312,39 +335,39 @@ double pljlrc_term[nspecie_max][nspecie_max];
 double tmp_virial;
 double tmp_virial_1, tmp_virial_2;
 
-
 // counters and accumulators
 int icounter[num_counter_max];
 double accumulator[num_counter_max][8];
 // 0-4 for accumulator, 5-ave, 6-err, 7-fluc
 
 /*
-accumulator[0]   utot
-accumulator[1]   upot
-accumulator[2]   ukin
-accumulator[3]   uinter
-accumulator[4]   uintra
-accumulator[5]   uvdw
-accumulator[6]   ubond
-accumulator[7]   uangle
-accumulator[8]   udih
-accumulator[9]   uimp
-accumulator[10]   uewald
-accumulator[11]   ureal
-accumulator[12]   ufourier
-accumulator[13]   uself
-accumulator[14]   usflj
-accumulator[15]   tinst
-accumulator[16]   uvacuum
-accumulator[17]   uwolf
-accumulator[18]   pressure
-accumulator[19]   boxv
-accumulator[20]   pideal
+ accumulator[0]   utot
+ accumulator[1]   upot
+ accumulator[2]   ukin
+ accumulator[3]   uinter
+ accumulator[4]   uintra
+ accumulator[5]   uvdw
+ accumulator[6]   ubond
+ accumulator[7]   uangle
+ accumulator[8]   udih
+ accumulator[9]   uimp
+ accumulator[10]   uewald
+ accumulator[11]   ureal
+ accumulator[12]   ufourier
+ accumulator[13]   uself
+ accumulator[14]   usflj
+ accumulator[15]   tinst
+ accumulator[16]   uvacuum
+ accumulator[17]   uwolf
+ accumulator[18]   pressure
+ accumulator[19]   boxv
+ accumulator[20]   pideal
 
-icounter[10]   number of average cycles
-icounter[11]  decrease, for equilibrium
+ icounter[10]   number of average cycles
+ icounter[11]	decrease, for equilibrium
+ icounter[20]	number of accepted canonical moves
+ icounter[21]	number of accepted volume change moves
 
-*/
-
+ */
 
 #endif /* VARS_H */
