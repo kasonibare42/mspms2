@@ -690,7 +690,8 @@ int readins()
 			&nstep_print, &nstep_save, &nstep_ss, &nstep_trj);
 	sscanf(fgets(buffer, datalen, fpins), "%lf %d", &delt, &nstep_inner);
 	sscanf(fgets(buffer, datalen, fpins), "%lf", &f0);
-	sscanf(fgets(buffer, datalen, fpins), "%d %d", &what_simulation, &what_ensemble);
+	sscanf(fgets(buffer, datalen, fpins), "%d %d", &what_simulation,
+			&what_ensemble);
 	sscanf(fgets(buffer, datalen, fpins), "%d", &isLJswitchOn);
 	sscanf(fgets(buffer, datalen, fpins), "%d", &isChargeOn);
 	// sscanf(fgets(buffer,datalen,fpins), "%d", &isWolfOn);
@@ -1448,8 +1449,21 @@ int main(int argc, char *argv[])
 	init_vars();
 	make_exclude_list();
 
-	// MD simulation
-	md();
+	if (what_simulation == md_run)
+	{
+		// MD simulation
+		md();
+	}
+	else if (what_simulation == hmc_run)
+	{
+		// HMC simulation
+		hmc();
+	}
+	else
+	{
+		fprintf(stderr,"Error: unknown simulation type.\n");
+		fprintf(fpouts, "Error: unknown simulation type.\n");
+	}
 
 	snapshot();
 
