@@ -369,8 +369,14 @@ double accumulator[num_counter_max][8];
 
  icounter[10]   number of average cycles
  icounter[11]	decrease, for equilibrium
- icounter[20]	number of accepted canonical moves
- icounter[21]	number of accepted volume change moves
+ icounter[20]	number of canonical moves
+ icounter[21]   number of accepted canonical moves
+ icounter[22]   number of volume change moves
+ icounter[23]	number of accepted volume change moves
+ icounter[24]   number of insertion
+ icounter[25]   number of accepted insertion
+ icounter[26]   number of deletion
+ icounter[27]   number of accepted deletion
 
  */
 

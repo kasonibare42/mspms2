@@ -30,6 +30,7 @@ extern int init_my_interp();
 extern int init_npt_respa();
 extern int init_nvt();
 extern int md();
+extern int init_hmc();
 extern int hmc();
 
 int calculate_ljlrc();
@@ -103,6 +104,12 @@ int init_vars()
 	dt_outer2 = deltby2;
 	dt_outer4 = delt/4.0;
 	dt_outer8 = delt/8.0;
+	
+	// initialize HMC input data
+	if (what_simulation == hmc_run) 
+	{
+		init_hmc();
+	}
 
 	// initialize thermostat/baron stat input data
 	if (what_ensemble == npt_run)
@@ -487,6 +494,13 @@ int ending()
 	fprintf(fpouts, "Ideal pressure              %15.6le\n", accumulator[20][5]);
 	fprintf(fpouts, "   std. dev.                %15.4lf\n", accumulator[20][6]);
 	fprintf(fpouts, "   fluctuation              %15.4lf\n", accumulator[20][7]);
+	
+	if (what_simulation == hmc_run)
+	{
+		fprintf(fpouts, "Total canonical moves       %15d\n", icounter[20]);
+		fprintf(fpouts, "accepted canonical moves    %15d\n", icounter[21]);
+		fprintf(fpouts, "   ratio                    %15.4lf\n", icounter[21]*1.0/icounter[20]);
+	}
 
 	fprintf(fpouts,
 			"=========================================================\n");
@@ -1168,8 +1182,6 @@ int velinit()
 	double stdvtmp, stdv;
 	double totalmass;
 	double scaling;
-
-	fprintf(fpouts, "initializing velocities...\n");
 
 	totalmass = 0.0;
 	px = py = pz = 0.0;

@@ -262,9 +262,9 @@ int loop_ij()
 				// wolf method for electrostatic
 				if (isWolfOn && rijsq<rcutoffelecsq)
 				{
-					uwolf_real = uwolf_real + chargei*charge[jj]
-							*(erfc(kappa*rij)/rij + wolfvcon1 + wolfvcon2*(rij
-									-rcutoffelec));
+					uwolf_real = uwolf_real + chargei*charge[jj] *(erfc(kappa
+							*rij)/rij + wolfvcon1 + wolfvcon2
+							*(rij -rcutoffelec));
 					uij_wolf_temp = chargei*charge[jj]/rij;
 					fij = const_columb*uij_wolf_temp
 					*(erfc(kappa*rij)/rijsq + wolffcon1*exp(-(kappa*rij)*(kappa*rij))/rij + wolffcon2);
@@ -660,9 +660,8 @@ int loop_13()
 					{
 						uij_real13 += temp3; // still need constant
 						// forces
-						fij
-								= (temp3+temp2*2.0*temp1*exp(-temp1*temp1)
-										/sqrt(pi))*const_columb/rijsq;
+						fij = (temp3+temp2*2.0*temp1*exp(-temp1*temp1)
+								/sqrt(pi))*const_columb/rijsq;
 					}
 					else if (isWolfOn)
 					{

@@ -24,6 +24,62 @@ extern int trajectory();
 extern int velinit();
 extern int echo();
 
+int init_hmc()
+{
+	int ii, jj;
+	const int datalen = 200;
+	char buffer[200];
+	double auc, buc, cuc, nanotuberadius;
+	int na, nb, nc;
+	int nspecies_yang;
+	int tnuatoms;
+	char szgrid[12][200]; // assuming only 12 types of grids
+	char keyword[100];
+
+	fprintf(stderr,"Reading input data for HMC simulation...\n");
+	fprintf(fpouts, "Reading input data for HMC simulation...\n");
+
+	// re-open input file to read extra data section
+	fpins = fopen(INPUT,"r");
+
+	while (fgets(buffer, datalen, fpins)!=NULL)
+	{
+		sscanf(buffer, "%s", keyword);
+		for (ii=0; ii<strlen(keyword); ii++)
+			keyword[ii] = toupper(keyword[ii]);
+		if (!strcmp(keyword, "HMC"))
+		{
+			fprintf(stderr,"Data section for HMC simulation found...\n");
+			fprintf(fpouts, "Data section for HMC simulation found...\n");
+
+			sscanf(fgets(buffer, datalen, fpins), "%d", &nstep_md_per_hmc);
+			sscanf(fgets(buffer, datalen, fpins), "%lf %lf %lf", &prob_cm,
+					&prob_vc, &prob_id);
+			sscanf(fgets(buffer, datalen, fpins), "%lf %lf", &ratio_cm_req,
+					&ratio_vc_req);
+			sscanf(fgets(buffer, datalen, fpins), "%d %d",
+					&nstep_delt_adj_cycle, &nstep_delv_adj_cycle);
+			sscanf(fgets(buffer, datalen, fpins), "%lf", &delv);
+
+			if (prob_cm+prob_vc+prob_id>1.0)
+			{
+				fprintf( stderr, "Warning: prob_cm (%lf) + prob_vc (%lf) + prob_id (%lf) > 1.0 \n", prob_cm, prob_vc, prob_id);
+				fprintf(
+						fpouts,
+						"Warning: prob_cm (%lf) + prob_vc (%lf) + prob_id (%lf) > 1.0 \n",
+						prob_cm, prob_vc, prob_id);
+
+			}
+			fclose(fpins);
+			return 0;
+		} // if keyword found
+	} // read through the lines
+	fprintf(stderr,"Error: data for HMC simulation not found.\n");
+	fprintf(fpouts, "Error: data for HMC simulation not found.\n");
+	fclose(fpins);
+	exit(1);
+}
+
 int hmc()
 {
 	int ii;
@@ -31,6 +87,10 @@ int hmc()
 	double *xx_old, *yy_old, *zz_old;
 	double upot_old, utot_old;
 	double upot_new, utot_new;
+	double ukin_old, tinst_old, uinter_old, uintra_old, uvdw_old, ubond_old,
+			uangle_old, udih_old, uimp_old, uewald_old, usflj_old, unhts_old,
+			unhtss_old, virial_old, virial_inter_old, virial_intra_old,
+			utsbs_old, pinst_old, boxlx_old, boxly_old, boxlz_old, boxv_old;
 	double dH;
 	int isAccept;
 	double rndnum[3];
@@ -49,6 +109,7 @@ int hmc()
 
 	// start of the HMC simulation
 	// initialize velocities
+	fprintf(fpouts, "initializing velocities...\n");
 	velinit();
 
 	// if not new run, load from old file
@@ -96,7 +157,7 @@ int hmc()
 	boxly_old = boxly;
 	boxlz_old = boxlz;
 	boxv_old = boxv;
-	
+
 	// print out initial values
 	echo();
 	// print initial properties
@@ -124,7 +185,7 @@ int hmc()
 				utot_old = utot_old + unhts + unhtss + utsbs;
 				// add long range corrections into total energy
 				utot_old = utot_old + uljlrc;
-				
+
 				// save old positions and energies
 				for (ii=0; ii<natom; ii++)
 				{
@@ -181,9 +242,10 @@ int hmc()
 					isAccept = 1;
 			}
 
+			icounter[20]++; // canonical moves
 			if (isAccept == 1)
 			{
-				icounter[20]++; // accepted canonical moves
+				icounter[21]++; // accepted canonical moves
 			}
 			else
 			{
@@ -206,7 +268,7 @@ int hmc()
 				uewald = uewald_old;
 				usflj = usflj_old;
 				unhts = unhts_old;
-				unhtss = unhtss_old_old;
+				unhtss = unhtss_old;
 				virial = virial_old;
 				virial_inter = virial_inter_old;
 				virial_intra = virial_intra_old;
@@ -225,24 +287,6 @@ int hmc()
 		else // insertions or deletions
 		{
 			// insdel(pBox);
-		}
-
-		if ((istep-nstep_eq)%nstep_delt_adj_cycle==0) // delt adjustment
-		{
-			ratio = icounter[20]*1.0/nstep_delt_adj_cycle;
-			delt *= (1.0 - ratio_cm_req + ratio);
-			icounter[20] = 0;
-			// delt update
-			deltby2 = delt/2.0;
-			delts = delt/nstep_inner;
-			deltsby2 = delts/2.0;
-		}
-		if ((istep-nstep_eq)%nstep_delv_adj_cycle==0) // delv adjustment
-		{
-			ratio = icounter[21]*1.0/nstep_delv_adj_cycle;
-			delv = delv*(1.0 - ratio_vc_req + ratio);
-			icounter[21] = 0;
-			// length update
 		}
 
 		// print out, snapshot, trajectory, save
@@ -265,9 +309,30 @@ int hmc()
 
 		icounter[11]--;
 		// if still in equilibrium run
+		// adjust the delt, deltv
 		// do not do averages
 		if (icounter[11]>=0)
 		{
+			if (icounter[20]%nstep_delt_adj_cycle==0) // delt adjustment
+			{
+				ratio = icounter[21]*1.0/nstep_delt_adj_cycle;
+				delt *= (1.0 - ratio_cm_req + ratio);
+				icounter[20] = 0;
+				icounter[21] = 0;
+				// delt update
+				deltby2 = delt/2.0;
+				delts = delt/nstep_inner;
+				deltsby2 = delts/2.0;
+			}
+			if (icounter[22]%nstep_delv_adj_cycle==0) // delv adjustment
+			{
+				ratio = icounter[23]*1.0/nstep_delv_adj_cycle;
+				delv = delv*(1.0 - ratio_vc_req + ratio);
+				icounter[22] = 0;
+				icounter[23] = 0;
+				// length update
+			}
+
 			continue;
 		}
 
