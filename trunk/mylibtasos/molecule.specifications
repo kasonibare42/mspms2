@@ -1,7 +1,0 @@
-1 : spherical molecule
-2 : rigid linear diatomic  (e.g. H2,N2 without charges)
-3 : rigid linear symmetric triatomic (e.g. CO2, CS2, N2 with charge)
-4 : rigid general linear molecule
-. 
-.
-.
