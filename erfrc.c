@@ -1,7 +1,7 @@
-/* Calculate inter atom and inter molecule energies and forces.
- These include different atoms on the same molecule (exclude 1-2,1-3,1-4)
- 1-4 will be still be calculated after
- and atoms on different molecules.
+/* Calculate inter atom and inter molecule energies and forces. 
+ * These include different atoms on the same molecule (exclude 1-2,1-3,1-4) 
+ * and atoms on different molecules. 
+ * 1-4 will be still be calculated in loop_nbp()
  */
 #include <stdio.h>
 #include <stdlib.h>

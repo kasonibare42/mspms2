@@ -71,7 +71,8 @@
 #define nimp_max	2000
 #define nnbp_max	4000
 #define exclude_max	4000
-#define num_counter_max	30
+#define natom_per_mole_max	100
+#define num_counter_max	40
 #define nunique_atom_max	5 // number of unqiue atoms for grid interpolation
 #define Rgas		8.314472 /* J/mol/K */
 #define rRgas		0.120272219 /* reciprocal of Rgas */
@@ -96,6 +97,8 @@ int ndih_per_mole[nspecie_max];
 int nimp_per_mole[nspecie_max];
 int nnbp_per_mole[nspecie_max];
 int specie_first_atom_idx[nspecie_max+1];
+int specie_first_mole_idx[nspecie_max+1];
+int mole2specie[nmole_max]; // which specie this molecule belongs to
 int mole_first_atom_idx[nmole_max+1]; // index of the first atom in a molecule
 double mole_xx[nmole_max], mole_yy[nmole_max], mole_zz[nmole_max];
 int mole_status[nmole_max]; // the status of the molecule, e.g. vacancy etc.
@@ -105,6 +108,7 @@ int mole_first_dih_idx[nmole_max+1]; // index of the first dihedral in a molecul
 int mole_first_imp_idx[nmole_max+1]; // index of the first improper in a molecule
 int mole_first_nbp_idx[nmole_max+1]; // index of the first nonbonded pair in a molecule
 double mw[nmole_max]; // molecule weight
+int atom2mole[natom_max]; // which molecule this atom belongs to
 double xx[natom_max], yy[natom_max], zz[natom_max]; /* position */
 // inner coordinates relative to the center of mass, also used for PBC reconstruction of the molecule
 double ex[natom_max], fy[natom_max], gz[natom_max];
@@ -146,6 +150,8 @@ double komega[nimp_max], omega0[nimp_max];
 int nbp_idx[nnbp_max][2];
 int excllist[exclude_max];
 int pointexcl[natom_max+1]; // the index of exclude list starts and ends
+int pointexcl_specie[nspecie_max+1]; // the index of exclude list starts and ends for a specie
+int pointexcl_atom[natom_per_mole_max+1]; // the index of exclude list starts and ends for an atom
 
 // name of the object system
 char sysname[200];
