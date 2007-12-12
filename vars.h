@@ -101,6 +101,7 @@ int specie_first_mole_idx[nspecie_max+1];
 int mole2specie[nmole_max]; // which specie this molecule belongs to
 int mole_first_atom_idx[nmole_max+1]; // index of the first atom in a molecule
 double mole_xx[nmole_max], mole_yy[nmole_max], mole_zz[nmole_max];
+int vacancy_idx[nspecie_max]; // the index of first vancant molecule for a specie
 int mole_status[nmole_max]; // the status of the molecule, e.g. vacancy etc.
 int mole_first_bond_idx[nmole_max+1]; // index of the first bond in a molecule
 int mole_first_angle_idx[nmole_max+1]; // index of the first angle in a molecule
