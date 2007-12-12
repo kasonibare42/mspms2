@@ -1,0 +1,60 @@
+1024 768               random seeds
+298.0                  Temperature
+100.0 100.0 100.0      box length, width, height
+20.0 20.0 20.0         rcuton, rcutoff, rcutoffelec
+1000 1 0               number of total steps, starting option (1-new;2-continue;3-new from old), equilibrium steps
+100 1 100 100 0        number of steps for averages, print, save, snapshots, trajectory
+1.0 5                  delt (fs), number of inner steps (cant be zero, 1 is the minimum)
+0.0                    1,4 LJ modifier (0.0 for no 14 TraPPE, 0.5 for OPLS)
+1 1                    simulation type, 0-MD, 1-HMC; ensemble type, 0-nve, 1-nvt, 2-npt;
+0                      isLJswitchOn
+1                      isChargeOn, need additional data sections for different methods
+3                      number of constraint
+0                      isSFon Solid-fluid interactions
+1                      sf_type different nanotube potentials or others, 1-hypergeo,2-atomexplicit,3-tasos,4-my interp
+
+   Electrostatic
+3                     type (1-ewald, 2-wolf, 3-simple coulomb)
+0.2                   kappa ~4/cutoff
+20 20 20 800          kmaxx,kmaxy,kmaxz,ksqmax ~kappa*box length,  kmax^2<ksqmax<3*kmax^2
+1 3                    Boundary conditions(1-tinfoil,2-vaccum), Dimension(1,2,3 D)
+
+   MDnvt
+1e14 1e9               qq qqs (outer and inner) Nose hoover thermostat mass, qq goes to infinity->NVE
+
+   MDnpt
+8000.0                 required pressure (pascal)
+1.0e8 1.0e8            Qts Qbs (mass of thermostat, barostat), larger number = weaker coupling
+
+   hypergeo
+1 3.4 232.805216       number of tubes, sigma, epsilon(J/mol)
+0.0 0.0  7.458         x,y,radius
+
+   Tasos
+14.916 14.916 4.919 7.458       x,y,z,radius
+1 1 60                          number of unit cell in x,y,z
+2                               number of species
+2                               total number of unique atoms
+/mnt/hgfs/winxp_mydoc/programs/Runs/Grids/MDCnT11x11-CH3.grid            grid file of unique atom 1
+/mnt/hgfs/winxp_mydoc/programs/Runs/Grids/MDCnT11x11-CH2.grid            grid file of unique atom 2
+
+   AtomExplicit
+4
+1 3.4 232.8052160 0.0   sorbent type(1-uniform), sigma, epsilon (J/mol), charge
+C    14.781224634762     8.869435899814     0.000000000000
+C    14.882230020493     8.166928031101     1.229756073374
+C    14.086935109222    10.875453681938     1.229756073374
+C    14.381768410313    10.229858825919     2.459512146748
+
+  MyInterp
+14.916 14.916 2.45951214674781  7.458 7.458 0.0 uclx, ucly, uclz, x,y,z center
+2                                   number of unique atoms
+/mnt/hgfs/winxp_mydoc/programs/Runs/Grids/CH3-11x11.grid       grid file 1
+/mnt/hgfs/winxp_mydoc/programs/Runs/Grids/CH2-11x11.grid       grid file 2
+
+  HMC
+10                            Number of MD steps per HMC cycle
+1.0  0.0  0.0                 probability of canonical moves, volume changes, and insertion/deletion
+0.5  0.5                      Required acceptance ratio for canonical moves, volumen changes
+100  100                      Number of steps between adjustments for canonical moves, volume changes 
+100.0                         delv
