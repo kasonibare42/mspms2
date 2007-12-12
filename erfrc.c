@@ -103,6 +103,8 @@ int loop_ij()
 	double rhoklsq, kapparhokl_sq;
 	double uij_Gz0; // 1D ewald
 	gsl_function FF;
+	int iMole, iSpecie;
+	int iAtomPosInMole; // the relative atom index within a molecule
 
 	FF.function = &deriv_inc_gamma;
 	FF.params = 0;
@@ -127,9 +129,17 @@ int loop_ij()
 		chargei = charge[ii];
 		// set the exclude list for atom ii
 		for (kk=0; kk<natom; kk++)
+		{
 			isNotexcl[kk] = true;
-		for (kk=pointexcl[ii]; kk<pointexcl[ii+1]; kk++)
-			isNotexcl[excllist[kk]] = false;
+		}
+		iMole = atom2mole[ii]; // which atom this atom belongs to
+		iSpecie = mole2specie[iMole]; // which specie this molecule belongs to
+		iAtomPosInMole = ii - mole_first_atom_idx[iMole];
+		for (kk=pointexcl_atom[iSpecie][iAtomPosInMole]; kk
+				<pointexcl_atom[iSpecie][iAtomPosInMole+1]; kk++)
+		{
+			isNotexcl[excllist[kk]+ii] = false; // +ii since the excllist uses relative index
+		}
 		// atom jj
 		for (jj=ii+1; jj<natom; jj++)
 		{
@@ -219,7 +229,9 @@ int loop_ij()
 											/roff2_minus_ron2_cube;
 					}
 					else
+					{
 						fij = 24.0*epsilonij*(r_r12_minus_r_r6+r_r12)/rijsq;
+					}
 					fxij = fij*rxij;
 					fyij = fij*ryij;
 					fzij = fij*rzij;
@@ -263,8 +275,8 @@ int loop_ij()
 				if (isWolfOn && rijsq<rcutoffelecsq)
 				{
 					uwolf_real = uwolf_real + chargei*charge[jj] *(erfc(kappa
-							*rij)/rij + wolfvcon1 + wolfvcon2
-							*(rij -rcutoffelec));
+							*rij)/rij + wolfvcon1 + wolfvcon2 *(rij
+							-rcutoffelec));
 					uij_wolf_temp = chargei*charge[jj]/rij;
 					fij = const_columb*uij_wolf_temp
 					*(erfc(kappa*rij)/rijsq + wolffcon1*exp(-(kappa*rij)*(kappa*rij))/rij + wolffcon2);
@@ -422,11 +434,15 @@ int loop_14()
 				if (isLJswitchOn) // if use switch for LJ
 				{
 					if (rijsq<rcutonsq)
+					{
 						LJswitch = 1.0;
+					}
 					else
+					{
 						LJswitch = (rcutoffsq-rijsq)*(rcutoffsq-rijsq)
 								*(rcutoffsq+2.0*rijsq-3.0*rcutonsq)
 								/roff2_minus_ron2_cube;
+					}
 				}
 				r_rijsq = sigmaij*sigmaij/rijsq;
 				r_r6 = r_rijsq*r_rijsq*r_rijsq;
@@ -441,15 +457,21 @@ int loop_14()
 				if (isLJswitchOn)
 				{
 					if (rijsq<rcutonsq)
+					{
 						fij = 24.0*epsilonij*(r_r12_minus_r_r6+r_r12)/rijsq;
+					}
 					else
+					{
 						fij = 24.0*epsilonij*(r_r12_minus_r_r6+r_r12)/rijsq
 								*LJswitch // 4.0 for the real energy
 								-4.0*uij_vdw14_temp*12.0*(rcutoffsq-rijsq)
 										*(rcutonsq-rijsq)/roff2_minus_ron2_cube;
+					}
 				}
 				else
+				{
 					fij = 24.0*epsilonij*(r_r12_minus_r_r6+r_r12)/rijsq;
+				}
 				fxij = fij*rxij;
 				fyij = fij*ryij;
 				fzij = fij*rzij;
@@ -633,8 +655,10 @@ int loop_13()
 				fyij = fij*ryij;
 				fzij = fij*rzij;
 				if (isWolfOn) // negative contribution to the virial
+				{
 					virial_inter = virial_inter + fxij*rxij + fyij*ryij + fzij
 							*rzij;
+				}
 				// forces on ii1
 				fxl[ii1] += fxij;
 				fyl[ii1] += fyij;
@@ -676,8 +700,10 @@ int loop_13()
 					fzij = fij*rzij;
 
 					if (isWolfOn) // contribution to the virial
+					{
 						virial_inter = virial_inter + fxij*rxij + fyij*ryij
 								+ fzij*rzij;
+					}
 
 					// force on atom ii1
 					fxl[ii1] += fxij;
@@ -719,11 +745,15 @@ int loop_13()
 					if (isLJswitchOn) // check if switch for LJ is used
 					{
 						if (rijsq<rcutonsq)
+						{
 							LJswitch = 1.0;
+						}
 						else
+						{
 							LJswitch = (rcutoffsq-rijsq)*(rcutoffsq-rijsq)
 									*(rcutoffsq+2.0*rijsq-3.0*rcutonsq)
 									/roff2_minus_ron2_cube;
+						}
 					}
 					sigmaij = 0.5*(sigma[ii1]+sigma[ii2]);
 					epsilonij = sqrt(epsilon[ii1]*epsilon[ii2]);
@@ -740,16 +770,22 @@ int loop_13()
 					if (isLJswitchOn)
 					{
 						if (rijsq<rcutonsq)
+						{
 							fij = 24.0*epsilonij*(r_r12_minus_r_r6+r_r12)/rijsq;
+						}
 						else
+						{
 							fij = 24.0*epsilonij*(r_r12_minus_r_r6+r_r12)/rijsq
 									*LJswitch // 4.0 for the real energy
 									-4.0*uij_vdw13img_temp*12.0*(rcutoffsq
 											-rijsq)*(rcutonsq-rijsq)
 											/roff2_minus_ron2_cube;
+						}
 					}
 					else
+					{
 						fij = 24.0*epsilonij*(r_r12_minus_r_r6+r_r12)/rijsq;
+					}
 					fxij = fij*rxij;
 					fyij = fij*ryij;
 					fzij = fij*rzij;
@@ -858,7 +894,9 @@ int loop_12()
 			fyij = fij*ryij;
 			fzij = fij*rzij;
 			if (isWolfOn) // negative contribution to the virial
+			{
 				virial_inter = virial_inter + fxij*rxij + fyij*ryij + fzij*rzij;
+			}
 			// forces on ii1
 			fxl[ii1] += fxij;
 			fyl[ii1] += fyij;
@@ -899,8 +937,10 @@ int loop_12()
 				fzij = fij*rzij;
 
 				if (isWolfOn) // contribution to the virial
+				{
 					virial_inter = virial_inter + fxij*rxij + fyij*ryij + fzij
 							*rzij;
+				}
 
 				// force on atom ii1
 				fxl[ii1] += fxij;
@@ -942,11 +982,15 @@ int loop_12()
 				if (isLJswitchOn)
 				{
 					if (rijsq<rcutonsq)
+					{
 						LJswitch = 1.0;
+					}
 					else
+					{
 						LJswitch = (rcutoffsq-rijsq)*(rcutoffsq-rijsq)
 								*(rcutoffsq+2.0*rijsq-3.0*rcutonsq)
 								/roff2_minus_ron2_cube;
+					}
 				}
 				sigmaij = 0.5*(sigma[ii1]+sigma[ii2]);
 				epsilonij = sqrt(epsilon[ii1]*epsilon[ii2]);
@@ -956,22 +1000,32 @@ int loop_12()
 				r_r12_minus_r_r6 = r_r12 - r_r6;
 				uij_vdw12img_temp = epsilonij*r_r12_minus_r_r6; // still need *4.0
 				if (isLJswitchOn) // if switch is used
+				{
 					uij_vdw12img += uij_vdw12img_temp*LJswitch; // still need 4.0
+				}
 				else
+				{
 					uij_vdw12img += uij_vdw12img_temp; // still need *4.0
+				}
 				// calculate LJ forces
 				if (isLJswitchOn)
 				{
 					if (rijsq<rcutonsq)
+					{
 						fij = 24.0*epsilonij*(r_r12_minus_r_r6+r_r12)/rijsq;
+					}
 					else
+					{
 						fij = 24.0*epsilonij*(r_r12_minus_r_r6+r_r12)/rijsq
 								*LJswitch // 4.0 for the real energy
 								-4.0*uij_vdw12img_temp*12.0*(rcutoffsq-rijsq)
 										*(rcutonsq-rijsq)/roff2_minus_ron2_cube;
+					}
 				}
 				else
+				{
 					fij = 24.0*epsilonij*(r_r12_minus_r_r6+r_r12)/rijsq;
+				}
 				fxij = fij*rxij;
 				fyij = fij*ryij;
 				fzij = fij*rzij;
@@ -1102,11 +1156,15 @@ int loop_nbp()
 				if (isLJswitchOn)
 				{
 					if (rijsq<rcutonsq)
+					{
 						LJswitch = 1.0;
+					}
 					else
+					{
 						LJswitch = (rcutoffsq-rijsq)*(rcutoffsq-rijsq)
 								*(rcutoffsq+2.0*rijsq-3.0*rcutonsq)
 								/roff2_minus_ron2_cube;
+					}
 				}
 				sigmaij = 0.5*(sigma[ii1]+sigma[ii2]);
 				epsilonij = sqrt(epsilon[ii1]*epsilon[ii2]);
@@ -1116,21 +1174,29 @@ int loop_nbp()
 				r_r12_minus_r_r6 = r_r12 - r_r6;
 				uij_vdwnbp_temp = epsilonij*r_r12_minus_r_r6; // still need *4.0
 				if (isLJswitchOn) // if switch is used
+				{
 					uij_vdwnbp += uij_vdwnbp_temp*LJswitch; // still need 4.0 else 
+				}
 				uij_vdwnbp += uij_vdwnbp_temp; // still need *4.0
 				// force calculations
 				if (isLJswitchOn)
 				{
 					if (rijsq<rcutonsq)
+					{
 						fij = 24.0*epsilonij*(r_r12_minus_r_r6+r_r12)/rijsq;
+					}
 					else
+					{
 						fij = 24.0*epsilonij*(r_r12_minus_r_r6+r_r12)/rijsq
 								*LJswitch // 4.0 for the real energy
 								-4.0*uij_vdwnbp_temp*12.0*(rcutoffsq-rijsq)
 										*(rcutonsq-rijsq)/roff2_minus_ron2_cube;
+					}
 				}
 				else
+				{
 					fij = 24.0*epsilonij*(r_r12_minus_r_r6+r_r12)/rijsq;
+				}
 				fxij = fij*rxij;
 				fyij = fij*ryij;
 				fzij = fij*rzij;
@@ -1282,7 +1348,9 @@ int ewald_fourier_and_self()
 				// check for 1D ewald summation
 				// skip all Gz=0 terms
 				if (fEwald_Dim==ewald_1D && kz==0)
+				{
 					continue;
+				}
 				ksq = kx*kx + ky*ky + kz*kz;
 				if (ksq<=KSQMAX && ksq!=0)
 				{
@@ -1327,7 +1395,9 @@ int ewald_fourier_and_self()
 
 	// self interaction corrections, constant, so no forces
 	for (ii=0; ii<natom; ii++)
+	{
 		uself += charge[ii]*charge[ii];
+	}
 	uself = uself*const_columb*sqrt(kappa*kappa/pi);
 
 	return 0;
@@ -1462,14 +1532,18 @@ int simple_coulomb_inter_mole()
 				{
 					// ghost check
 					if (isghost[ii]==all_ghost)
+					{
 						continue;
+					}
 					// second atom
 					for (jj=first_atom_of_mole_nn; jj
 							<first_atom_of_mole_nn_plus_one; jj++)
 					{
 						// ghost check
 						if (isghost[jj]==all_ghost)
+						{
 							continue;
+						}
 						// i         j
 						//  \       /
 						//   m-----n
@@ -1541,7 +1615,9 @@ int erfrc()
 
 	// zero forces
 	for (ii=0; ii<natom; ii++)
+	{
 		fxl[ii] = fyl[ii] = fzl[ii] = 0.0;
+	}
 
 	// i-j loop, nonboned loop, 1-4 loop, 1-3 loop and 1-2 loop
 	loop_ij();
@@ -1581,13 +1657,19 @@ int erfrc()
 		virial_inter = virial_inter + uewald;
 	}
 	else if (isWolfOn) // if wolf is on
+	{
 		wolf_con(); // calculate the self interaction term for wolf
+	}
 	else if (isSimpleCoulomb)
+	{
 		simple_coulomb_inter_mole(); // if simple coulomb is used, calculate inter-mole coulomb
+	}
 
 	// calculate solid fluid energy if necessary
 	if (isSFon)
+	{
 		sffrc();
+	}
 
 	// total inter molecule energy add up everything
 	// they should be zero if they are not used

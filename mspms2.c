@@ -55,7 +55,9 @@ int init_vars()
 	{
 		mw[ii] = 0.0;
 		for (jj=mole_first_atom_idx[ii]; jj<mole_first_atom_idx[ii+1]; jj++)
+		{
 			mw[ii] += aw[jj];
+		}
 		// fprintf(fpouts,"molecule %d: %d-%d :  mw=%lf : 1st bond id=%d : 1st angle id=%d : 1st dih id=%d\n",
 		// ii,mole_first_atom_idx[ii],mole_first_atom_idx[ii+1]-1,mw[ii],
 		// mole_first_bond_idx[ii],mole_first_angle_idx[ii],mole_first_dih_idx[ii]);
@@ -72,7 +74,9 @@ int init_vars()
 	{
 		icounter[ii] = 0;
 		for (jj=0; jj<5; jj++)
+		{
 			accumulator[ii][jj] = 0.0;
+		}
 	}
 	// set the counter for equilibrium
 	// it will decrease during the run
@@ -104,18 +108,22 @@ int init_vars()
 	dt_outer2 = deltby2;
 	dt_outer4 = delt/4.0;
 	dt_outer8 = delt/8.0;
-	
+
 	// initialize HMC input data
-	if (what_simulation == hmc_run) 
+	if (what_simulation == hmc_run)
 	{
 		init_hmc();
 	}
 
 	// initialize thermostat/baron stat input data
 	if (what_ensemble == npt_run)
+	{
 		init_npt_respa();
+	}
 	else if (what_ensemble == nvt_run)
+	{
 		init_nvt();
+	}
 
 	// sf energy, tasos initiate part
 	if (isSFon)
@@ -146,7 +154,9 @@ int init_vars()
 	// The 14 pair should only be calculated once for energy/force
 	// Thats the unique check for
 	for (ii=0; ii<ndih; ii++)
+	{
 		isDih_unique[ii] = true;
+	}
 	for (ii=0; ii<ndih-1; ii++)
 	{
 		if (isDih_unique[ii])
@@ -240,7 +250,9 @@ int init_vars()
 	// check unique for angles
 	// see above comments for dihedrals
 	for (ii=0; ii<nangle; ii++)
+	{
 		isAngle_unique[ii] = true;
+	}
 	for (ii=0; ii<nangle-1; ii++)
 	{
 		if (isAngle_unique[ii])
@@ -494,12 +506,13 @@ int ending()
 	fprintf(fpouts, "Ideal pressure              %15.6le\n", accumulator[20][5]);
 	fprintf(fpouts, "   std. dev.                %15.4lf\n", accumulator[20][6]);
 	fprintf(fpouts, "   fluctuation              %15.4lf\n", accumulator[20][7]);
-	
+
 	if (what_simulation == hmc_run)
 	{
 		fprintf(fpouts, "Total canonical moves       %15d\n", icounter[20]);
 		fprintf(fpouts, "accepted canonical moves    %15d\n", icounter[21]);
-		fprintf(fpouts, "   ratio                    %15.4lf\n", icounter[21]*1.0/icounter[20]);
+		fprintf(fpouts, "   ratio                    %15.4lf\n", icounter[21]
+				*1.0/icounter[20]);
 	}
 
 	fprintf(fpouts,
@@ -682,6 +695,8 @@ int readins()
 	int atomid, moleid;
 	int isFirstAtom;
 	int last_mole_id;
+	int ispecie;
+	int imole;
 
 	int position_counter;
 	int starting_position;
@@ -802,6 +817,7 @@ int readins()
 	// read in the information of how many molecules in one specie and
 	// how many atoms in one molecule for a certain specie
 	specie_first_atom_idx[0] = 0;
+	specie_first_mole_idx[0] = 0;
 	starting_position = position_counter;
 	for (ii=0; ii<nspecie; ii++)
 	{
@@ -812,18 +828,22 @@ int readins()
 		// printf("%d %d ",nmole_per_specie[ii],natom_per_mole[ii]);
 		specie_first_atom_idx[ii+1] = specie_first_atom_idx[ii]
 				+ nmole_per_specie[ii]*natom_per_mole[ii];
+		specie_first_mole_idx[ii+1] = specie_first_mole_idx[ii]
+				+ nmole_per_specie[ii];
 	}
 	// readin detailed atom information
 	nmole = 0;
 	isFirstAtom = 1;
 	last_mole_id = 0;
+	ispecie = 0;
+	imole = 0;
 	for (ii=0; ii<natom; ii++)
 	{
 		fscanf(fpcfg, "%d %d %s %lf %lf %lf %lf %d %d\n", &atomid, &moleid,
 				atomname[ii], &aw[ii], &epsilon[ii], &sigma[ii], &charge[ii],
 				&isghost[ii], &tasostype[ii]);
 		// assign the molecule index to the atom
-		atom_to_mole_idx[ii] = moleid;
+		atom2mole[ii] = moleid;
 		// assign the correct index of the first atom in a molecule
 		if (moleid == last_mole_id+1)
 		{
@@ -833,9 +853,17 @@ int readins()
 		if (isFirstAtom)
 		{
 			mole_first_atom_idx[nmole] = atomid;
+			mole2specie[nmole] = ispecie;
 			nmole++;
+			imole++;
 			assert(nmole<nmole_max+1);
 			isFirstAtom = 0;
+		}
+		// increase ispecie for correctly assign molecule to specie index
+		if (imole == nmole_per_specie[ispecie])
+		{
+			ispecie++;
+			imole = 0;
 		}
 	}
 	mole_first_atom_idx[nmole] = atomid + 1; // set the boundary of the last molecule
@@ -918,7 +946,7 @@ int readins()
 	starting_position = position_counter;
 	for (ii=0; ii<nspecie; ii++)
 	{
-		sscanf(&buffer[starting_position], "%d%n", &nangle_per_mole[ii],
+		sscanf(&buffer[starting_position], "%d%n", &ndih_per_mole[ii],
 				&position_counter);
 		starting_position += position_counter;
 	}
@@ -1071,106 +1099,128 @@ int echo()
 
 int make_exclude_list()
 {
-	int ii, jj, nexcllist;
+	int ii, jj, kk;
+	int nexcllist;
+	int iStartAtom, iEndAtom;
+	int iStartBond, iEndBond;
+	int iStartAngle, iEndAngle;
+	int iStartDihedral, iEndDihedral;
+	int iStartNbp, iEndNbp;
+	int iatom;
 
 	fprintf(fpouts, "making exclude list... ");
 
+	// the exclude list uses the relative index
 	nexcllist = 0;
-	for (ii=0; ii<natom; ii++)
+	for (ii=0; ii<nspecie; ii++)
 	{
-		pointexcl[ii] = nexcllist;
-
-		// self-exclusion
-		excllist[nexcllist] = ii;
-		nexcllist++;
-
-		// exclude bonded atoms
-		// In order to improve it and save the memory usage
-		// Only set atom jj to be an exclude atom for atom ii
-		// if jj>ii. It should avoid double count of the exclulde pairs.
-		// Since the calculations loop ij is from i=0,n-1 and j=i+1,n
-		// i.e. if 0 and 1 are exclude pair, 1 will be in 0's exclude list
-		// but 0 will not be in 1's exclude list
-		// Be careful of it while coding other interaction functions
-		for (jj=0; jj<nbond; jj++)
+		pointexcl_specie[ii] = nexcllist;
+		// get the start and end atom index for the specie sample
+		// They are the start and end atom index for the first molecule of the specie
+		iStartAtom = specie_first_atom_idx[ii];
+		iEndAtom = iStartAtom + natom_per_mole[ii];
+		iatom = 0;
+		for (jj=iStartAtom; jj<iEndAtom; jj++)
 		{
-			if (bond_idx[jj][0] == ii && bond_idx[jj][1] > ii)
+			pointexcl_atom[ii][iatom] = nexcllist;
+			// self exclusion
+			excllist[nexcllist] = jj - jj;
+			nexcllist++;
+			// exclude bonded atoms
+			// get the first bond index of the first molecule of the specie
+			iStartBond = mole_first_bond_idx[specie_first_mole_idx[ii]];
+			iEndBond = iStartBond + nbond_per_mole[ii];
+			for (kk=iStartBond; kk<iEndBond; kk++)
 			{
-				excllist[nexcllist] = bond_idx[jj][1];
-				nexcllist++;
+				if (bond_idx[kk][0] == jj)
+				{
+					excllist[nexcllist] = bond_idx[kk][1] - jj;
+					nexcllist++;
+				}
+				else if (bond_idx[kk][1] == jj)
+				{
+					excllist[nexcllist] = bond_idx[kk][0] - jj;
+					nexcllist++;
+				}
+				assert(nexcllist<exclude_max);
 			}
-			else if (bond_idx[jj][1] == ii && bond_idx[jj][0] > ii)
+			// exclude angled atoms
+			// get first angle index for the first molecule of the specie
+			iStartAngle = mole_first_angle_idx[specie_first_mole_idx[ii]];
+			iEndAngle = iStartAngle + nangle_per_mole[ii];
+			for (kk=iStartAngle; kk<iEndAngle; kk++)
 			{
-				excllist[nexcllist] = bond_idx[jj][0];
-				nexcllist++;
+				if (angle_idx[kk][0] == jj)
+				{
+					excllist[nexcllist] = angle_idx[kk][2] - jj;
+					nexcllist++;
+				}
+				else if (angle_idx[kk][2] == jj)
+				{
+					excllist[nexcllist] = angle_idx[kk][0] - jj;
+					nexcllist++;
+				}
+				assert(nexcllist<exclude_max);
 			}
-			assert(nexcllist<exclude_max);
+			// exclude dihedraled atoms
+			// get first dihedral index for the first molecule of the specie
+			iStartDihedral = mole_first_dih_idx[specie_first_mole_idx[ii]];
+			iEndDihedral = iStartDihedral + ndih_per_mole[ii];
+			for (kk=iStartDihedral; kk<iEndDihedral; kk++)
+			{
+				if (dih_idx[kk][0] == jj)
+				{
+					excllist[nexcllist] = dih_idx[kk][3] - jj;
+					nexcllist++;
+				}
+				else if (dih_idx[kk][3] == jj)
+				{
+					excllist[nexcllist] = dih_idx[kk][0] - jj;
+					nexcllist++;
+				}
+				assert(nexcllist<exclude_max);
+			}
+			// exclude non-bonded pair atoms
+			// get first non-bonded pair index for the first molecule of the specie
+			iStartNbp = mole_first_nbp_idx[specie_first_mole_idx[ii]];
+			iEndNbp = iStartNbp + nnbp_per_mole[ii];
+			for (kk=iStartNbp; kk<iEndNbp; kk++)
+			{
+				if (nbp_idx[kk][0] == jj)
+				{
+					excllist[nexcllist] = nbp_idx[kk][1] - jj;
+					nexcllist++;
+				}
+				else if (nbp_idx[kk][1] == jj)
+				{
+					excllist[nexcllist] = nbp_idx[kk][0] - jj;
+					nexcllist++;
+				}
+				assert(nexcllist<exclude_max);
+			}
+			iatom++;
 		}
-		// exclude angled atoms
-		for (jj=0; jj<nangle; jj++)
+		pointexcl_atom[ii][natom_per_mole[ii]] = nexcllist;
+	}
+	pointexcl_specie[nspecie] = nexcllist;
+	
+	// check the exclude list
+	fprintf(fpouts, "%d excluding pairs\n", nexcllist);
+	int itmp = 0;
+	for (ii=0; ii<nspecie; ii++)
+	{
+		fprintf(fpouts, "=== specie %d ===\n", ii);
+		for (jj=0; jj<natom_per_mole[ii]; jj++)
 		{
-			if (angle_idx[jj][0] == ii && angle_idx[jj][2] > ii)
+			fprintf(fpouts, "atom %d excludes are:\n", jj);
+			for (kk=pointexcl_atom[ii][jj]; kk<pointexcl_atom[ii][jj+1]; kk++)
 			{
-				excllist[nexcllist] = angle_idx[jj][2];
-				nexcllist++;
+				fprintf(fpouts, "%d ", excllist[itmp]);
+				itmp++;
 			}
-			else if (angle_idx[jj][2] == ii && angle_idx[jj][0] > ii)
-			{
-				excllist[nexcllist] = angle_idx[jj][0];
-				nexcllist++;
-			}
-			assert(nexcllist<exclude_max);
-		}
-		// exclude dihedraled atoms
-		for (jj=0; jj<ndih; jj++)
-		{
-			if (dih_idx[jj][0] == ii && dih_idx[jj][3] > ii)
-			{
-				excllist[nexcllist] = dih_idx[jj][3];
-				nexcllist++;
-			}
-			else if (dih_idx[jj][3] == ii && dih_idx[jj][0] > ii)
-			{
-				excllist[nexcllist] = dih_idx[jj][0];
-				nexcllist++;
-			}
-			assert(nexcllist<exclude_max);
-		}
-		// exclude non-bonded atoms
-		for (jj=0; jj<nnbp; jj++)
-		{
-			if (nbp_idx[jj][0] == ii && nbp_idx[jj][1] > ii)
-			{
-				excllist[nexcllist] = nbp_idx[jj][1];
-				nexcllist++;
-			}
-			else if (nbp_idx[jj][1] == ii && nbp_idx[jj][0] > ii)
-			{
-				excllist[nexcllist] = nbp_idx[jj][0];
-				nexcllist++;
-			}
-			assert(nexcllist<exclude_max);
+			fprintf(fpouts, "\n");
 		}
 	}
-	pointexcl[natom] = nexcllist;
-
-	fprintf(fpouts, "%d excluding pairs\n", nexcllist);
-
-	// check the exclude list
-	/*
-	 printf("n = %d\n",nexcllist);
-	 int tmp = 0;
-	 for (ii=0;ii<natom;ii++)
-	 {
-	 printf("%d excludes are:\n",ii);
-	 for (jj=pointexcl[ii];jj<pointexcl[ii+1];jj++)
-	 {
-	 printf("%d ",excllist[tmp]);
-	 tmp++;
-	 }
-	 printf("\n");
-	 }
-	 */
 
 	return 0;
 }
@@ -1214,7 +1264,9 @@ int velinit()
 	// rescale velocity for required temperature
 	ukin = 0.0;
 	for (ii=0; ii<natom; ii++)
+	{
 		ukin += aw[ii]*(vx[ii]*vx[ii]+vy[ii]*vy[ii]+vz[ii]*vz[ii]);
+	}
 	ukin = 0.5*ukin;
 	tinst = 2.0*ukin/(Rgas*nfree);
 	scaling = sqrt(treq/tinst);
@@ -1228,7 +1280,9 @@ int velinit()
 	// should be exactly the set tempature
 	ukin = 0.0;
 	for (ii=0; ii<natom; ii++)
+	{
 		ukin += aw[ii]*(vx[ii]*vx[ii]+vy[ii]*vy[ii]+vz[ii]*vz[ii]);
+	}
 	ukin = 0.5*ukin;
 	tinst = 2.0*ukin/(Rgas*nfree);
 
@@ -1277,8 +1331,10 @@ int snapshot()
 	fprintf(fpss, "%d\n", natom);
 	fprintf(fpss, "%d %lf %lf %lf\n", istep, boxlx, boxly, boxlz);
 	for (ii=0; ii<natom; ii++)
+	{
 		fprintf(fpss, "%s  %lf  %lf  %lf\n", atomname[ii], xx[ii], yy[ii],
 				zz[ii]);
+	}
 	fclose(fpss);
 
 	return 0;

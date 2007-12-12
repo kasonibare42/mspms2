@@ -120,7 +120,6 @@ double aw[natom_max], epsilon[natom_max], sigma[natom_max], charge[natom_max]; /
 int isghost[natom_max]; /* flag of ghost atom, including ghost LJ or ghost electrostatic */
 int tasostype[natom_max]; /* atom type for tasos interpolation */
 char atomname[natom_max][5];
-int atom_to_mole_idx[natom_max]; // the index of the molecule which the atom is belong to
 
 // for atom explicit solid (nanotubes)
 int solid_natom;
@@ -152,7 +151,7 @@ int nbp_idx[nnbp_max][2];
 int excllist[exclude_max];
 int pointexcl[natom_max+1]; // the index of exclude list starts and ends
 int pointexcl_specie[nspecie_max+1]; // the index of exclude list starts and ends for a specie
-int pointexcl_atom[natom_per_mole_max+1]; // the index of exclude list starts and ends for an atom
+int pointexcl_atom[nspecie_max][natom_per_mole_max+1]; // the index of exclude list starts and ends for an atom
 
 // name of the object system
 char sysname[200];
