@@ -35,7 +35,14 @@ extern int hmc();
 
 int calculate_ljlrc();
 
-/* Initiate variables */
+/// Initiate variables 
+/**
+ * Initialize the readin variables.
+ * Readin additional data section according to the simulation and ensemble
+ * type.
+ * Check the uniqueness for dihedrals and angles.
+ * Calculate the long range corrections.
+ */
 int init_vars()
 {
 	int ii, jj;
@@ -82,8 +89,6 @@ int init_vars()
 	// it will decrease during the run
 	icounter[11] = nstep_eq;
 
-	/* long range corrections */
-
 	// initialize random number generator
 	rmarin(ij, jk);
 
@@ -97,10 +102,10 @@ int init_vars()
 	roff2_minus_ron2_cube = (rcutoffsq-rcutonsq)*(rcutoffsq-rcutonsq)
 			*(rcutoffsq-rcutonsq);
 
-	// volume
+	// volume calculation
 	boxv = boxlx*boxly*boxlz;
 
-	// delt
+	// delt related
 	deltby2 = delt/2.0;
 	delts = delt/nstep_inner;
 	deltsby2 = delts/2.0;
