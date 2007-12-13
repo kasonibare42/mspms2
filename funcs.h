@@ -1,7 +1,7 @@
 #ifndef FUNCS_H_
 #define FUNCS_H_
 
-int sffrc();
+int fnSffrcSession();
 int vver();
 int erfrc();
 int rafrc();

@@ -1,4 +1,5 @@
-/* Calculate inter atom and inter molecule energies and forces. 
+/* 
+ * Calculate inter atom and inter molecule energies and forces. 
  * These include different atoms on the same molecule (exclude 1-2,1-3,1-4) 
  * and atoms on different molecules. 
  * 1-4 will be still be calculated in loop_nbp()
@@ -296,7 +297,7 @@ int loop_ij(int iStartMole, int iEndMole)
 					fyij = fij*ryij;
 					fzij = fij*rzij;
 					// contribution to the virial
-					virial_inter = virial_inter + fxij*rxij + fyij*ryij + fzij
+					gVirialInterSession = gVirialInterSession + fxij*rxij + fyij*ryij + fzij
 							*rzij;
 					// force on atom ii
 					fxi += fxij;
@@ -334,7 +335,7 @@ int loop_ij(int iStartMole, int iEndMole)
 				// wolf method for electrostatic
 				if (isWolfOn && rijsq<rcutoffelecsq)
 				{
-					uwolf_real = uwolf_real + chargei*charge[jj] *(erfc(kappa
+					gUwolfrealSession = gUwolfrealSession + chargei*charge[jj] *(erfc(kappa
 							*rij)/rij + wolfvcon1 + wolfvcon2 *(rij
 							-rcutoffelec));
 					uij_wolf_temp = chargei*charge[jj]/rij;
@@ -344,7 +345,7 @@ int loop_ij(int iStartMole, int iEndMole)
 					fyij = fij*ryij;
 					fzij = fij*rzij;
 					// contribution to the virial
-					virial_inter = virial_inter + fxij*rxij + fyij*ryij + fzij
+					gVirialInterSession = gVirialInterSession + fxij*rxij + fyij*ryij + fzij
 							*rzij;
 					// force on atom ii
 					fxi += fxij;
@@ -362,9 +363,10 @@ int loop_ij(int iStartMole, int iEndMole)
 		fzl[ii] = fzi;
 	} // end of atom ii
 
-	uvdw += uij_vdw; // still need 4.0
-	ureal += uij_real; // still neeed constant
-	uGz0 += uij_Gz0/(2.0*boxlz); // still need constant
+	gUvdwSession += uij_vdw; // still need 4.0
+	gUrealSession += uij_real; // still neeed constant
+	gUGz0Session += uij_Gz0/(2.0*boxlz); // still need constant
+
 	return 0;
 }
 
@@ -559,7 +561,7 @@ int loop_14(int iMole)
 				fyij = fij*ryij;
 				fzij = fij*rzij;
 				// contribution to the virial
-				virial_inter = virial_inter + fxij*rxij + fyij*ryij + fzij*rzij;
+				gVirialInterSession = gVirialInterSession + fxij*rxij + fyij*ryij + fzij*rzij;
 				// force on atom ii1
 				fxl[ii1] += fxij;
 				fyl[ii1] += fyij;
@@ -596,7 +598,7 @@ int loop_14(int iMole)
 			// wolf method for electrostatic
 			if (fCalculate14_elec && isWolfOn && rijsq<rcutoffelecsq)
 			{
-				uwolf_real = uwolf_real + charge[ii1]*charge[ii2]*(erfc(kappa
+				gUwolfrealSession = gUwolfrealSession + charge[ii1]*charge[ii2]*(erfc(kappa
 						*rij)/rij + wolfvcon1 + wolfvcon2*(rij-rcutoffelec));
 				// need + some scale factor here
 				uij_wolf14_temp = charge[ii1]*charge[ii2]/rij;
@@ -607,7 +609,7 @@ int loop_14(int iMole)
 				fyij = fij*ryij;
 				fzij = fij*rzij;
 				// contribution to the virial
-				virial_inter = virial_inter + fxij*rxij + fyij*ryij + fzij*rzij;
+				gVirialInterSession = gVirialInterSession + fxij*rxij + fyij*ryij + fzij*rzij;
 				// force on atom ii1
 				fxl[ii1] += fxij;
 				fyl[ii1] += fyij;
@@ -622,13 +624,13 @@ int loop_14(int iMole)
 			if (fCalculate14_elec && isSimpleCoulomb && rijsq<rcutoffelecsq)
 			{
 				uij_coulomb14_temp = charge[ii1]*charge[ii2]/rij; // need constant
-				ucoulomb += uij_coulomb14_temp; // need constant
+				gUcoulombSession += uij_coulomb14_temp; // need constant
 				fij = const_columb*uij_coulomb14_temp/rijsq;
 				fxij = fij*rxij;
 				fyij = fij*ryij;
 				fzij = fij*rzij;
 				// contribution to the virial
-				virial_inter = virial_inter + fxij*rxij + fyij*ryij + fzij*rzij;
+				gVirialInterSession = gVirialInterSession + fxij*rxij + fyij*ryij + fzij*rzij;
 				// force on atom ii1
 				fxl[ii1] += fxij;
 				fyl[ii1] += fyij;
@@ -643,9 +645,9 @@ int loop_14(int iMole)
 	} // loop through dihedrals
 
 	// add into total energy
-	uvdw += uij_vdw14; // still need 4.0
-	ureal += uij_real14; // still need constant
-	uGz0 += uij_Gz0/(2.0*boxlz); // still need constant
+	gUvdwSession += uij_vdw14; // still need 4.0
+	gUrealSession += uij_real14; // still need constant
+	gUGz0Session += uij_Gz0/(2.0*boxlz); // still need constant
 
 	return 0;
 }
@@ -763,7 +765,7 @@ int loop_13(int iMole)
 				fzij = fij*rzij;
 				if (isWolfOn) // negative contribution to the virial
 				{
-					virial_inter = virial_inter + fxij*rxij + fyij*ryij + fzij
+					gVirialInterSession = gVirialInterSession + fxij*rxij + fyij*ryij + fzij
 							*rzij;
 				}
 				// forces on ii1
@@ -796,7 +798,7 @@ int loop_13(int iMole)
 					}
 					else if (isWolfOn)
 					{
-						uwolf_real = uwolf_real + charge[ii1]*charge[ii2]
+						gUwolfrealSession = gUwolfrealSession + charge[ii1]*charge[ii2]
 								*(erfc(temp1)/rij + wolfvcon1 + wolfvcon2*(rij
 										-rcutoffelec));
 						fij = const_columb*temp2*(erfc(temp1)/rijsq + wolffcon1*exp(-temp1*temp1)/rij + wolffcon2);
@@ -808,7 +810,7 @@ int loop_13(int iMole)
 
 					if (isWolfOn) // contribution to the virial
 					{
-						virial_inter = virial_inter + fxij*rxij + fyij*ryij
+						gVirialInterSession = gVirialInterSession + fxij*rxij + fyij*ryij
 								+ fzij*rzij;
 					}
 
@@ -897,7 +899,7 @@ int loop_13(int iMole)
 					fyij = fij*ryij;
 					fzij = fij*rzij;
 					// contribution to the virial
-					virial_inter = virial_inter + fxij*rxij + fyij*ryij + fzij
+					gVirialInterSession = gVirialInterSession + fxij*rxij + fyij*ryij + fzij
 							*rzij;
 					// force on atom ii1
 					fxl[ii1] += fxij;
@@ -913,10 +915,10 @@ int loop_13(int iMole)
 	} // nangle loop
 
 	// add into total energy
-	uexcl += uij_excl_13; // still need constant
-	uvdw += uij_vdw13img; // still need 4.0
-	ureal += uij_real13; // still need constant
-	uGz0 += uij_Gz0/(2.0*boxlz);
+	gUexclSession += uij_excl_13; // still need constant
+	gUvdwSession += uij_vdw13img; // still need 4.0
+	gUrealSession += uij_real13; // still need constant
+	gUGz0Session += uij_Gz0/(2.0*boxlz);
 	return 0;
 }
 
@@ -1026,7 +1028,7 @@ int loop_12(int iMole)
 			fzij = fij*rzij;
 			if (isWolfOn) // negative contribution to the virial
 			{
-				virial_inter = virial_inter + fxij*rxij + fyij*ryij + fzij*rzij;
+				gVirialInterSession = gVirialInterSession + fxij*rxij + fyij*ryij + fzij*rzij;
 			}
 			// forces on ii1
 			fxl[ii1] += fxij;
@@ -1058,7 +1060,7 @@ int loop_12(int iMole)
 				}
 				else if (isWolfOn)
 				{
-					uwolf_real = uwolf_real + charge[ii1]*charge[ii2]
+					gUwolfrealSession = gUwolfrealSession + charge[ii1]*charge[ii2]
 							*(erfc(temp1)/rij + wolfvcon1 + wolfvcon2*(rij
 									-rcutoffelec));
 					fij = const_columb*temp2*(erfc(temp1)/rijsq + wolffcon1*exp(-temp1*temp1)/rij + wolffcon2);
@@ -1069,7 +1071,7 @@ int loop_12(int iMole)
 
 				if (isWolfOn) // contribution to the virial
 				{
-					virial_inter = virial_inter + fxij*rxij + fyij*ryij + fzij
+					gVirialInterSession = gVirialInterSession + fxij*rxij + fyij*ryij + fzij
 							*rzij;
 				}
 
@@ -1161,7 +1163,7 @@ int loop_12(int iMole)
 				fyij = fij*ryij;
 				fzij = fij*rzij;
 				// contribution to the virial
-				virial_inter = virial_inter + fxij*rxij + fyij*ryij + fzij*rzij;
+				gVirialInterSession = gVirialInterSession + fxij*rxij + fyij*ryij + fzij*rzij;
 				// force on atom ii1
 				fxl[ii1] += fxij;
 				fyl[ii1] += fyij;
@@ -1175,10 +1177,10 @@ int loop_12(int iMole)
 	} // nbond loop
 
 	// add into total energy
-	uexcl += uij_excl_12; // still need constant
-	uvdw += uij_vdw12img; // still need 4.0
-	ureal += uij_real12; // still need constant
-	uGz0 += uij_Gz0/(2.0*boxlz);
+	gUexclSession += uij_excl_12; // still need constant
+	gUvdwSession += uij_vdw12img; // still need 4.0
+	gUrealSession += uij_real12; // still need constant
+	gUGz0Session += uij_Gz0/(2.0*boxlz);
 	return 0;
 }
 
@@ -1354,7 +1356,7 @@ int loop_nbp(int iMole)
 				fyij = fij*ryij;
 				fzij = fij*rzij;
 				// contribution to the virial
-				virial_inter = virial_inter + fxij*rxij + fyij*ryij + fzij*rzij;
+				gVirialInterSession = gVirialInterSession + fxij*rxij + fyij*ryij + fzij*rzij;
 				// force on atom ii1
 				fxl[ii1] += fxij;
 				fyl[ii1] += fyij;
@@ -1429,7 +1431,7 @@ int loop_nbp(int iMole)
 			// wolf method for electrostatic
 			if (isWolfOn && rijsq<rcutoffelecsq)
 			{
-				uwolf_real = uwolf_real + charge[ii1]*charge[ii2]*(erfc(kappa
+				gUwolfrealSession = gUwolfrealSession + charge[ii1]*charge[ii2]*(erfc(kappa
 						*rij)/rij + wolfvcon1 + wolfvcon2*(rij-rcutoffelec));
 				uij_wolfnbp_temp = charge[ii1]*charge[ii2]/rij;
 				fij = const_columb*uij_wolfnbp_temp
@@ -1438,7 +1440,7 @@ int loop_nbp(int iMole)
 				fyij = fij*ryij;
 				fzij = fij*rzij;
 				// contribution to the virial
-				virial_inter = virial_inter + fxij*rxij + fyij*ryij + fzij*rzij;
+				gVirialInterSession = gVirialInterSession + fxij*rxij + fyij*ryij + fzij*rzij;
 				// force on atom ii1
 				fxl[ii1] += fxij;
 				fyl[ii1] += fyij;
@@ -1453,13 +1455,13 @@ int loop_nbp(int iMole)
 			if (isSimpleCoulomb && rijsq<rcutoffelecsq)
 			{
 				uij_coulombnbp_temp = charge[ii1]*charge[ii2]/rij; // need constant
-				ucoulomb += uij_coulombnbp_temp; // need constant
+				gUcoulombSession += uij_coulombnbp_temp; // need constant
 				fij = const_columb*uij_coulombnbp_temp/rijsq;
 				fxij = fij*rxij;
 				fyij = fij*ryij;
 				fzij = fij*rzij;
 				// contribution to the virial
-				virial_inter = virial_inter + fxij*rxij + fyij*ryij + fzij*rzij;
+				gVirialInterSession = gVirialInterSession + fxij*rxij + fyij*ryij + fzij*rzij;
 				// force on atom ii1
 				fxl[ii1] += fxij;
 				fyl[ii1] += fyij;
@@ -1474,14 +1476,16 @@ int loop_nbp(int iMole)
 	} // nonbonded pair loop
 
 	// add into total energy
-	uvdw += uij_vdwnbp; // still need 4.0
-	unbp_vdw += uij_vdwnbp; // still need 4.0
-	ureal += uij_realnbp; // still neeed constant
-	uGz0 += uij_Gz0nbp/(2.0*boxlz); // still need constant
+	gUvdwSession += uij_vdwnbp; // still need 4.0
+	gUvdwNbpSession += uij_vdwnbp; // still need 4.0
+	gUrealSession += uij_realnbp; // still neeed constant
+	gUGz0Session += uij_Gz0nbp/(2.0*boxlz); // still need constant
 	return 0;
 }
-
-// fourier space sum and self interaction correction
+/** 
+ * Fourier space sum and self interaction correction for Ewald Summation.
+ * This is for the whole system. No single molecule calculation is allowed.
+ */
 int ewald_fourier_and_self()
 {
 	int ii;
@@ -1526,7 +1530,7 @@ int ewald_fourier_and_self()
 						sr = sr + charge[ii]*cos(t);
 						si = si + charge[ii]*sin(t);
 					}
-					ufourier += kvec*(sr*sr+si*si);
+					gUfourierSession += kvec*(sr*sr+si*si);
 					// forces
 					for (ii=0; ii<natom; ii++)
 					{
@@ -1544,18 +1548,22 @@ int ewald_fourier_and_self()
 
 
 	// total fourier energy part of ewald
-	ufourier = ufourier*Vfactor_ewald*const_columb;
+	gUfourierSession = gUfourierSession*Vfactor_ewald*const_columb;
 
 	// self interaction corrections, constant, so no forces
 	for (ii=0; ii<natom; ii++)
 	{
-		uself += charge[ii]*charge[ii];
+		gUselfSession += charge[ii]*charge[ii];
 	}
-	uself = uself*const_columb*sqrt(kappa*kappa/pi);
+	gUselfSession = gUselfSession*const_columb*sqrt(kappa*kappa/pi);
 
 	return 0;
 }
 
+/**
+ * Calculate the forces and energy related to the vacuum boundary condition for Ewald Summation.
+ * This is for the whole system. No single molecule calculation is allowed.
+ */
 int ewald_vacuum()
 {
 	int ii;
@@ -1598,8 +1606,8 @@ int ewald_vacuum()
 		qrz = qrz + chargei*zzpri;
 	}
 	// energy
-	uvacuum = qrx*qrx + qry*qry + qrz*qrz; // still need constant
-	uvacuum = uvacuum*twopi_over_3v*const_columb;
+	gUvacuumSession = qrx*qrx + qry*qry + qrz*qrz; // still need constant
+	gUvacuumSession = gUvacuumSession*twopi_over_3v*const_columb;
 
 	// forces
 	for (ii=0; ii<natom; ii++)
@@ -1616,27 +1624,28 @@ int ewald_vacuum()
 	return 0;
 }
 
-// calculate the wolf self interaction part
+/**
+ * Calculate the wolf self interaction energy.
+ * This is for the whole system. No single molecule calculation is allowed.
+ */
 int wolf_con()
 {
 	int ii;
 	for (ii=0; ii<natom; ii++)
 	{
-		uwolf_con = uwolf_con + charge[ii]*charge[ii];
+		gUwolfconSession = gUwolfconSession + charge[ii]*charge[ii];
 	}
-	uwolf_con = uwolf_con*const_columb*(kappa/sqrt(pi)+erfc(kappa*rcutoffelec)
+	gUwolfconSession = gUwolfconSession*const_columb*(kappa/sqrt(pi)+erfc(kappa*rcutoffelec)
 			/(2.0*rcutoffelec));
-	uwolf_real = uwolf_real*const_columb;
-	uexcl *= const_columb;
-	// total wolf
-	uwolf = uwolf_real - uwolf_con - uexcl;
 
 	return 0;
 }
 
-// calculate simple direct coulomb interactions between different molecules
-// the cutoff is based on molecular center (center of mass)
-int simple_coulomb_inter_mole()
+/**
+ * Calculate simple direct coulomb interactions between different molecules. 
+ * The cutoff is based on molecular center (center of mass).
+ */
+int simple_coulomb_inter_mole(int iStartMole, int iEndMole)
 {
 	int ii, jj;
 	int mm, nn;
@@ -1646,15 +1655,47 @@ int simple_coulomb_inter_mole()
 	double rxmn, rymn, rzmn, rmnsq, rmn; // distance between molecular center of mass
 	double rxij, ryij, rzij, rijsq, rij; // distance between atoms
 	double fij, fxij, fyij, fzij;
+	int mmStart, mmEnd;
+	int nnStart, nnEnd;
+
+	// Assign the lower and upper limits for mm and nn
+		if (iStartMole==-1 && iEndMole==-1)
+	{
+		mmStart = 0;
+		mmEnd = nmole - 1;
+		nnStart = -1; // -1 for nnStart==-1?mm+1:nnStart, dynamically assign the nnStart
+		nnEnd = nmole;
+	}
+	else if (iStartMole>=0 && iEndMole==-1)
+	{
+		mmStart = iStartMole;
+		mmEnd = iStartMole+1;
+		nnStart = 0;
+		nnEnd = nmole;
+	}
+	else if (iStartMole>=0 && iEndMole>=0)
+	{
+		mmStart = iStartMole;
+		mmEnd = iStartMole+1;
+		nnStart = iEndMole;
+		nnEnd = iEndMole+1;
+	}
+	else
+	{
+		fprintf(stderr,"Error: Invalid parameters for simple_coulomb_inter_mole(%d,%d).\n",iStartMole,iEndMole);
+		fprintf(fpouts, "Error: Invalid parameters for simple_coulomb_inter_mole(%d,%d).\n",
+				iStartMole, iEndMole);
+		exit(1);
+	}
 
 	// first calculate all molecules center of mass
 	cal_com_and_inner_coords();
 
 	// calculate coulomb energy
 	// for cross molecules
-	for (mm=0; mm<nmole-1; mm++)
+	for (mm=mmStart; mm<mmEnd; mm++)
 	{
-		for (nn=mm+1; nn<nmole; nn++)
+		for (nn=(nnStart==-1?mm+1:nnStart); nn<nnEnd; nn++)
 		{
 			// calculate the distance between molecular center of mass
 			rxmn = mole_xx[mm] - mole_xx[nn];
@@ -1665,10 +1706,12 @@ int simple_coulomb_inter_mole()
 			rymn = rymn - boxly*rint(rymn/boxly);
 			rzmn = rzmn - boxlz*rint(rzmn/boxlz);
 			rmnsq = rxmn*rxmn + rymn*rymn + rzmn*rzmn;
-			// the cut off check is based on the molecular center of mass
-			// there could be different types of the check
-			// e.g. based on distances of any sites between 2 molecules
-			//      based on distances of any groups between 2 molecules
+			/** 
+			 * The cut off check is based on the molecular center of mass.
+			 * There could be different types of the check.
+			 * E.g. (1) based on distances of any sites between 2 molecules. 
+			 * (2) based on distances of any groups between 2 molecules.
+			 */
 			// cutoff check
 			if (rmnsq < rcutoffelecsq)
 			{
@@ -1713,13 +1756,13 @@ int simple_coulomb_inter_mole()
 						rijsq = rxij*rxij + ryij*ryij + rzij*rzij;
 						rij = sqrt(rijsq);
 						uij_coulomb_temp = charge[ii]*charge[jj]/rij; // need constant
-						ucoulomb += uij_coulomb_temp; // need constant
+						gUcoulombSession += uij_coulomb_temp; // need constant
 						fij = const_columb*uij_coulomb_temp/rijsq;
 						fxij = fij*rxij;
 						fyij = fij*ryij;
 						fzij = fij*rzij;
 						// contribution to the virial
-						virial_inter = virial_inter + fxij*rxij + fyij*ryij
+						gVirialInterSession = gVirialInterSession + fxij*rxij + fyij*ryij
 								+ fzij*rzij;
 						// force on atom ii
 						fxl[ii] += fxij;
@@ -1735,36 +1778,39 @@ int simple_coulomb_inter_mole()
 		} // inner layer molecules
 	} // outer layer molecules
 
-	// coulomb interactions from 1,4 and nonbonded atom pairs
-	// are calculated via loop_14 and loop_nbp
+	/** 
+	 * Culomb interactions from 1,4 and nonbonded atom pairs
+	 * are calculated via loop_14 and loop_nbp.
+	 */
 
 	// constant for coulomb energy
-	ucoulomb *= const_columb;
+	gUcoulombSession *= const_columb;
 
 	return 0;
 }
 
-int erfrc()
+int fnErfrcSession()
 {
 	int ii;
 
 	// zero energies
-	uvdw = 0.0;
-	unbp_vdw = 0.0;
-	ureal = 0.0;
-	uexcl = 0.0;
-	ufourier = 0.0;
-	uself = 0.0;
-	uwolf = 0.0;
-	uwolf_real = 0.0;
-	uwolf_con = 0.0;
-	usflj = 0.0;
-	uvacuum = 0.0;
-	uGz0 = 0.0;
-	ucoulomb = 0.0;
+	gUvdwSession = 0.0;
+	gUvdwNbpSession = 0.0;
+	gUewaldSession = 0.0;
+	gUrealSession = 0.0;
+	gUexclSession = 0.0;
+	gUfourierSession = 0.0;
+	gUselfSession = 0.0;
+	gUwolfSession = 0.0;
+	gUwolfrealSession = 0.0;
+	gUwolfconSession = 0.0;
+	gUvacuumSession = 0.0;
+	gUGz0Session = 0.0;
+	gUcoulombSession = 0.0;
+	gUinterSession = 0.0;
 
 	// pressure related
-	virial_inter = 0.0;
+	gVirialInterSession = 0.0;
 
 	// zero forces
 	for (ii=0; ii<natom; ii++)
@@ -1780,54 +1826,92 @@ int erfrc()
 	loop_12(-1); // Calculate the 1,2 energy for the whole system
 
 	// 4.0 factor for LJ energies
-	uvdw *= 4.0;
-	unbp_vdw *= 4.0;
+	gUvdwSession *= 4.0;
+	gUvdwNbpSession *= 4.0;
+	// Add into total Inter Energy
+	gUinterSession += gUvdwSession;
 
-	if (isEwaldOn) // if ewald is on, calculate the fourier and self correction parts
+	// if ewald is on, calculate the fourier and self correction parts
+	if (isEwaldOn) 
 	{
-		// calculate fourier space sum for ewald and self interaction corrections
-		ewald_fourier_and_self();
 		// constant for ewald energies
-		ureal *= const_columb;
-		uexcl *= const_columb;
+		gUrealSession *= const_columb;
+		gUexclSession *= const_columb;
+		// calculate fourier space sum for ewald and self interaction corrections
+		ewald_fourier_and_self(); // already have the constant inside the function
 		// total 3D ewald energy with tinfoil boundary condition
-		uewald = ureal + ufourier - uself - uexcl;
+		gUewaldSession = gUrealSession + gUfourierSession - gUselfSession - gUexclSession;
 
 		// calculate vacuum boundary condition
 		// energy/force term is needed
 		if (fEwald_BC == ewald_bc_vacuum)
 		{
-			ewald_vacuum();
-			uewald += uvacuum; // add into total ewald energy
+			ewald_vacuum(); // already have the constant inside the function
+			gUewaldSession += gUvacuumSession; // add into total ewald energy
 		}
 		// if 1D ewald is used
 		if (fEwald_Dim==ewald_1D)
 		{
-			uGz0 *= const_columb;
-			uewald += uGz0; // add Gz=0 term into total ewald energy for 1D ewald
+			gUGz0Session *= const_columb; // constant
+			gUewaldSession += gUGz0Session; // add Gz=0 term into total ewald energy for 1D ewald
 		}
+		// Add into total Inter Energy
+		gUinterSession += gUewaldSession;
 		// add the virial contribution from ewald
-		virial_inter = virial_inter + uewald;
+		gVirialInterSession = gVirialInterSession + gUewaldSession;
 	}
 	else if (isWolfOn) // if wolf is on
 	{
-		wolf_con(); // calculate the self interaction term for wolf
+		// constant for wolf energies
+	       	gUwolfrealSession = gUwolfrealSession*const_columb;
+	       	gUexclSession *= const_columb;
+		wolf_con(); // calculate the self interaction energy for wolf
+	       	// total wolf
+		gUwolfSession = gUwolfrealSession - gUwolfconSession - gUexclSession;
+		// Add into total Inter Energy
+		gUinterSession += gUwolfSession;
 	}
-	else if (isSimpleCoulomb)
+	else if (isSimpleCoulomb) // if simple coulomb is used, calculate inter-mole coulomb
 	{
-		simple_coulomb_inter_mole(); // if simple coulomb is used, calculate inter-mole coulomb
+		simple_coulomb_inter_mole(-1, -1); // constant is already applied inside the function
+		// Add into total Inter Energy
+		gUinterSession += gUcoulombSession;
 	}
 
 	// calculate solid fluid energy if necessary
 	if (isSFon)
 	{
-		sffrc();
+		fnSffrcSession();
+		// Add into total Inter Energy
+		gUinterSession += gUsfljSession;
 	}
-
-	// total inter molecule energy add up everything
-	// they should be zero if they are not used
-	uinter = uvdw + uewald + uwolf + ucoulomb + usflj;
 
 	return 0;
 }
 
+int erfrc()
+{
+	// call session Erfrc
+	fnErfrcSession();
+
+	// set the energies for the whole system
+	uvdw = gUvdwSession;
+	unbp_vdw = gUvdwNbpSession;
+	ureal = gUrealSession;
+	uexcl = gUexclSession;
+	ufourier = gUfourierSession;
+	uself = gUselfSession;
+	uwolf = gUwolfSession;
+	uwolf_real = gUwolfrealSession;
+	uwolf_con = gUwolfconSession;
+	usflj = gUsfljSession;
+	uvacuum = gUvacuumSession;
+	uGz0 = gUGz0Session;
+	ucoulomb = gUcoulombSession;
+
+	virial_inter = gVirialInterSession;
+	uewald = gUewaldSession;
+	uinter = gUinterSession;
+
+	return 0;
+}

@@ -16,7 +16,7 @@
    Electrostatic
 3                     type (1-ewald, 2-wolf, 3-simple coulomb)
 0.2                   kappa ~4/cutoff
-20 20 20 800          kmaxx,kmaxy,kmaxz,ksqmax ~kappa*box length,  kmax^2<ksqmax<3*kmax^2
+2 2 2 16          kmaxx,kmaxy,kmaxz,ksqmax ~kappa*box length,  kmax^2<ksqmax<3*kmax^2
 1 3                    Boundary conditions(1-tinfoil,2-vaccum), Dimension(1,2,3 D)
 
    MDnvt

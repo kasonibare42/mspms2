@@ -1101,7 +1101,7 @@ int cal_sf_hypergeo()
 				fyij = fij*ryij/rij;
 			} // outside tube
 			// energy and forces
-			usflj += uhyper;
+			gUsfljSession += uhyper;
 			fxi += fxij;
 			fyi += fyij;
 		} // loop through all tubes
@@ -1261,19 +1261,19 @@ int cal_sf_atom_explicit()
 	} // fluid atom ii loop
 
 	// factor
-	usflj += usf_vdw*4.0;
+	gUsfljSession += usf_vdw*4.0;
 
 	return 0;
 }
 
-int sffrc()
+int fnSffrcSession()
 {
 	int ii;
 	double usflj_tasos;
 	double tasos_force[3];
 
 	// reset energy
-	usflj = 0.0;
+	gUsfljSession = 0.0;
 
 	// virial for solid-fluid with solid fixed
 	// is not well defined
@@ -1301,7 +1301,7 @@ int sffrc()
 			tasos_force[1] *= Rgas;
 			tasos_force[2] *= Rgas;
 
-			usflj += usflj_tasos;
+			gUsfljSession += usflj_tasos;
 			fxl[ii] += tasos_force[0];
 			fyl[ii] += tasos_force[1];
 			fzl[ii] += tasos_force[2];
@@ -1314,7 +1314,7 @@ int sffrc()
 			get_values_from_grid(xx[ii], yy[ii], zz[ii], tasostype[ii],
 					&usflj_tasos, tasos_force);
 
-			usflj += usflj_tasos;
+			gUsfljSession += usflj_tasos;
 
 			fxl[ii] += tasos_force[0];
 			fyl[ii] += tasos_force[1];
