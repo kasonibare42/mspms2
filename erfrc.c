@@ -75,7 +75,6 @@ int cal_coords_PBC()
 {
 	int ii;
 	for (ii=0; ii<natom; ii++)
-		;
 	{
 		ex[ii] = xx[ii] - boxlx*rint(xx[ii]/boxlx);
 		fy[ii] = yy[ii] - boxlx*rint(yy[ii]/boxlx);
@@ -84,8 +83,19 @@ int cal_coords_PBC()
 	return 0;
 }
 
-// calcualte interaction between atom ii and jj, exclude those from excluding list
-int loop_ij()
+/// Calcualte interaction between atom ii and jj, exclude those from excluding list.
+/**
+ * iStartMole is the starting molecule for the loop.
+ * iEndMole is the ending molecule for the loop.
+ * These two parameters are used to decide what are the lower and upper limits for ii, jj loop.
+ * The value of -1 means all molecules in the system.
+ * For examples, (-1, -1) means calculate the energy for the whole system.
+ * I.e. iiStart = 0; iiEnd = natom - 1; jjEnd = natom;
+ * jjStart is special, it will be set to -1. And jj will be assigned dynamically through the
+ * expression of "(jjStart==-1?ii+1:jjStart).
+ * (10, -1) means calculate the energy for the molecule 10 with the whole system.
+ */
+int loop_ij(int iStartMole, int iEndMole)
 {
 	int ii, jj, kk;
 	double xxi, yyi, zzi;
@@ -105,6 +115,8 @@ int loop_ij()
 	gsl_function FF;
 	int iMole, iSpecie;
 	int iAtomPosInMole; // the relative atom index within a molecule
+	int iiStart, iiEnd;
+	int jjStart, jjEnd;
 
 	FF.function = &deriv_inc_gamma;
 	FF.params = 0;
@@ -113,8 +125,38 @@ int loop_ij()
 	uij_real = 0.0;
 	uij_Gz0 = 0.0;
 
+	// Assign the ii, jj lower and upper limits
+	if (iStartMole==-1 && iEndMole==-1)
+	{
+		iiStart = 0;
+		iiEnd = natom - 1;
+		jjStart = -1; // -1 for jjStart==-1?ii+1:jjStart, dynamically assign the jjStart
+		jjEnd = natom;
+	}
+	else if (iStartMole>=0 && iEndMole==-1)
+	{
+		iiStart = mole_first_atom_idx[iStartMole];
+		iiEnd = mole_first_atom_idx[iStartMole+1];
+		jjStart = 0;
+		jjEnd = natom;
+	}
+	else if (iStartMole>=0 && iEndMole>=0)
+	{
+		iiStart = mole_first_atom_idx[iStartMole];
+		iiEnd = mole_first_atom_idx[iStartMole+1];
+		jjStart = mole_first_atom_idx[iEndMole];
+		jjEnd = mole_first_atom_idx[iEndMole+1];
+	}
+	else
+	{
+		fprintf(stderr,"Error: Invalid parameters for loop_ij(%d,%d).\n",iStartMole,iEndMole);
+		fprintf(fpouts, "Error: Invalid parameters for loop_ij(%d,%d).\n",
+				iStartMole, iEndMole);
+		exit(1);
+	}
+
 	// atom ii
-	for (ii=0; ii<natom-1; ii++)
+	for (ii=iiStart; ii<iiEnd; ii++)
 	{
 		if (isghost[ii] == all_ghost) // move to ii+1 if atom ii is full ghost atom
 		{
@@ -143,7 +185,7 @@ int loop_ij()
 			isNotexcl[excllist[kk]+ii] = false; // +ii since the excllist uses relative index
 		}
 		// atom jj
-		for (jj=ii+1; jj<natom; jj++)
+		for (jj=(jjStart==-1 ? ii+1 : jjStart); jj<jjEnd; jj++) // dynamically assign the starting number of jj
 		{
 			if (isghost[jj] == all_ghost) // move to jj+1 if atom jj is full ghost atom
 			{
@@ -155,11 +197,13 @@ int loop_ij()
 				ryij = yyi - yy[jj];
 				rzij = zzi - zz[jj];
 
-				// calculate Gz=0 term for 1D ewald summation
-				// this has to be done before the minimum image convention
-				// not sure if cutoff check should be applied
-				// If the cutoff is larger than the size in x,y dimension,
-				// this should not be a problem
+				///
+				/// Calculate Gz=0 term for 1D ewald summation.
+				/// This has to be done before the minimum image convention.
+				/// Not sure if cutoff check should be applied.
+				/// If the cutoff is larger than the size in x,y dimension,
+				/// this should not be a problem.
+				///
 				if (isEwaldOn && fEwald_Dim==ewald_1D)
 				{
 					rhoklsq = rxij*rxij + ryij*ryij;
@@ -203,11 +247,15 @@ int loop_ij()
 					if (isLJswitchOn)
 					{
 						if (rijsq<rcutonsq)
+						{
 							LJswitch = 1.0;
+						}
 						else
+						{
 							LJswitch = (rcutoffsq-rijsq)*(rcutoffsq-rijsq)
 									*(rcutoffsq+2.0*rijsq-3.0*rcutonsq)
 									/roff2_minus_ron2_cube;
+						}
 					}
 					sigmaij = 0.5*(sigmai+sigma[jj]);
 					epsilonij = sqrt(epsiloni*epsilon[jj]);
@@ -217,20 +265,28 @@ int loop_ij()
 					r_r12_minus_r_r6 = r_r12 - r_r6;
 					uij_vdw_temp = epsilonij*r_r12_minus_r_r6; // still need *4.0
 					if (isLJswitchOn) // if switch is used
+					{
 						uij_vdw += uij_vdw_temp*LJswitch; // still need 4.0
+					}
 					else
+					{
 						uij_vdw += uij_vdw_temp; // still need *4.0
+					}
 					// force calculations
 					if (isLJswitchOn)
 					{
 						if (rijsq<rcutonsq)
+						{
 							fij = 24.0*epsilonij*(r_r12_minus_r_r6+r_r12)/rijsq;
+						}
 						else
+						{
 							fij = 24.0*epsilonij*(r_r12_minus_r_r6+r_r12)/rijsq
 									*LJswitch // 4.0 for the real energy
 									-4.0*uij_vdw_temp*12.0*(rcutoffsq-rijsq)
 											*(rcutonsq-rijsq)
 											/roff2_minus_ron2_cube;
+						}
 					}
 					else
 					{
@@ -312,8 +368,12 @@ int loop_ij()
 	return 0;
 }
 
-// calculate the interactions between dihedral ending atom 1 and 4
-int loop_14()
+/// Calculate the interactions between dihedral ending atom 1 and 4.
+/**
+ * iMole is which molecule for the calculation. 
+ * The value of -1 means calculating the whole system.
+ */
+int loop_14(int iMole)
 {
 	int ii;
 	int ii1, ii2;
@@ -331,6 +391,7 @@ int loop_14()
 	double uij_Gz0; // 1D ewald
 	double uij_coulomb14_temp;
 	gsl_function FF;
+	int iiStart, iiEnd;
 
 	FF.function = &deriv_inc_gamma;
 	FF.params = 0;
@@ -339,7 +400,25 @@ int loop_14()
 	uij_real14 = 0.0;
 	uij_Gz0 = 0.0;
 
-	for (ii=0; ii<ndih; ii++)
+	// Assign the lower and upper limits for ii loop
+	if (iMole == -1)
+	{
+		iiStart = 0;
+		iiEnd = ndih;
+	}
+	else if (iMole >= 0)
+	{
+		iiStart = mole_first_dih_idx[iMole];
+		iiEnd = mole_first_dih_idx[iMole+1];
+	}
+	else
+	{
+		fprintf(stderr, "Error: Invalid parameters for loop_14(%d).\n", iMole);
+		fprintf(fpouts, "Error: Invalid parameters for loop_14(%d).\n", iMole);
+		exit(1);
+	}
+
+	for (ii=iiStart; ii<iiEnd; ii++)
 	{
 		if (isDih_unique[ii]) // only calculate interactions for unique 1,4 pairs
 		{
@@ -571,7 +650,12 @@ int loop_14()
 	return 0;
 }
 
-int loop_13()
+/// Calculate the interactions between dihedral ending atom 1 and 3.
+/**
+ * iMole is which molecule for the calculation. 
+ * The value of -1 means calculating the whole system.
+ */
+int loop_13(int iMole)
 {
 	int ii;
 	int ii1, ii2;
@@ -588,6 +672,7 @@ int loop_13()
 	double rhoklsq, kapparhokl_sq;
 	double uij_Gz0; // 1D ewald
 	gsl_function FF;
+	int iiStart, iiEnd;
 
 	FF.function = &deriv_inc_gamma;
 	FF.params = 0;
@@ -597,7 +682,25 @@ int loop_13()
 	uij_real13 = 0.0;
 	uij_Gz0 = 0.0;
 
-	for (ii=0; ii<nangle; ii++)
+	// Assign the lower and upper limits for ii loop
+	if (iMole == -1)
+	{
+		iiStart = 0;
+		iiEnd = nangle;
+	}
+	else if (iMole >= 0)
+	{
+		iiStart = mole_first_angle_idx[iMole];
+		iiEnd = mole_first_angle_idx[iMole+1];
+	}
+	else
+	{
+		fprintf(stderr, "Error: Invalid parameters for loop_13(%d).\n", iMole);
+		fprintf(fpouts, "Error: Invalid parameters for loop_13(%d).\n", iMole);
+		exit(1);
+	}
+	
+	for (ii=iiStart; ii<iiEnd; ii++)
 	{
 		if (isAngle_unique) // only calculate interactions for unique 1,3 pairs
 		{
@@ -817,7 +920,12 @@ int loop_13()
 	return 0;
 }
 
-int loop_12()
+/// Calculate the interactions between dihedral ending atom 1 and 2.
+/**
+ * iMole is which molecule for the calculation. 
+ * The value of -1 means calculating the whole system.
+ */
+int loop_12(int iMole)
 {
 	int ii;
 	int ii1, ii2;
@@ -834,6 +942,7 @@ int loop_12()
 	double rhoklsq, kapparhokl_sq;
 	double uij_Gz0; // 1D ewald
 	gsl_function FF;
+	int iiStart, iiEnd;
 
 	FF.function = &deriv_inc_gamma;
 	FF.params = 0;
@@ -843,6 +952,24 @@ int loop_12()
 	uij_real12 = 0.0;
 	uij_Gz0 = 0.0;
 
+	// Assign the lower and upper limits for ii loop
+	if (iMole == -1)
+	{
+		iiStart = 0;
+		iiEnd = nbond;
+	}
+	else if (iMole >= 0)
+	{
+		iiStart = mole_first_bond_idx[iMole];
+		iiEnd = mole_first_bond_idx[iMole+1];
+	}
+	else
+	{
+		fprintf(stderr, "Error: Invalid parameters for loop_12(%d).\n", iMole);
+		fprintf(fpouts, "Error: Invalid parameters for loop_12(%d).\n", iMole);
+		exit(1);
+	}
+	
 	for (ii=0; ii<nbond; ii++)
 	{
 		ii1 = bond_idx[ii][0];
@@ -1055,8 +1182,11 @@ int loop_12()
 	return 0;
 }
 
-// calcualte interaction between nonbonded pairs
-int loop_nbp()
+/// Calcualte interaction between non-bonded pairs.
+/**
+ * The iMole parameter has the same meaning as in loop_14
+ */
+int loop_nbp(int iMole)
 {
 	int ii;
 	int ii1, ii2;
@@ -1076,6 +1206,7 @@ int loop_nbp()
 	int fCalculate_nbpLJ, fCalculate_nbpelec;
 	double uij_coulombnbp_temp;
 	gsl_function FF;
+	int iiStart, iiEnd;
 
 	FF.function = &deriv_inc_gamma;
 	FF.params = 0;
@@ -1083,9 +1214,27 @@ int loop_nbp()
 	uij_vdwnbp = 0.0;
 	uij_realnbp = 0.0;
 	uij_Gz0nbp = 0.0;
+	
+	// Assign the lower and upper limits for ii loop
+	if (iMole == -1)
+	{
+		iiStart = 0;
+		iiEnd = nnbp;
+	}
+	else if (iMole >= 0)
+	{
+		iiStart = mole_first_nbp_idx[iMole];
+		iiEnd = mole_first_nbp_idx[iMole+1];
+	}
+	else
+	{
+		fprintf(stderr, "Error: Invalid parameters for loop_nbp(%d).\n", iMole);
+		fprintf(fpouts, "Error: Invalid parameters for loop_nbp(%d).\n", iMole);
+		exit(1);
+	}
 
 	// loop through all nonbonded pairs
-	for (ii=0; ii<nnbp; ii++)
+	for (ii=iiStart; ii<iiEnd; ii++)
 	{
 		ii1 = nbp_idx[ii][0];
 		ii2 = nbp_idx[ii][1];
@@ -1624,11 +1773,11 @@ int erfrc()
 	}
 
 	// i-j loop, nonboned loop, 1-4 loop, 1-3 loop and 1-2 loop
-	loop_ij();
-	loop_nbp();
-	loop_14();
-	loop_13();
-	loop_12();
+	loop_ij(-1, -1); // Calculate the energy for the whole system
+	loop_nbp(-1); // Calculate the non-bonded energy for the whole system
+	loop_14(-1); // Calculate the 1,4 energy for the whole system
+	loop_13(-1); // Calculate the 1,3 energy for the whole system
+	loop_12(-1); // Calculate the 1,2 energy for the whole system
 
 	// 4.0 factor for LJ energies
 	uvdw *= 4.0;

@@ -53,7 +53,7 @@ C    14.381768410313    10.229858825919     2.459512146748
 /mnt/hgfs/winxp_mydoc/programs/Runs/Grids/CH2-11x11.grid       grid file 2
 
   HMC
-1                            Number of MD steps per HMC cycle
+10                            Number of MD steps per HMC cycle
 1.0  0.0  0.0                 probability of canonical moves, volume changes, and insertion/deletion
 0.5  0.5                      Required acceptance ratio for canonical moves, volumen changes
 100  100                      Number of steps between adjustments for canonical moves, volume changes 
