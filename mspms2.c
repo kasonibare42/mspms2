@@ -22,18 +22,7 @@
 #include <ctype.h>
 #include "vars.h"
 #include "random.h"
-
-extern int init_sf_hypergeo();
-extern int init_sf_atom_explicit();
-extern int init_tasos_grid();
-extern int init_my_interp();
-extern int init_npt_respa();
-extern int init_nvt();
-extern int md();
-extern int init_hmc();
-extern int hmc();
-
-int calculate_ljlrc();
+#include "funcs.h"
 
 /// Initiate variables 
 /**

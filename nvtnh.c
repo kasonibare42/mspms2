@@ -4,12 +4,9 @@
 #include <string.h>
 #include <ctype.h>
 #include "vars.h"
+#include "funcs.h"
 
-extern int erfrc();
-extern int rafrc();
-
-// init the variables needed for NVT simulation
-// Also read parameters from the input file
+/// Read parameters from the input file for MDNVT and initialize the variables needed for NVT simulation
 int init_nvt()
 {
 	int ii;

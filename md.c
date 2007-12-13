@@ -11,19 +11,8 @@
 #include <assert.h>
 #include <ctype.h>
 #include "vars.h"
+#include "funcs.h"
 
-extern int erfrc();
-extern int rafrc();
-extern int vver_nh_3();
-extern int npt_respa();
-extern int averages();
-extern int loadit();
-extern int saveit();
-extern int printit();
-extern int snapshot();
-extern int trajectory();
-extern int velinit();
-extern int echo();
 
 int vver() // velocity verlet
 {

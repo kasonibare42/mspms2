@@ -11,18 +11,7 @@
 #include <assert.h>
 #include <ctype.h>
 #include "vars.h"
-
-extern int vver();
-extern int erfrc();
-extern int rafrc();
-extern int averages();
-extern int loadit();
-extern int saveit();
-extern int printit();
-extern int snapshot();
-extern int trajectory();
-extern int velinit();
-extern int echo();
+#include "funcs.h"
 
 int init_hmc()
 {

@@ -6,10 +6,8 @@
 #include <string.h>
 #include <ctype.h>
 #include "vars.h"
+#include "funcs.h"
 
-extern int erfrc();
-extern int rafrc();
-extern int calculate_ljlrc();
 
 int init_npt_respa()
 {

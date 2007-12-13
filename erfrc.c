@@ -11,8 +11,8 @@
 #include <gsl/gsl_math.h>
 #include <gsl/gsl_deriv.h>
 #include "vars.h"
+#include "funcs.h"
 
-extern int sffrc();
 
 double deriv_inc_gamma(double x, void *params)
 {
