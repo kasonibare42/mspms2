@@ -13,8 +13,8 @@
 #include "vars.h"
 #include "funcs.h"
 
-
-int vver() // velocity verlet
+/// Velocity verlet
+int vver()
 {
 	int ii, ll;
 

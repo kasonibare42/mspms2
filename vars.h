@@ -192,8 +192,9 @@ int sf_type; // solid-fluid type. for different nanotube potentials and future p
 char atomname[natom_max][5];
 
 int istep; // counter of step, current step
-double utot;
-double upot, ukin;
+double utot; // calculated in printit()
+double upot; // calculated in printit()
+double ukin;
 double uinter, uintra; // inter and intra molecular energy
 double uvdw; // van der wall energy, LJ energy, include unbp
 double unbp_vdw; // nonbonded pair energy
@@ -208,12 +209,24 @@ double uGz0; // 1D ewald Gz=0 term
 double LJswitch; // switch factor for LJ
 double usflj; // solid-fluid LJ energy
 double ucoulomb; // direct coulomb energy
-
-double virial;
+double virial; // calculated in printit()
 double virial_inter;
 double virial_intra;
 double pideal;
 double pinst; // instantaneous pressure
+
+/** 
+ * The Session variables are used to store the results from one calculation session.
+ * E.g., one loop_ij() session. They will be used to calculate the final total energies
+ * or pair energies.
+ */
+double gUtotSession, gUpotSession, gUkinSession, gUinterSession, gUintraSession;
+double gUvdwSession, gUvdwNbpSession, gUbondSession, gUangleSession, gUdihSession;
+double gUimpSession, gUewaldSession, gUrealSession, gUfourierSession;
+double gUselfSession, gUexclSession, gUvacuumSession, gUGz0Session, gUsfljSession;
+double gUcoulombSession, gVirialSession, gVirialInterSession, gVirialIntraSession;
+double gPidealSession, gPinstSession;
+double gUwolfSession, gUwolfrealSession, gUwolfconSession;
 
 int nfree; // freedom
 double tinst; // instantaneous temperature

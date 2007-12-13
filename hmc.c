@@ -78,7 +78,7 @@ int hmc()
 	double upot_new, utot_new;
 	double ukin_old, tinst_old, uinter_old, uintra_old, uvdw_old, ubond_old,
 			uangle_old, udih_old, uimp_old, uewald_old, usflj_old, unhts_old,
-			unhtss_old, virial_old, virial_inter_old, virial_intra_old,
+			unhtss_old, virial_inter_old, virial_intra_old,
 			utsbs_old, pinst_old, boxlx_old, boxly_old, boxlz_old, boxv_old;
 	double dH;
 	int isAccept;
@@ -137,7 +137,6 @@ int hmc()
 	usflj_old = usflj;
 	unhts_old = unhts;
 	unhtss_old = unhtss_old;
-	virial_old = virial;
 	virial_inter_old = virial_inter;
 	virial_intra_old = virial_intra;
 	utsbs_old = utsbs;
@@ -195,7 +194,6 @@ int hmc()
 				usflj_old = usflj;
 				unhts_old = unhts;
 				unhtss_old = unhtss_old;
-				virial_old = virial;
 				virial_inter_old = virial_inter;
 				virial_intra_old = virial_intra;
 				utsbs_old = utsbs;
@@ -258,7 +256,6 @@ int hmc()
 				usflj = usflj_old;
 				unhts = unhts_old;
 				unhtss = unhtss_old;
-				virial = virial_old;
 				virial_inter = virial_inter_old;
 				virial_intra = virial_intra_old;
 				utsbs = utsbs_old;
