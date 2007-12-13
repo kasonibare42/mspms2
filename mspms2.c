@@ -114,20 +114,21 @@ int init_vars()
 	dt_outer4 = delt/4.0;
 	dt_outer8 = delt/8.0;
 
-	// initialize HMC input data
-	if (what_simulation == hmc_run)
+	if (what_simulation == md_run)
+	{
+		// initialize thermostat/baron stat input data
+		if (what_ensemble == npt_run)
+		{
+			init_npt_respa();
+		}
+		else if (what_ensemble == nvt_run)
+		{
+			init_nvt();
+		}
+	}
+	else if (what_simulation == hmc_run) // initialize HMC input data
 	{
 		init_hmc();
-	}
-
-	// initialize thermostat/baron stat input data
-	if (what_ensemble == npt_run)
-	{
-		init_npt_respa();
-	}
-	else if (what_ensemble == nvt_run)
-	{
-		init_nvt();
 	}
 
 	// sf energy, tasos initiate part
@@ -728,10 +729,6 @@ int readins()
 			&what_ensemble);
 	sscanf(fgets(buffer, datalen, fpins), "%d", &isLJswitchOn);
 	sscanf(fgets(buffer, datalen, fpins), "%d", &isChargeOn);
-	// sscanf(fgets(buffer,datalen,fpins), "%d", &isWolfOn);
-	// sscanf(fgets(buffer,datalen,fpins), "%d %d %d", &KMAXX, &KMAXY, &KMAXZ);
-	// sscanf(fgets(buffer,datalen,fpins), "%d", &KSQMAX);
-	// sscanf(fgets(buffer,datalen,fpins), "%lf", &kappa);
 
 	sscanf(fgets(buffer, datalen, fpins), "%d", &nconstraint);
 
@@ -769,24 +766,15 @@ int readins()
 							&KMAXX, &KMAXY, &KMAXZ, &KSQMAX);
 					sscanf(fgets(buffer, datalen, fpins), "%d %d", &fEwald_BC,
 							&fEwald_Dim);
-					fprintf(fpouts, "%dD Ewald summation requested...\n",
-							fEwald_Dim);
-					fprintf(fpouts, "kappa=%lf\n", kappa);
-					fprintf(fpouts, "kmaxx=%d kmaxy=%d kmaxz=%d kmaxsq=%d\n",
-							KMAXX, KMAXY, KMAXZ, KSQMAX);
-					fprintf(fpouts, "Boundary condition is %d\n", fEwald_BC);
 				}
 				else if (electype==elec_wolf)
 				{
 					isWolfOn = 1;
 					sscanf(fgets(buffer, datalen, fpins), "%lf", &kappa);
-					fprintf(fpouts, "Wolf method requested...\n");
-					fprintf(fpouts, "kappa=%lf\n", kappa);
 				}
 				else if (electype==elec_simple_coulomb)
 				{
 					isSimpleCoulomb = 1;
-					fprintf(fpouts, "Simple coulomb interaction requested...\n");
 				}
 				break;
 			}
@@ -1129,24 +1117,8 @@ int make_exclude_list()
 		pointexcl_atom[ii][natom_per_mole[ii]] = nexcllist;
 	}
 	pointexcl_specie[nspecie] = nexcllist;
-	
-	// check the exclude list
+
 	fprintf(fpouts, "%d excluding pairs\n", nexcllist);
-	int itmp = 0;
-	for (ii=0; ii<nspecie; ii++)
-	{
-		fprintf(fpouts, "=== specie %d ===\n", ii);
-		for (jj=0; jj<natom_per_mole[ii]; jj++)
-		{
-			fprintf(fpouts, "atom %d excludes are:\n", jj);
-			for (kk=pointexcl_atom[ii][jj]; kk<pointexcl_atom[ii][jj+1]; kk++)
-			{
-				fprintf(fpouts, "%d ", excllist[itmp]);
-				itmp++;
-			}
-			fprintf(fpouts, "\n");
-		}
-	}
 
 	return 0;
 }

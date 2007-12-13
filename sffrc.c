@@ -35,7 +35,9 @@ int init_tasos_grid()
 	{
 		sscanf(buffer, "%s", keyword);
 		for (ii=0; ii<strlen(keyword); ii++)
+		{
 			keyword[ii] = toupper(keyword[ii]);
+		}
 		if (!strcmp(keyword, "TASOS"))
 		{
 			fprintf(stderr,"Data section for tasos grids found...\n");
@@ -46,9 +48,17 @@ int init_tasos_grid()
 			sscanf(fgets(buffer, datalen, fpins), "%d %d %d", &na, &nb, &nc);
 			sscanf(fgets(buffer, datalen, fpins), "%d", &nspecies_yang);
 			sscanf(fgets(buffer, datalen, fpins), "%d", &tnuatoms);
+			fprintf(
+					fpouts,
+					"The size of the unit cell is %lf long, %lf wide, %lf high, with %lf radius.\n",
+					auc, buc, cuc, nanotuberadius);
+			fprintf(fpouts,
+					"There are %d unique species and %d unique atoms.\n",
+					nspecies_yang, tnuatoms);
 			for (ii=0; ii<tnuatoms; ii++)
+			{
 				sscanf(fgets(buffer, datalen, fpins), "%s", szgrid+ii);
-
+			}
 			initpotentialgrid_(&tnuatoms, &auc, &buc, &cuc, &na, &nb, &nc,
 					&nanotuberadius);
 			fprintf(stderr,"init potential ok\n");
@@ -110,7 +120,9 @@ int init_my_interp()
 	{
 		sscanf(buffer, "%s", keyword);
 		for (ii=0; ii<strlen(keyword); ii++)
+		{
 			keyword[ii] = toupper(keyword[ii]);
+		}
 		if (!strcmp(keyword, "MYINTERP"))
 		{
 			fprintf(stderr,"Data section for myinterp found...\n");
@@ -1144,8 +1156,10 @@ int init_sf_atom_explicit()
 			assert(solid_zz!=NULL);
 			// readin solid coordinates
 			for (ii=0; ii<solid_natom; ii++)
+			{
 				fscanf(fpins, "%s %lf %lf %lf\n", buffer, &solid_xx[ii],
 						&solid_yy[ii], &solid_zz[ii]);
+			}
 			fclose(fpins);
 			return 0;
 		} // if keyword found

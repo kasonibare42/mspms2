@@ -117,7 +117,9 @@ int loop_ij()
 	for (ii=0; ii<natom-1; ii++)
 	{
 		if (isghost[ii] == all_ghost) // move to ii+1 if atom ii is full ghost atom
+		{
 			continue;
+		}
 		xxi = xx[ii];
 		yyi = yy[ii];
 		zzi = zz[ii];
@@ -144,7 +146,9 @@ int loop_ij()
 		for (jj=ii+1; jj<natom; jj++)
 		{
 			if (isghost[jj] == all_ghost) // move to jj+1 if atom jj is full ghost atom
+			{
 				continue;
+			}
 			if (isNotexcl[jj]) // calculate interactions if it is not exclusion pair
 			{
 				rxij = xxi - xx[jj];

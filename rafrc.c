@@ -749,19 +749,29 @@ int rafrc()
 	tmp_virial_2 = 0.0;
 
 	for (ii=0; ii<natom; ii++)
+	{
 		fxs[ii] = fys[ii] = fzs[ii] = 0.0;
+	}
 
 	if (nbond > 0)
+	{
 		bndfrc();
+	}
 
 	if (nangle > 0)
+	{
 		aglfrc();
+	}
 
 	if (ndih > 0)
+	{
 		dihfrc();
+	}
 
 	if (nimp > 0)
+	{
 		impfrc();
+	}
 
 	// printf("%lf %lf %lf %lf\n", ubond, uangle, udih, uimp);
 
