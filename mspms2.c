@@ -920,7 +920,6 @@ int readins()
 	mole_first_angle_idx[last_mole_id] = ii;
 
 	// read in dihedral list
-	// fscanf(fpcfg, "%d dihedrals\n", &ndih);
 	sscanf(fgets(buffer, datalen, fpcfg), "%d dihedrals%n", &ndih,
 			&position_counter);
 	assert(ndih<=ndih_max);
@@ -954,7 +953,6 @@ int readins()
 	mole_first_dih_idx[last_mole_id] = ii;
 
 	// read in improper list
-	// fscanf(fpcfg, "%d impropers\n", &nimp);
 	sscanf(fgets(buffer, datalen, fpcfg), "%d impropers%n", &nimp,
 			&position_counter);
 	assert(nimp<=nimp_max);
@@ -966,9 +964,25 @@ int readins()
 				&position_counter);
 		starting_position += position_counter;
 	}
+	// readin detailed improper dihedral information
+	last_mole_id = 0;
+	for (ii=0; ii<nimp; ii++)
+	{
+		fscanf(fpcfg, "%d %d %d %d %d %lf %lf\n", &imp_idx[ii][0],
+				&imp_idx[ii][1], &imp_idx[ii][2], &imp_idx[ii][3],
+				&imp_type[ii], &komega[ii], &omega0[ii]);
+		if (mole_first_atom_idx[last_mole_id]<=imp_idx[ii][0] && imp_idx[ii][0]
+				< mole_first_atom_idx[last_mole_id+1])
+		{
+			mole_first_imp_idx[last_mole_id] = ii;
+			last_mole_id++;
+			assert(last_mole_id<nmole_max+1);
+		}
+	}
+	// set the upper bound for the last molecule
+	mole_first_imp_idx[last_mole_id] = ii;
 
 	// read in nonbonded pair list
-	// fscanf(fpcfg, "%d nonbonded\n", &nnbp);
 	sscanf(fgets(buffer, datalen, fpcfg), "%d nonbonded%n", &nnbp,
 			&position_counter);
 	assert(nnbp<=nnbp_max);
@@ -1294,7 +1308,9 @@ int loadit()
 	// recaculate kinetic energy and temperature using the loaded velocities
 	ukin = 0.0;
 	for (ii=0; ii<natom; ii++)
+	{
 		ukin += aw[ii]*(vx[ii]*vx[ii]+vy[ii]*vy[ii]+vz[ii]*vz[ii]);
+	}
 	ukin = 0.5*ukin;
 	tinst = 2.0*ukin/(Rgas*nfree);
 
