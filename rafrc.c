@@ -7,7 +7,7 @@
 #include <assert.h>
 #include "vars.h"
 
-int bndfrc()
+int bndfrc(int iMole)
 {
 	int ii;
 	int ii1, ii2;
@@ -19,8 +19,28 @@ int bndfrc()
 	double De;
 	double exp_term, one_minus_exp_term;
 	double rmax2;
+	int iiStart, iiEnd;
+
+	// Assign the lower and upper limits for ii loop
+	if (iMole == -1)
+	{
+		iiStart = 0;
+		iiEnd = nbond;
+	}
+	else if (iMole >= 0)
+	{
+		iiStart = mole_first_bond_idx[iMole];
+		iiEnd = mole_first_bond_idx[iMole+1];
+	}
+	else
+	{
+		fprintf(stderr, "Error: Invalid parameters for bndfrc(%d).\n", iMole);
+		fprintf(fpouts, "Error: Invalid parameters for bndfrc(%d).\n", iMole);
+		exit(1);
+	}
+
 	// bond stretching calculations
-	for (ii=0; ii<nbond; ii++)
+	for (ii=iiStart; ii<iiEnd; ii++)
 	{
 		ii1 = bond_idx[ii][0];
 		ii2 = bond_idx[ii][1];
@@ -37,13 +57,13 @@ int bndfrc()
 		case bond_harmonic: // 1
 			delta_r = rij - Req[ii];
 			ubond_temp = 0.5*Kb[ii]*delta_r*delta_r;
-			ubond += ubond_temp;
+			gUbondSession += ubond_temp;
 			fij = -Kb[ii]*delta_r/rij;
 			fxij = fij*rxij;
 			fyij = fij*ryij;
 			fzij = fij*rzij;
 			// contribution to virial
-			virial_intra = virial_intra + fxij*rxij + fyij*ryij + fzij*rzij;
+			gVirialIntraSession = gVirialIntraSession + fxij*rxij + fyij*ryij + fzij*rzij;
 			// force on atom 1
 			fxs[ii1] += fxij;
 			fys[ii1] += fyij;
@@ -59,13 +79,13 @@ int bndfrc()
 			exp_term = exp(-alpha[ii]*delta_r);
 			one_minus_exp_term = 1.0 - exp_term;
 			ubond_temp = De*one_minus_exp_term*one_minus_exp_term;
-			ubond += ubond_temp;
+			gUbondSession += ubond_temp;
 			fij = -2.0*De*alpha[ii]*one_minus_exp_term*exp_term/rij;
 			fxij = fij*rxij;
 			fyij = fij*ryij;
 			fzij = fij*rzij;
 			// contribution to virial
-			virial_intra = virial_intra + fxij*rxij + fyij*ryij + fzij*rzij;
+			gVirialIntraSession = gVirialIntraSession + fxij*rxij + fyij*ryij + fzij*rzij;
 			// force on atom 1
 			fxs[ii1] += fxij;
 			fys[ii1] += fyij;
@@ -78,13 +98,13 @@ int bndfrc()
 		case bond_fene: // 3
 			rmax2 = Req[ii]*Req[ii];
 			ubond_temp = Kb[ii]*rmax2*log(1.0-rijsq/rmax2);
-			ubond += ubond_temp;
+			gUbondSession += ubond_temp;
 			fij = -2.0*Kb[ii]*rmax2/(rmax2-rijsq);
 			fxij = fij*rxij;
 			fyij = fij*ryij;
 			fzij = fij*rzij;
 			// contribution to virial
-			virial_intra = virial_intra + fxij*rxij + fyij*ryij + fzij*rzij;
+			gVirialIntraSession = gVirialIntraSession + fxij*rxij + fyij*ryij + fzij*rzij;
 			// force on atom 1
 			fxs[ii1] += fxij;
 			fys[ii1] += fyij;
@@ -103,7 +123,7 @@ int bndfrc()
 	return 0;
 }
 
-int aglfrc()
+int aglfrc(int iMole)
 {
 	int ii;
 	int iia, iib, iic;
@@ -127,8 +147,28 @@ int aglfrc()
 	double frc_term_2_1, frc_term_2_2;
 	double frc_term_3, frc_term_3_1, frc_term_3_2;
 
+	int iiStart, iiEnd;
+
+	// Assign the lower and upper limits for ii loop
+	if (iMole == -1)
+	{
+		iiStart = 0;
+		iiEnd = nangle;
+	}
+	else if (iMole >= 0)
+	{
+		iiStart = mole_first_angle_idx[iMole];
+		iiEnd = mole_first_angle_idx[iMole+1];
+	}
+	else
+	{
+		fprintf(stderr, "Error: Invalid parameters for aglfrc(%d).\n", iMole);
+		fprintf(fpouts, "Error: Invalid parameters for aglfrc(%d).\n", iMole);
+		exit(1);
+	}
+
 	// angle bending calculations
-	for (ii=0; ii<nangle; ii++)
+	for (ii=iiStart; ii<iiEnd; ii++)
 	{
 		// The atom list of the angle must be list as 0-1-2
 		// otherwise, the calculations are not right
@@ -170,7 +210,7 @@ int aglfrc()
 			// angle difference
 			delta_theta = theta - Thetaeq[ii];
 			uangle_temp = 0.5*Ktheta[ii]*delta_theta*delta_theta;
-			uangle += uangle_temp;
+			gUangleSession += uangle_temp;
 			// forces
 			gamma = Ktheta[ii]*delta_theta/sint;
 			fxa = gamma*(xbc-xab*cost)*rrab; // vector 1
@@ -222,7 +262,7 @@ int aglfrc()
 			k_r_rprime = agl_para_3[ii];
 			u123 = 0.5*k_theta*delta_r3*delta_r3 + k_r_theta*delta_r3*(delta_r1
 					+delta_r2) + k_r_rprime*delta_r1*delta_r2;
-			uangle = uangle + u123;
+			gUangleSession += u123;
 			// forces
 			// atom 1 (a)
 			frc_term_1 = -k_theta*delta_r3/r13;
@@ -272,9 +312,9 @@ int aglfrc()
 
 			// contribution to virial
 			// Not sure. need double check
-			virial_intra = virial_intra + fxa*vec_12_x + fya*vec_12_y + fza
+			gVirialIntraSession = gVirialIntraSession + fxa*vec_12_x + fya*vec_12_y + fza
 					*vec_12_z;
-			virial_intra = virial_intra - fxc*vec_23_x - fyc*vec_23_y - fzc
+			gVirialIntraSession = gVirialIntraSession - fxc*vec_23_x - fyc*vec_23_y - fzc
 					*vec_23_z;
 
 			break;
@@ -287,7 +327,7 @@ int aglfrc()
 	return 0;
 }
 
-int dihfrc()
+int dihfrc(int iMole)
 {
 	int ii;
 	int iia, iib, iic, iid;
@@ -311,9 +351,29 @@ int dihfrc()
 	double phi, alpha_temp;
 	double fij;
 
+	int iiStart, iiEnd;
+
+	// Assign the lower and upper limits for ii loop
+	if (iMole == -1)
+	{
+		iiStart = 0;
+		iiEnd = ndih;
+	}
+	else if (iMole >= 0)
+	{
+		iiStart = mole_first_dih_idx[iMole];
+		iiEnd = mole_first_dih_idx[iMole+1];
+	}
+	else
+	{
+		fprintf(stderr, "Error: Invalid parameters for dihfrc(%d).\n", iMole);
+		fprintf(fpouts, "Error: Invalid parameters for dihfrc(%d).\n", iMole);
+		exit(1);
+	}
+
 	// dihedral torsion calculations
 	// dihedral has no contribution to virial
-	for (ii=0; ii<ndih; ii++)
+	for (ii=iiStart; ii<iiEnd; ii++)
 	{
 		// The atom list of dihedrals must be ordered as 0-1-2-3
 		// Otherwise, the results wont be correct
@@ -392,7 +452,8 @@ int dihfrc()
 			// calculate the energy
 			vopls = v1+0.5*(v2*(1.0+cos(theta))+v3*(1.0-cos(2.0*theta))+v4*(1.0
 					+cos(3.0*theta)));
-			udih = udih + vopls;
+			// add into the session energy
+			gUdihSession += vopls;
 			// forces
 			dopls = -0.5*(v2*sin(theta)-2.0*v3*sin(2.0*theta)+3.0*v4*sin(3.0
 					*theta));
@@ -433,7 +494,7 @@ int dihfrc()
 		case dih_charmm: // future implementation 
 			// modified from Shi Wei's code
 			// NOT tested.
-			// calculate the dihedral angle energy udih
+			// calculate the dihedral angle energy 
 			// Note that add count_dih_multiple due to multiple matching parameters of the 
 			// dihedral angle part
 			// a-b-c-d  is i-j-k-l is 1-2-3-4
@@ -478,7 +539,7 @@ int dihfrc()
 				alpha_temp = phi;
 				// ** the angle between the two planes is below
 				phi = 180.0 - (acos(phi)*180.0/pi);
-				udih = udih + kphi*(1+cos((nperiod*phi-delta0)/180*pi));
+				gUdihSession += kphi*(1+cos((nperiod*phi-delta0)/180*pi));
 				// ** calculate forces due to dihedral angle part
 				// ** the following make sure that it is not divided by 0, if it is, it can
 				// ** be reduced from 0/0 by mathematical tricks. Note that the 
@@ -553,7 +614,7 @@ int dihfrc()
 	return 0;
 }
 
-int impfrc() // improper energy/force calculations
+int impfrc(int iMole) // improper energy/force calculations
 {
 	int ii;
 	int ii1, ii2, ii3, ii4;
@@ -568,9 +629,29 @@ int impfrc() // improper energy/force calculations
 	double phi, alpha_temp;
 	double fij;
 
+	int iiStart, iiEnd;
+
+	// Assign the lower and upper limits for ii loop
+	if (iMole == -1)
+	{
+		iiStart = 0;
+		iiEnd = nimp;
+	}
+	else if (iMole >= 0)
+	{
+		iiStart = mole_first_imp_idx[iMole];
+		iiEnd = mole_first_imp_idx[iMole+1];
+	}
+	else
+	{
+		fprintf(stderr, "Error: Invalid parameters for impfrc(%d).\n", iMole);
+		fprintf(fpouts, "Error: Invalid parameters for impfrc(%d).\n", iMole);
+		exit(1);
+	}
+
 	// improper dihedral makes no contribution
 	// to virial according to DL_POLY manual
-	for (ii=0; ii<nimp; ii++)
+	for (ii=iiStart; ii<iiEnd; ii++)
 	{
 		switch (imp_type[ii])
 		{
@@ -619,7 +700,7 @@ int impfrc() // improper energy/force calculations
 				alpha_temp = phi;
 				// ** the angle between the two planes is below
 				phi = 180 - (acos(phi)*180/pi);
-				uimp = uimp + komega[ii]*(phi-omega0[ii])*(phi-omega0[ii]);
+				gUimpSession += komega[ii]*(phi-omega0[ii])*(phi-omega0[ii]);
 				// ** the following is used to avoid dividing by 0
 				// ** note that omega0[ii] is either 0 or 180 from the database
 				// ** parameter file for improper
@@ -725,28 +806,24 @@ int impfrc() // improper energy/force calculations
 	} // loop through all impropers
 
 	if (imp_type[ii]==imp_charmm)
-		uimp = uimp*(pi/180)*(pi/180);
+		gUimpSession *= (pi/180)*(pi/180);
 
 	return 0;
 }
 
-int rafrc()
+int fnRafrcSession()
 {
 	int ii;
 
 	// energies
-	uintra = 0.0;
-	ubond = 0.0;
-	uangle = 0.0;
-	udih = 0.0;
-	uimp = 0.0;
+	gUintraSession = 0.0;
+	gUbondSession = 0.0;
+	gUangleSession = 0.0;
+	gUdihSession = 0.0;
+	gUimpSession = 0.0;
 
 	// pressure related
-	virial_intra = 0.0;
-
-	tmp_virial = 0.0;
-	tmp_virial_1 = 0.0;
-	tmp_virial_2 = 0.0;
+	gVirialIntraSession = 0.0;
 
 	for (ii=0; ii<natom; ii++)
 	{
@@ -755,29 +832,45 @@ int rafrc()
 
 	if (nbond > 0)
 	{
-		bndfrc();
+		bndfrc(-1);
+		gUintraSession += gUbondSession;
 	}
 
 	if (nangle > 0)
 	{
-		aglfrc();
+		aglfrc(-1);
+		gUintraSession += gUangleSession;
 	}
 
 	if (ndih > 0)
 	{
-		dihfrc();
+		dihfrc(-1);
+		gUintraSession += gUdihSession;
 	}
 
 	if (nimp > 0)
 	{
-		impfrc();
+		impfrc(-1);
+		gUintraSession += gUimpSession;
 	}
-
-	// printf("%lf %lf %lf %lf\n", ubond, uangle, udih, uimp);
-
-	// total intra energy
-	uintra = ubond + uangle + udih + uimp;
 
 	return 0;
 }
 
+int rafrc()
+{
+	// calculate the session energies
+	fnRafrcSession();
+
+	// energies
+	uintra = gUintraSession;
+	ubond = gUbondSession;
+	uangle = gUangleSession;
+	udih = gUdihSession;
+	uimp = gUimpSession;
+
+	// pressure related
+	virial_intra = gVirialIntraSession;
+
+	return 0;
+}

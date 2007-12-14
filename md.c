@@ -148,19 +148,29 @@ int md()
 			vver_nh_3();
 			// print out, snapshot, trajectory, save
 			if (istep%nstep_print == 0)
+			{
 				printit();
+			}
 			if (nstep_ss && istep%nstep_ss == 0)
+			{
 				snapshot();
+			}
 			if (nstep_trj && istep%nstep_trj==0)
+			{
 				trajectory();
+			}
 			if (istep%nstep_save==0)
+			{
 				saveit();
+			}
 
 			icounter[11]--;
 			// if still in equilibrium run
 			// do not do averages
 			if (icounter[11]>=0)
+			{
 				continue;
+			}
 			// accumulators
 			do_accumu();
 			
@@ -178,19 +188,29 @@ int md()
 			npt_respa();
 			// print out, snapshot, trajectory, save
 			if (istep%nstep_print == 0)
+			{
 				printit();
+			}
 			if (nstep_ss && istep%nstep_ss == 0)
+			{
 				snapshot();
+			}
 			if (nstep_trj && istep%nstep_trj==0)
+			{
 				trajectory();
+			}
 			if (istep%nstep_save==0)
+			{
 				saveit();
+			}
 
 			icounter[11]--;
 			// if still in equilibrium run
 			// do not do averages
 			if (icounter[11]>=0)
+			{
 				continue;
+			}
 			// accumulators
 			do_accumu();
 			
@@ -208,19 +228,29 @@ int md()
 			vver();
 			// print out, snapshot, trajectory, save
 			if (istep%nstep_print == 0)
+			{
 				printit();
+			}
 			if (nstep_ss && istep%nstep_ss == 0)
+			{
 				snapshot();
+			}
 			if (nstep_trj && istep%nstep_trj==0)
+			{
 				trajectory();
+			}
 			if (istep%nstep_save==0)
+			{
 				saveit();
+			}
 
 			icounter[11]--;
 			// if still in equilibrium run
 			// do not do averages
 			if (icounter[11]>=0)
+			{
 				continue;
+			}
 			// accumulators
 			do_accumu();
 			

@@ -14,14 +14,12 @@
 #include "vars.h"
 #include "funcs.h"
 
-
 double deriv_inc_gamma(double x, void *params)
 {
 	return gsl_sf_gamma_inc(0.0, x);
 }
 
-// calculate the center of mass for all the molecules
-// and the inner coordinates
+/// Calculate the center of mass for all the molecules and the inner coordinates.
 int cal_com_and_inner_coords()
 {
 	int ii, jj;
@@ -52,8 +50,7 @@ int cal_com_and_inner_coords()
 	return 0;
 }
 
-// calculate the atom position according to the PBC'd center of mass
-// the coordinates are saved to ex, fy, gz
+/// Calculate the atom position according to the PBC'd center of mass the coordinates are saved to ex, fy, gz.
 int reconstruct_coords_from_com()
 {
 	int ii, jj;
@@ -70,8 +67,7 @@ int reconstruct_coords_from_com()
 	return 0;
 }
 
-// calculate the PBC'd atom coordinates
-// the new coordinates are saved in ex,fy,gz
+/// Calculate the PBC'd atom coordinates the new coordinates are saved in ex,fy,gz.
 int cal_coords_PBC()
 {
 	int ii;
@@ -86,14 +82,15 @@ int cal_coords_PBC()
 
 /// Calcualte interaction between atom ii and jj, exclude those from excluding list.
 /**
- * iStartMole is the starting molecule for the loop.
- * iEndMole is the ending molecule for the loop.
+ * @param iStartMole is the starting molecule for the loop.
+ * @param iEndMole is the ending molecule for the loop.\n
+ * 
  * These two parameters are used to decide what are the lower and upper limits for ii, jj loop.
- * The value of -1 means all molecules in the system.
+ * The value of -1 means all molecules in the system. \n
  * For examples, (-1, -1) means calculate the energy for the whole system.
  * I.e. iiStart = 0; iiEnd = natom - 1; jjEnd = natom;
  * jjStart is special, it will be set to -1. And jj will be assigned dynamically through the
- * expression of "(jjStart==-1?ii+1:jjStart).
+ * expression of "(jjStart==-1?ii+1:jjStart).\n
  * (10, -1) means calculate the energy for the molecule 10 with the whole system.
  */
 int loop_ij(int iStartMole, int iEndMole)
@@ -297,8 +294,8 @@ int loop_ij(int iStartMole, int iEndMole)
 					fyij = fij*ryij;
 					fzij = fij*rzij;
 					// contribution to the virial
-					gVirialInterSession = gVirialInterSession + fxij*rxij + fyij*ryij + fzij
-							*rzij;
+					gVirialInterSession = gVirialInterSession + fxij*rxij
+							+ fyij*ryij + fzij *rzij;
 					// force on atom ii
 					fxi += fxij;
 					fyi += fyij;
@@ -335,9 +332,9 @@ int loop_ij(int iStartMole, int iEndMole)
 				// wolf method for electrostatic
 				if (isWolfOn && rijsq<rcutoffelecsq)
 				{
-					gUwolfrealSession = gUwolfrealSession + chargei*charge[jj] *(erfc(kappa
-							*rij)/rij + wolfvcon1 + wolfvcon2 *(rij
-							-rcutoffelec));
+					gUwolfrealSession = gUwolfrealSession + chargei*charge[jj]
+							*(erfc(kappa *rij)/rij + wolfvcon1 + wolfvcon2
+									*(rij -rcutoffelec));
 					uij_wolf_temp = chargei*charge[jj]/rij;
 					fij = const_columb*uij_wolf_temp
 					*(erfc(kappa*rij)/rijsq + wolffcon1*exp(-(kappa*rij)*(kappa*rij))/rij + wolffcon2);
@@ -345,8 +342,8 @@ int loop_ij(int iStartMole, int iEndMole)
 					fyij = fij*ryij;
 					fzij = fij*rzij;
 					// contribution to the virial
-					gVirialInterSession = gVirialInterSession + fxij*rxij + fyij*ryij + fzij
-							*rzij;
+					gVirialInterSession = gVirialInterSession + fxij*rxij
+							+ fyij*ryij + fzij *rzij;
 					// force on atom ii
 					fxi += fxij;
 					fyi += fyij;
@@ -372,7 +369,7 @@ int loop_ij(int iStartMole, int iEndMole)
 
 /// Calculate the interactions between dihedral ending atom 1 and 4.
 /**
- * iMole is which molecule for the calculation. 
+ * @param iMole is which molecule for the calculation. 
  * The value of -1 means calculating the whole system.
  */
 int loop_14(int iMole)
@@ -561,7 +558,8 @@ int loop_14(int iMole)
 				fyij = fij*ryij;
 				fzij = fij*rzij;
 				// contribution to the virial
-				gVirialInterSession = gVirialInterSession + fxij*rxij + fyij*ryij + fzij*rzij;
+				gVirialInterSession = gVirialInterSession + fxij*rxij + fyij
+						*ryij + fzij*rzij;
 				// force on atom ii1
 				fxl[ii1] += fxij;
 				fyl[ii1] += fyij;
@@ -598,8 +596,9 @@ int loop_14(int iMole)
 			// wolf method for electrostatic
 			if (fCalculate14_elec && isWolfOn && rijsq<rcutoffelecsq)
 			{
-				gUwolfrealSession = gUwolfrealSession + charge[ii1]*charge[ii2]*(erfc(kappa
-						*rij)/rij + wolfvcon1 + wolfvcon2*(rij-rcutoffelec));
+				gUwolfrealSession = gUwolfrealSession + charge[ii1]*charge[ii2]
+						*(erfc(kappa *rij)/rij + wolfvcon1 + wolfvcon2*(rij
+								-rcutoffelec));
 				// need + some scale factor here
 				uij_wolf14_temp = charge[ii1]*charge[ii2]/rij;
 				fij = const_columb*uij_wolf14_temp
@@ -609,7 +608,8 @@ int loop_14(int iMole)
 				fyij = fij*ryij;
 				fzij = fij*rzij;
 				// contribution to the virial
-				gVirialInterSession = gVirialInterSession + fxij*rxij + fyij*ryij + fzij*rzij;
+				gVirialInterSession = gVirialInterSession + fxij*rxij + fyij
+						*ryij + fzij*rzij;
 				// force on atom ii1
 				fxl[ii1] += fxij;
 				fyl[ii1] += fyij;
@@ -630,7 +630,8 @@ int loop_14(int iMole)
 				fyij = fij*ryij;
 				fzij = fij*rzij;
 				// contribution to the virial
-				gVirialInterSession = gVirialInterSession + fxij*rxij + fyij*ryij + fzij*rzij;
+				gVirialInterSession = gVirialInterSession + fxij*rxij + fyij
+						*ryij + fzij*rzij;
 				// force on atom ii1
 				fxl[ii1] += fxij;
 				fyl[ii1] += fyij;
@@ -654,7 +655,7 @@ int loop_14(int iMole)
 
 /// Calculate the interactions between dihedral ending atom 1 and 3.
 /**
- * iMole is which molecule for the calculation. 
+ * @param iMole is which molecule for the calculation. 
  * The value of -1 means calculating the whole system.
  */
 int loop_13(int iMole)
@@ -701,7 +702,7 @@ int loop_13(int iMole)
 		fprintf(fpouts, "Error: Invalid parameters for loop_13(%d).\n", iMole);
 		exit(1);
 	}
-	
+
 	for (ii=iiStart; ii<iiEnd; ii++)
 	{
 		if (isAngle_unique) // only calculate interactions for unique 1,3 pairs
@@ -765,8 +766,8 @@ int loop_13(int iMole)
 				fzij = fij*rzij;
 				if (isWolfOn) // negative contribution to the virial
 				{
-					gVirialInterSession = gVirialInterSession + fxij*rxij + fyij*ryij + fzij
-							*rzij;
+					gVirialInterSession = gVirialInterSession + fxij*rxij
+							+ fyij*ryij + fzij *rzij;
 				}
 				// forces on ii1
 				fxl[ii1] += fxij;
@@ -798,9 +799,9 @@ int loop_13(int iMole)
 					}
 					else if (isWolfOn)
 					{
-						gUwolfrealSession = gUwolfrealSession + charge[ii1]*charge[ii2]
-								*(erfc(temp1)/rij + wolfvcon1 + wolfvcon2*(rij
-										-rcutoffelec));
+						gUwolfrealSession = gUwolfrealSession + charge[ii1]
+								*charge[ii2] *(erfc(temp1)/rij + wolfvcon1
+								+ wolfvcon2*(rij -rcutoffelec));
 						fij = const_columb*temp2*(erfc(temp1)/rijsq + wolffcon1*exp(-temp1*temp1)/rij + wolffcon2);
 
 					}
@@ -810,8 +811,8 @@ int loop_13(int iMole)
 
 					if (isWolfOn) // contribution to the virial
 					{
-						gVirialInterSession = gVirialInterSession + fxij*rxij + fyij*ryij
-								+ fzij*rzij;
+						gVirialInterSession = gVirialInterSession + fxij*rxij
+								+ fyij*ryij + fzij*rzij;
 					}
 
 					// force on atom ii1
@@ -899,8 +900,8 @@ int loop_13(int iMole)
 					fyij = fij*ryij;
 					fzij = fij*rzij;
 					// contribution to the virial
-					gVirialInterSession = gVirialInterSession + fxij*rxij + fyij*ryij + fzij
-							*rzij;
+					gVirialInterSession = gVirialInterSession + fxij*rxij
+							+ fyij*ryij + fzij *rzij;
 					// force on atom ii1
 					fxl[ii1] += fxij;
 					fyl[ii1] += fyij;
@@ -924,7 +925,7 @@ int loop_13(int iMole)
 
 /// Calculate the interactions between dihedral ending atom 1 and 2.
 /**
- * iMole is which molecule for the calculation. 
+ * @param iMole is which molecule for the calculation. 
  * The value of -1 means calculating the whole system.
  */
 int loop_12(int iMole)
@@ -971,8 +972,8 @@ int loop_12(int iMole)
 		fprintf(fpouts, "Error: Invalid parameters for loop_12(%d).\n", iMole);
 		exit(1);
 	}
-	
-	for (ii=0; ii<nbond; ii++)
+
+	for (ii=iiStart; ii<iiEnd; ii++)
 	{
 		ii1 = bond_idx[ii][0];
 		ii2 = bond_idx[ii][1];
@@ -1028,7 +1029,8 @@ int loop_12(int iMole)
 			fzij = fij*rzij;
 			if (isWolfOn) // negative contribution to the virial
 			{
-				gVirialInterSession = gVirialInterSession + fxij*rxij + fyij*ryij + fzij*rzij;
+				gVirialInterSession = gVirialInterSession + fxij*rxij + fyij
+						*ryij + fzij*rzij;
 			}
 			// forces on ii1
 			fxl[ii1] += fxij;
@@ -1060,9 +1062,9 @@ int loop_12(int iMole)
 				}
 				else if (isWolfOn)
 				{
-					gUwolfrealSession = gUwolfrealSession + charge[ii1]*charge[ii2]
-							*(erfc(temp1)/rij + wolfvcon1 + wolfvcon2*(rij
-									-rcutoffelec));
+					gUwolfrealSession = gUwolfrealSession + charge[ii1]
+							*charge[ii2] *(erfc(temp1)/rij + wolfvcon1
+							+ wolfvcon2*(rij -rcutoffelec));
 					fij = const_columb*temp2*(erfc(temp1)/rijsq + wolffcon1*exp(-temp1*temp1)/rij + wolffcon2);
 				}
 				fxij = fij*rxij;
@@ -1071,8 +1073,8 @@ int loop_12(int iMole)
 
 				if (isWolfOn) // contribution to the virial
 				{
-					gVirialInterSession = gVirialInterSession + fxij*rxij + fyij*ryij + fzij
-							*rzij;
+					gVirialInterSession = gVirialInterSession + fxij*rxij
+							+ fyij*ryij + fzij *rzij;
 				}
 
 				// force on atom ii1
@@ -1163,7 +1165,8 @@ int loop_12(int iMole)
 				fyij = fij*ryij;
 				fzij = fij*rzij;
 				// contribution to the virial
-				gVirialInterSession = gVirialInterSession + fxij*rxij + fyij*ryij + fzij*rzij;
+				gVirialInterSession = gVirialInterSession + fxij*rxij + fyij
+						*ryij + fzij*rzij;
 				// force on atom ii1
 				fxl[ii1] += fxij;
 				fyl[ii1] += fyij;
@@ -1186,7 +1189,7 @@ int loop_12(int iMole)
 
 /// Calcualte interaction between non-bonded pairs.
 /**
- * The iMole parameter has the same meaning as in loop_14
+ * @param iMole has the same meaning as in loop_14
  */
 int loop_nbp(int iMole)
 {
@@ -1216,7 +1219,7 @@ int loop_nbp(int iMole)
 	uij_vdwnbp = 0.0;
 	uij_realnbp = 0.0;
 	uij_Gz0nbp = 0.0;
-	
+
 	// Assign the lower and upper limits for ii loop
 	if (iMole == -1)
 	{
@@ -1356,7 +1359,8 @@ int loop_nbp(int iMole)
 				fyij = fij*ryij;
 				fzij = fij*rzij;
 				// contribution to the virial
-				gVirialInterSession = gVirialInterSession + fxij*rxij + fyij*ryij + fzij*rzij;
+				gVirialInterSession = gVirialInterSession + fxij*rxij + fyij
+						*ryij + fzij*rzij;
 				// force on atom ii1
 				fxl[ii1] += fxij;
 				fyl[ii1] += fyij;
@@ -1431,8 +1435,9 @@ int loop_nbp(int iMole)
 			// wolf method for electrostatic
 			if (isWolfOn && rijsq<rcutoffelecsq)
 			{
-				gUwolfrealSession = gUwolfrealSession + charge[ii1]*charge[ii2]*(erfc(kappa
-						*rij)/rij + wolfvcon1 + wolfvcon2*(rij-rcutoffelec));
+				gUwolfrealSession = gUwolfrealSession + charge[ii1]*charge[ii2]
+						*(erfc(kappa *rij)/rij + wolfvcon1 + wolfvcon2*(rij
+								-rcutoffelec));
 				uij_wolfnbp_temp = charge[ii1]*charge[ii2]/rij;
 				fij = const_columb*uij_wolfnbp_temp
 				*(erfc(kappa*rij)/rijsq + wolffcon1*exp(-(kappa*rij)*(kappa*rij))/rij + wolffcon2);
@@ -1440,7 +1445,8 @@ int loop_nbp(int iMole)
 				fyij = fij*ryij;
 				fzij = fij*rzij;
 				// contribution to the virial
-				gVirialInterSession = gVirialInterSession + fxij*rxij + fyij*ryij + fzij*rzij;
+				gVirialInterSession = gVirialInterSession + fxij*rxij + fyij
+						*ryij + fzij*rzij;
 				// force on atom ii1
 				fxl[ii1] += fxij;
 				fyl[ii1] += fyij;
@@ -1461,7 +1467,8 @@ int loop_nbp(int iMole)
 				fyij = fij*ryij;
 				fzij = fij*rzij;
 				// contribution to the virial
-				gVirialInterSession = gVirialInterSession + fxij*rxij + fyij*ryij + fzij*rzij;
+				gVirialInterSession = gVirialInterSession + fxij*rxij + fyij
+						*ryij + fzij*rzij;
 				// force on atom ii1
 				fxl[ii1] += fxij;
 				fyl[ii1] += fyij;
@@ -1483,7 +1490,8 @@ int loop_nbp(int iMole)
 	return 0;
 }
 /** 
- * Fourier space sum and self interaction correction for Ewald Summation.
+ * \brief Fourier space sum and self interaction correction for Ewald Summation.
+ * 
  * This is for the whole system. No single molecule calculation is allowed.
  */
 int ewald_fourier_and_self()
@@ -1561,7 +1569,8 @@ int ewald_fourier_and_self()
 }
 
 /**
- * Calculate the forces and energy related to the vacuum boundary condition for Ewald Summation.
+ * \brief Calculate the forces and energy related to the vacuum boundary condition for Ewald Summation.
+ * 
  * This is for the whole system. No single molecule calculation is allowed.
  */
 int ewald_vacuum()
@@ -1625,7 +1634,8 @@ int ewald_vacuum()
 }
 
 /**
- * Calculate the wolf self interaction energy.
+ * \brief Calculate the wolf self interaction energy.
+ * 
  * This is for the whole system. No single molecule calculation is allowed.
  */
 int wolf_con()
@@ -1635,14 +1645,15 @@ int wolf_con()
 	{
 		gUwolfconSession = gUwolfconSession + charge[ii]*charge[ii];
 	}
-	gUwolfconSession = gUwolfconSession*const_columb*(kappa/sqrt(pi)+erfc(kappa*rcutoffelec)
-			/(2.0*rcutoffelec));
+	gUwolfconSession = gUwolfconSession*const_columb*(kappa/sqrt(pi)+erfc(kappa
+			*rcutoffelec) /(2.0*rcutoffelec));
 
 	return 0;
 }
 
 /**
- * Calculate simple direct coulomb interactions between different molecules. 
+ * \brief Calculate simple direct coulomb interactions between different molecules. 
+ * 
  * The cutoff is based on molecular center (center of mass).
  */
 int simple_coulomb_inter_mole(int iStartMole, int iEndMole)
@@ -1659,7 +1670,7 @@ int simple_coulomb_inter_mole(int iStartMole, int iEndMole)
 	int nnStart, nnEnd;
 
 	// Assign the lower and upper limits for mm and nn
-		if (iStartMole==-1 && iEndMole==-1)
+	if (iStartMole==-1 && iEndMole==-1)
 	{
 		mmStart = 0;
 		mmEnd = nmole - 1;
@@ -1683,7 +1694,9 @@ int simple_coulomb_inter_mole(int iStartMole, int iEndMole)
 	else
 	{
 		fprintf(stderr,"Error: Invalid parameters for simple_coulomb_inter_mole(%d,%d).\n",iStartMole,iEndMole);
-		fprintf(fpouts, "Error: Invalid parameters for simple_coulomb_inter_mole(%d,%d).\n",
+		fprintf(
+				fpouts,
+				"Error: Invalid parameters for simple_coulomb_inter_mole(%d,%d).\n",
 				iStartMole, iEndMole);
 		exit(1);
 	}
@@ -1695,7 +1708,7 @@ int simple_coulomb_inter_mole(int iStartMole, int iEndMole)
 	// for cross molecules
 	for (mm=mmStart; mm<mmEnd; mm++)
 	{
-		for (nn=(nnStart==-1?mm+1:nnStart); nn<nnEnd; nn++)
+		for (nn=(nnStart==-1 ? mm+1 : nnStart); nn<nnEnd; nn++)
 		{
 			// calculate the distance between molecular center of mass
 			rxmn = mole_xx[mm] - mole_xx[nn];
@@ -1762,8 +1775,8 @@ int simple_coulomb_inter_mole(int iStartMole, int iEndMole)
 						fyij = fij*ryij;
 						fzij = fij*rzij;
 						// contribution to the virial
-						gVirialInterSession = gVirialInterSession + fxij*rxij + fyij*ryij
-								+ fzij*rzij;
+						gVirialInterSession = gVirialInterSession + fxij*rxij
+								+ fyij*ryij + fzij*rzij;
 						// force on atom ii
 						fxl[ii] += fxij;
 						fyl[ii] += fyij;
@@ -1789,6 +1802,16 @@ int simple_coulomb_inter_mole(int iStartMole, int iEndMole)
 	return 0;
 }
 
+/**
+ * \brief Calculate energies and forces for a loop session.
+ * 
+ * A session means calling the loop_xxx etc. functions one time.
+ * It can be used to calculate either entire system states or pair interactions.
+ * The energies are stored in Session variables. They can be used later in erfrc() function
+ * to get the entire system states.\n
+ * We should note that currently the forces are not stored in Session variables.
+ * Because pair interactions usually do not require calculations for forces.
+ */
 int fnErfrcSession()
 {
 	int ii;
@@ -1832,7 +1855,7 @@ int fnErfrcSession()
 	gUinterSession += gUvdwSession;
 
 	// if ewald is on, calculate the fourier and self correction parts
-	if (isEwaldOn) 
+	if (isEwaldOn)
 	{
 		// constant for ewald energies
 		gUrealSession *= const_columb;
@@ -1840,7 +1863,8 @@ int fnErfrcSession()
 		// calculate fourier space sum for ewald and self interaction corrections
 		ewald_fourier_and_self(); // already have the constant inside the function
 		// total 3D ewald energy with tinfoil boundary condition
-		gUewaldSession = gUrealSession + gUfourierSession - gUselfSession - gUexclSession;
+		gUewaldSession = gUrealSession + gUfourierSession - gUselfSession
+				- gUexclSession;
 
 		// calculate vacuum boundary condition
 		// energy/force term is needed
@@ -1863,10 +1887,10 @@ int fnErfrcSession()
 	else if (isWolfOn) // if wolf is on
 	{
 		// constant for wolf energies
-	       	gUwolfrealSession = gUwolfrealSession*const_columb;
-	       	gUexclSession *= const_columb;
+		gUwolfrealSession = gUwolfrealSession*const_columb;
+		gUexclSession *= const_columb;
 		wolf_con(); // calculate the self interaction energy for wolf
-	       	// total wolf
+		// total wolf
 		gUwolfSession = gUwolfrealSession - gUwolfconSession - gUexclSession;
 		// Add into total Inter Energy
 		gUinterSession += gUwolfSession;
