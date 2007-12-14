@@ -37,13 +37,6 @@ void rmarin(int ij, int kl)
 	int i, j, k, l, ii, jj, m;
 	double s, t;
 
-	if (ij<0 || ij>31328 || kl<0 || kl>30081)
-	{
-		printf("The first random number seed must have a value between 0 and 31328.");
-		printf("The second seed must have a value between 0 and 30081.\n");
-		exit(1);
-	}
-
 	i = (ij/177)%177 + 2;
 	j = ij%177 + 2;
 	k = (kl/169)%178 + 1;

@@ -25,5 +25,7 @@ int md();
 int init_hmc();
 int hmc();
 int calculate_ljlrc();
+int fnValidateInput();
+
 
 #endif /*FUNCS_H_*/

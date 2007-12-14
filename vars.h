@@ -45,6 +45,7 @@
 #define dih_charmm		2 ///< charmm type dihedral potential
 #define imp_none		0
 #define imp_charmm		1 ///< charmm type improper potential
+#define _NO_SF_POTENTIAL	0
 #define nanotube_hypergeo  	1
 #define nanotube_atom_explicit	2
 #define nanotube_tasos		3
@@ -88,6 +89,7 @@
 #define c3_pisq_theta 	11.3105666436484 
 #define PascalA3_to_J_mol	6.0221415e-7 ///< Na*1e-30 turn preq*boxv to J/mol
 #define J_mol_A3_to_Pascal	1660538.86313 ///< 1/6.0221415e-7 = 1.0/(6.0221415e23*1.0e-30)
+
 int nspecie, nmole, natom; ///< total number of molecules, atoms, species 
 int nmole_per_specie[nspecie_max]; ///< number of molecules in a certain specie
 int natom_per_mole[nspecie_max]; ///< number of atoms in a molecule, which is belong to a certain specie
@@ -185,8 +187,16 @@ int KSQMAX; ///< ewald parameter
 int what_simulation; ///< simulation type, MD, HMC, etc.
 int what_ensemble; ///< what type of ensemble, NVT, NPT etc.
 int whichNH; ///< which nose hoover subroutine to use? usually 3 for molecule, 2 for atoms, see more details in nvtnh.c
-int isSFon; ///< is solid-fluid interaction on
-int sf_type; ///< solid-fluid type. for different nanotube potentials and future possible other materials
+/** 
+ * \brief solid-fluid type. for different nanotube potentials and future possible other materials
+ * 
+ * 0 - No solid-fluid interaction\n
+ * 1 - Hypergeo nanotube potential\n
+ * 2 - Atom explicit nanotube/other materials potentials
+ * 3 - Tasos interpolation
+ * 4 - Yang's interpolation
+ */
+int sf_type; 
 char atomname[natom_max][5];
 
 int istep; ///< counter of step, current step

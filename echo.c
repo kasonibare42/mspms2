@@ -238,7 +238,7 @@ int echo()
 				prob_id);
 	}
 
-	if (isSFon)
+	if (sf_type != _NO_SF_POTENTIAL)
 	{
 		fprintf(fpouts, "Solid-fluid interaction calculation is enabled.\n");
 		if (sf_type==nanotube_hypergeo)

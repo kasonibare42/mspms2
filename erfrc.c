@@ -1903,7 +1903,7 @@ int fnErfrcSession()
 	}
 
 	// calculate solid fluid energy if necessary
-	if (isSFon)
+	if (sf_type != _NO_SF_POTENTIAL)
 	{
 		fnSffrcSession();
 		// Add into total Inter Energy

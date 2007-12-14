@@ -10,8 +10,7 @@
 0                      isLJswitchOn
 1                      isChargeOn, need additional data sections for different methods
 3                      number of constraint
-0                      isSFon Solid-fluid interactions
-1                      sf_type different nanotube potentials or others, 1-hypergeo,2-atomexplicit,3-tasos,4-my interp
+0                      sf_type 0-no sf interaction, 1-hypergeo,2-atomexplicit,3-tasos,4-my interp
 
    Electrostatic
 3                     type (1-ewald, 2-wolf, 3-simple coulomb)
