@@ -142,11 +142,11 @@ int echo()
 	{
 		fprintf(fpouts, "Switch potential is disabled (%d).\n", isLJswitchOn);
 	}
-	if (isChargeOn)
+	if (iChargeType != _NO_ELECTROSTATIC_INTERACTION)
 	{
 		fprintf(fpouts,
 				"Electrostatic interaction calculations are enabled (%d).\n",
-				isChargeOn);
+				iChargeType);
 		if (isEwaldOn)
 		{
 			fprintf(
@@ -188,7 +188,7 @@ int echo()
 	{
 		fprintf(fpouts,
 				"Electrostatic interaction calculations are disabled (%d).\n",
-				isChargeOn);
+				iChargeType);
 	}
 	if (what_simulation == md_run)
 	{

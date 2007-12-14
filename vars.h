@@ -50,6 +50,7 @@
 #define nanotube_atom_explicit	2
 #define nanotube_tasos		3
 #define nanotube_my_interp	4 ///< my interpolation grid
+#define _NO_ELECTROSTATIC_INTERACTION	0
 #define elec_ewald		1
 #define elec_wolf		2
 #define elec_simple_coulomb	3
@@ -175,7 +176,15 @@ double rcutoff, rcutoffsq, rcuton, rcutonsq;
 double rcutoffelec, rcutoffelecsq;
 double f0; ///< 1,4 LJ potential modifier for OPLS, set to 1.0 for no modification or 0.5 for OPLS or 0.0 for TraPPE.
 int isLJswitchOn; ///< use switch potential for LJ or not
-int isChargeOn; ///< calculate electrostatic?
+/** 
+ * \brief Electrostatic interaction type
+ * 
+ * 0 - No electrostatic interaction
+ * 1 - Ewald Summation
+ * 2 - Wolf's method
+ * 3 - Simple direct coulomb interaction
+ */
+int iChargeType; 
 int isEwaldOn; ///< Ewald summation electrostatic interactions
 int fEwald_BC; ///< flag of boundary condition for ewald summation. 1-tinfoil; 2-vacuum
 int fEwald_Dim; ///< flag of Ewald method dimension. 1, 2 or 3 dimension.

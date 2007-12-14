@@ -8,12 +8,11 @@
 0.0                    1,4 LJ modifier (0.0 for no 14 TraPPE, 0.5 for OPLS)
 1 1                    simulation type, 0-MD, 1-HMC; ensemble type, 0-nve, 1-nvt, 2-npt;
 0                      isLJswitchOn
-1                      isChargeOn, need additional data sections for different methods
+3                      Electrostatic interaction type: 0-no elec intreaction, 1-ewald, 2-wolf, 3-simple coulomb
 3                      number of constraint
 0                      sf_type 0-no sf interaction, 1-hypergeo,2-atomexplicit,3-tasos,4-my interp
 
    Electrostatic
-3                     type (1-ewald, 2-wolf, 3-simple coulomb)
 0.2                   kappa ~4/cutoff
 2 2 2 16          kmaxx,kmaxy,kmaxz,ksqmax ~kappa*box length,  kmax^2<ksqmax<3*kmax^2
 1 3                    Boundary conditions(1-tinfoil,2-vaccum), Dimension(1,2,3 D)

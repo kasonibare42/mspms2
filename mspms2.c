@@ -720,15 +720,14 @@ int readins()
 	sscanf(fgets(buffer, datalen, fpins), "%d %d", &what_simulation,
 			&what_ensemble);
 	sscanf(fgets(buffer, datalen, fpins), "%d", &isLJswitchOn);
-	sscanf(fgets(buffer, datalen, fpins), "%d", &isChargeOn);
+	sscanf(fgets(buffer, datalen, fpins), "%d", &iChargeType);
 
 	sscanf(fgets(buffer, datalen, fpins), "%d", &nconstraint);
 
 	sscanf(fgets(buffer, datalen, fpins), "%d", &sf_type);
 
 	// read in electrostatic parametes if needed
-	int electype; // type of electrostatic
-	if (isChargeOn)
+	if (iChargeType != _NO_ELECTROSTATIC_INTERACTION)
 	{
 		// rewind the input file stream
 		rewind(fpins);
@@ -748,8 +747,7 @@ int readins()
 				// preset all electrostatic methods to false
 				// then turn on them according to the input
 				isEwaldOn = isWolfOn = isSimpleCoulomb = 0;
-				sscanf(fgets(buffer, datalen, fpins), "%d", &electype);
-				if (electype==elec_ewald)
+				if (iChargeType == elec_ewald)
 				{
 					isEwaldOn = 1;
 					sscanf(fgets(buffer, datalen, fpins), "%lf", &kappa);
@@ -758,12 +756,12 @@ int readins()
 					sscanf(fgets(buffer, datalen, fpins), "%d %d", &fEwald_BC,
 							&fEwald_Dim);
 				}
-				else if (electype==elec_wolf)
+				else if (iChargeType == elec_wolf)
 				{
 					isWolfOn = 1;
 					sscanf(fgets(buffer, datalen, fpins), "%lf", &kappa);
 				}
-				else if (electype==elec_simple_coulomb)
+				else if (iChargeType == elec_simple_coulomb)
 				{
 					isSimpleCoulomb = 1;
 				}
