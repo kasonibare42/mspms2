@@ -176,6 +176,7 @@ double rcutoff, rcutoffsq, rcuton, rcutonsq;
 double rcutoffelec, rcutoffelecsq;
 double f0; ///< 1,4 LJ potential modifier for OPLS, set to 1.0 for no modification or 0.5 for OPLS or 0.0 for TraPPE.
 int isLJswitchOn; ///< use switch potential for LJ or not
+int isLJlrc; ///< if L-J long range correction is ON
 /** 
  * \brief Electrostatic interaction type
  * 

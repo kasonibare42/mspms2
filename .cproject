@@ -60,7 +60,7 @@
 </toolChain>
 </folderInfo>
 <sourceEntries>
-<entry excluding="mylibtasos|tools" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
+<entry excluding="volchg.c|mylibtasos|tools" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
 </sourceEntries>
 </configuration>
 </storageModule>
@@ -355,7 +355,7 @@
 </toolChain>
 </folderInfo>
 <sourceEntries>
-<entry excluding="mylibtasos|tools" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
+<entry excluding="volchg.c|mylibtasos|tools" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
 </sourceEntries>
 </configuration>
 </storageModule>
