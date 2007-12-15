@@ -35,7 +35,9 @@ int init_hmc()
 	{
 		sscanf(buffer, "%s", keyword);
 		for (ii=0; ii<strlen(keyword); ii++)
+		{
 			keyword[ii] = toupper(keyword[ii]);
+		}
 		if (!strcmp(keyword, "HMC"))
 		{
 			fprintf(stderr,"Data section for HMC simulation found...\n");

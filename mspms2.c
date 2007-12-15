@@ -25,6 +25,82 @@
 #include "random.h"
 #include "funcs.h"
 
+/// Read in electrostatic parametes and initialize related variables
+int fnInitCharge()
+{
+	int ii;
+	const int datalen = 200;
+	char buffer[200];
+	char keyword[100];
+
+	fprintf(stderr,"Reading input data for Electrostatic interactions...\n");
+	fprintf(fpouts, "Reading input data for Electrostatic interactions...\n");
+
+	// re-open input file to read extra data section
+	fpins = fopen(INPUT,"r");
+
+	while (fgets(buffer, datalen, fpins)!=NULL)
+	{
+		sscanf(buffer, "%s", keyword);
+		for (ii=0; ii<strlen(keyword); ii++)
+		{
+			keyword[ii] = toupper(keyword[ii]);
+		}
+		if (!strcmp(keyword, "ELECTROSTATIC"))
+		{
+			fprintf(stderr,"Data section for electrostatics found...\n");
+			fprintf(fpouts, "Data section for electrostatics found...\n");
+
+			// preset all electrostatic methods to false
+			// then turn on them according to the input
+			isEwaldOn = isWolfOn = isSimpleCoulomb = 0;
+			if (iChargeType == elec_ewald)
+			{
+				isEwaldOn = 1;
+				sscanf(fgets(buffer, datalen, fpins), "%lf", &kappa);
+				sscanf(fgets(buffer, datalen, fpins), "%d %d %d %d", &KMAXX,
+						&KMAXY, &KMAXZ, &KSQMAX);
+				sscanf(fgets(buffer, datalen, fpins), "%d %d", &fEwald_BC,
+						&fEwald_Dim);
+			}
+			else if (iChargeType == elec_wolf)
+			{
+				isWolfOn = 1;
+				sscanf(fgets(buffer, datalen, fpins), "%lf", &kappa);
+			}
+			else if (iChargeType == elec_simple_coulomb)
+			{
+				isSimpleCoulomb = 1;
+			}
+
+			// Initialization
+			// set ewald parameters
+			kappasq = kappa*kappa;
+			Bfactor_ewald = 1.0/(4.0*kappa*kappa);
+			Vfactor_ewald = 2.0*pi/(boxlx*boxly*boxlz);
+			TWOPI_LX = 2.0*pi/boxlx;
+			TWOPI_LY = 2.0*pi/boxly;
+			TWOPI_LZ = 2.0*pi/boxlz;
+			// 1D ewald constant
+			twopi_over_3v = 2.0*pi/3.0/boxlx/boxly/boxlz;
+
+			// set wolf parameters
+			wolfvcon1 = -erfc(kappa*rcutoffelec)/rcutoffelec;
+			wolfvcon2 = erfc(kappa*rcutoffelec)/rcutoffelecsq + 2.0*kappa
+					*exp(-(kappa *rcutoffelec)*(kappa*rcutoffelec))/(sqrt(pi)
+					*rcutoffelec);
+			wolffcon1 = 2.0*kappa/sqrt(pi);
+			wolffcon2 = -wolfvcon2;
+
+			fclose(fpins);
+			return 0;
+		} // if keyword found
+	} // read through lines
+	fprintf(stderr,"Error: data for electrostatics not found.\n");
+	fprintf(fpouts, "Error: data for electrostatics not found.\n");
+	fclose(fpins);
+	exit(1);
+}
 
 /// Initiate variables 
 /**
@@ -139,6 +215,12 @@ int init_vars()
 	else if (sf_type==nanotube_my_interp)
 	{
 		init_my_interp();
+	}
+
+	// Read in electrostatic parametes and initialize if needed
+	if (iChargeType != _NO_ELECTROSTATIC_INTERACTION)
+	{
+		fnInitCharge();
 	}
 
 	// check unique for dihedrals
@@ -307,23 +389,6 @@ int init_vars()
 			}
 		}
 	}
-
-	// set ewald parameters
-	kappasq = kappa*kappa;
-	Bfactor_ewald = 1.0/(4.0*kappa*kappa);
-	Vfactor_ewald = 2.0*pi/(boxlx*boxly*boxlz);
-	TWOPI_LX = 2.0*pi/boxlx;
-	TWOPI_LY = 2.0*pi/boxly;
-	TWOPI_LZ = 2.0*pi/boxlz;
-	// 1D ewald constant
-	twopi_over_3v = 2.0*pi/3.0/boxlx/boxly/boxlz;
-
-	// set wolf parameters
-	wolfvcon1 = -erfc(kappa*rcutoffelec)/rcutoffelec;
-	wolfvcon2 = erfc(kappa*rcutoffelec)/rcutoffelecsq + 2.0*kappa*exp(-(kappa
-			*rcutoffelec)*(kappa*rcutoffelec))/(sqrt(pi)*rcutoffelec);
-	wolffcon1 = 2.0*kappa/sqrt(pi);
-	wolffcon2 = -wolfvcon2;
 
 	// read in coordinates
 	fpcoords = fopen(COORDSIN,"r");
@@ -688,8 +753,6 @@ int readins()
 	int ii;
 	const int datalen = 200;
 	char buffer[200];
-	char keyword[100];
-	int isDataFound;
 	int atomid, moleid;
 	int isFirstAtom;
 	int last_mole_id;
@@ -725,57 +788,6 @@ int readins()
 	sscanf(fgets(buffer, datalen, fpins), "%d", &nconstraint);
 
 	sscanf(fgets(buffer, datalen, fpins), "%d", &sf_type);
-
-	// read in electrostatic parametes if needed
-	if (iChargeType != _NO_ELECTROSTATIC_INTERACTION)
-	{
-		// rewind the input file stream
-		rewind(fpins);
-		isDataFound = false;
-		while (fgets(buffer, datalen, fpins)!=NULL)
-		{
-			sscanf(buffer, "%s", keyword);
-			for (ii=0; ii<strlen(keyword); ii++)
-			{
-				keyword[ii] = toupper(keyword[ii]);
-			}
-			if (!strcmp(keyword, "ELECTROSTATIC"))
-			{
-				fprintf(stderr,"Data section for electrostatics found...\n");
-				fprintf(fpouts, "Data section for electrostatics found...\n");
-				isDataFound = true;
-				// preset all electrostatic methods to false
-				// then turn on them according to the input
-				isEwaldOn = isWolfOn = isSimpleCoulomb = 0;
-				if (iChargeType == elec_ewald)
-				{
-					isEwaldOn = 1;
-					sscanf(fgets(buffer, datalen, fpins), "%lf", &kappa);
-					sscanf(fgets(buffer, datalen, fpins), "%d %d %d %d",
-							&KMAXX, &KMAXY, &KMAXZ, &KSQMAX);
-					sscanf(fgets(buffer, datalen, fpins), "%d %d", &fEwald_BC,
-							&fEwald_Dim);
-				}
-				else if (iChargeType == elec_wolf)
-				{
-					isWolfOn = 1;
-					sscanf(fgets(buffer, datalen, fpins), "%lf", &kappa);
-				}
-				else if (iChargeType == elec_simple_coulomb)
-				{
-					isSimpleCoulomb = 1;
-				}
-				break;
-			}
-		} // read through lines
-		if (isDataFound==false)
-		{
-			fprintf(stderr,"Error: data for electrostatics not found.\n");
-			fprintf(fpouts, "Error: data for electrostatics not found.\n");
-			exit(1);
-		}
-	} // if charge needed
-
 
 	fclose(fpins);
 

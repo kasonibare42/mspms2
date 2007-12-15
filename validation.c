@@ -20,10 +20,13 @@ int fnValidateInput()
 	{
 		fprintf(stderr, "Error: The first random number seed must have a value between 0 and 31328. ij = %d\n",ij);
 		fprintf(
-				stderr,
-				"Error: The second seed must have a value between 0 and 30081. jk = %d\n",
-				jk);
-		fprintf(fpouts, "Error: The first random number seed must have a value between 0 and 31328. ij = %d\n",ij);
+		stderr,
+		"Error: The second seed must have a value between 0 and 30081. jk = %d\n",
+		jk);
+		fprintf(
+				fpouts,
+				"Error: The first random number seed must have a value between 0 and 31328. ij = %d\n",
+				ij);
 		fprintf(
 				fpouts,
 				"Error: The second seed must have a value between 0 and 30081. jk = %d\n",
@@ -70,6 +73,17 @@ int fnValidateInput()
 		fprintf(fpouts,
 				"Error: Invalid solid-fluid interaction type. sf_type = %d\n",
 				sf_type);
+		isError = 1;
+	}
+
+	if (iChargeType < _NO_ELECTROSTATIC_INTERACTION || iChargeType
+			> elec_simple_coulomb)
+	{
+		fprintf(stderr,"Error: Invalid electrostatic interaction type. iChargeType = %d\n", iChargeType);
+		fprintf(
+				fpouts,
+				"Error: Invalid electrostatic interaction type. iChargeType = %d\n",
+				iChargeType);
 		isError = 1;
 	}
 
