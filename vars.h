@@ -442,14 +442,19 @@ double accumulator[num_counter_max][8];
  * 
  icounter[10]   number of average cycles	\n
  icounter[11]	decrease, for equilibrium	\n
+ 
+ Following counters will be set to zero periodically during equilibrium run.
+ After equilibrium, they will be used to calculate the final acceptance ratio.\n
  icounter[20]	number of canonical moves	\n
  icounter[21]   number of accepted canonical moves	\n
- icounter[22]   number of volume change moves	\n
- icounter[23]	number of accepted volume change moves	\n
- icounter[24]   number of insertion	\n
- icounter[25]   number of accepted insertion	\n
- icounter[26]   number of deletion	\n
- icounter[27]   number of accepted deletion	\n
+ 
+ icounter[23]   number of volume change moves	\n
+ icounter[24]	number of accepted volume change moves	\n
+ 
+ icounter[26]   number of insertion	\n
+ icounter[27]   number of accepted insertion	\n
+ icounter[28]   number of deletion	\n
+ icounter[29]   number of accepted deletion	\n
  */
 
 #endif /* VARS_H */

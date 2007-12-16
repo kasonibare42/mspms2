@@ -574,11 +574,21 @@ int ending()
 		fprintf(fpouts, "accepted canonical moves    %15d\n", icounter[21]);
 		fprintf(fpouts, "   ratio                    %15.4lf\n", icounter[21]
 				*1.0/icounter[20]);
+		fprintf(fpouts, "   delt                     %15.4lf\n", delt);
+
+		if (prob_vc > 0.0)
+		{
+			fprintf(fpouts, "Total volume changes        %15d\n", icounter[23]);
+			fprintf(fpouts, "accepted volume changes     %15d\n", icounter[24]);
+			fprintf(fpouts, "   ratio                    %15.4lf\n",
+					icounter[24] *1.0/icounter[23]);
+			fprintf(fpouts, "   delv                     %15.4lf\n", delv);
+		}
 	}
 
 	fprintf(fpouts,
 			"=========================================================\n");
-	
+
 	// release the dynamically allocated memory for saving old positions for HMC simulation
 	if (what_simulation == hmc_run)
 	{
@@ -778,6 +788,7 @@ int readins()
 
 	sscanf(fgets(buffer, datalen, fpins), "%d %d", &ij, &jk);
 	sscanf(fgets(buffer, datalen, fpins), "%lf", &treq);
+	sscanf(fgets(buffer, datalen, fpins), "%lf", &preq);
 	sscanf(fgets(buffer, datalen, fpins), "%lf %lf %lf", &boxlx, &boxly, &boxlz);
 	sscanf(fgets(buffer, datalen, fpins), "%lf %lf %lf", &rcuton, &rcutoff,
 			&rcutoffelec);

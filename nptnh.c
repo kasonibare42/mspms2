@@ -26,12 +26,14 @@ int init_npt_respa()
 	{
 		sscanf(buffer, "%s", keyword);
 		for (ii=0; ii<strlen(keyword); ii++)
+		{
 			keyword[ii] = toupper(keyword[ii]);
+		}
 		if (!strcmp(keyword, "MDNPT"))
 		{
 			fprintf(stderr,"Data section for MD NPT simulation found...\n");
 			fprintf(fpouts, "Data section for MD NPT simulation found...\n");
-			sscanf(fgets(buffer, datalen, fpins), "%lf", &preq);
+
 			sscanf(fgets(buffer, datalen, fpins), "%lf %lf", &Qts, &Qbs);
 
 			// thermo/barostat

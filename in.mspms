@@ -1,5 +1,6 @@
 1024 768               random seeds
 298.0                  Temperature
+8000.0                 Pressure (Pascal)
 100.0 100.0 100.0      box length, width, height
 20.0 20.0 20.0         rcuton, rcutoff, rcutoffelec
 1000 1 0               number of total steps, starting option (1-new;2-continue;3-new from old), equilibrium steps
@@ -21,7 +22,6 @@
 1e14 1e9               qq qqs (outer and inner) Nose hoover thermostat mass, qq goes to infinity->NVE
 
    MDnpt
-8000.0                 required pressure (pascal)
 1.0e8 1.0e8            Qts Qbs (mass of thermostat, barostat), larger number = weaker coupling
 
    hypergeo

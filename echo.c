@@ -104,6 +104,7 @@ int echo()
 	fprintf(fpouts, "    The trajectory is taken every %d steps.\n", nstep_trj);
 	fprintf(fpouts, "Random seeds are set to be %d (ij) and %d (jk).\n", ij, jk);
 	fprintf(fpouts, "Required Temperature is %lf.\n", treq);
+	fprintf(fpouts, "Required Pressure is %lf.\n", preq);
 	fprintf(
 			fpouts,
 			"Time step is %lf fs, with %d inner step(s), which is %lf fs for one inner step.\n",
@@ -195,7 +196,6 @@ int echo()
 		if (what_ensemble == npt_run)
 		{
 			fprintf(fpouts, "MDNPT data section is required:\n");
-			fprintf(fpouts, "    Required Pressure is %lf.\n", preq);
 			fprintf(
 					fpouts,
 					"    The mass of thermostat is %le. The Mass of barostat is %le. (Larger number means weaker coupling)\n",

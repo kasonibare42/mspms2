@@ -102,6 +102,9 @@ int hmc()
 	// make snapshots & movies
 	trajectory();
 
+	// above counts as the first step
+	icounter[11]--;
+	
 	// simulation loop
 	for (istep=nstep_start; istep<=nstep; istep++) // NOTE: start from 1 and <=
 	{
@@ -144,10 +147,10 @@ int hmc()
 		// do not do averages
 		if (icounter[11]>=0)
 		{
-			if (icounter[20]%nstep_delt_adj_cycle==0) // delt adjustment
+			if (icounter[20]==nstep_delt_adj_cycle) // delt adjustment
 			{
 				ratio = icounter[21]*1.0/nstep_delt_adj_cycle;
-				delt *= (1.0 - ratio_cm_req + ratio);
+				delt = delt*(1.0 - ratio_cm_req + ratio);
 				icounter[20] = 0;
 				icounter[21] = 0;
 				// delt update
@@ -155,13 +158,12 @@ int hmc()
 				delts = delt/nstep_inner;
 				deltsby2 = delts/2.0;
 			}
-			if (icounter[22]%nstep_delv_adj_cycle==0) // delv adjustment
+			if (icounter[23]==nstep_delv_adj_cycle) // delv adjustment
 			{
-				ratio = icounter[23]*1.0/nstep_delv_adj_cycle;
+				ratio = icounter[24]*1.0/nstep_delv_adj_cycle;
 				delv = delv*(1.0 - ratio_vc_req + ratio);
-				icounter[22] = 0;
 				icounter[23] = 0;
-				// length update
+				icounter[24] = 0;
 			}
 			continue;
 		}

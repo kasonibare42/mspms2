@@ -30,10 +30,8 @@ int fnVolumeChange()
 
 	// Random volume change
 	ranmar(rndnum, 1);
-	delv = 2.0*delv*(rndnum[0]-0.5);
-
 	// calculate the new box size
-	fVolumeNew = boxv + delv;
+	fVolumeNew = boxv + 2.0*delv*(rndnum[0]-0.5);
 	fRatioNewV2OldV = fVolumeNew/boxv;
 	fRatioNewL2OldL = pow(fRatioNewV2OldV, 0.333333333);
 	fLengthNew = boxlx*fRatioNewL2OldL;
@@ -91,7 +89,7 @@ int fnVolumeChange()
 	dH = dH - nmole*log(fRatioNewV2OldV);
 
 	// attempted vc moves
-	icounter[22]++;
+	icounter[23]++;
 	
 	// check if the move is accepted
 	isAccept = 0;
@@ -110,7 +108,15 @@ int fnVolumeChange()
 	if (isAccept == 1)
 	{
 		// accepted vc moves
-		icounter[23]++;
+		icounter[24]++;
+		
+		// re-calculate box size related variables
+		Vfactor_ewald = 2.0*pi/(boxlx*boxly*boxlz);
+		TWOPI_LX = 2.0*pi/boxlx;
+		TWOPI_LY = 2.0*pi/boxly;
+		TWOPI_LZ = 2.0*pi/boxlz;
+		// 1D ewald constant
+		twopi_over_3v = 2.0*pi/3.0/boxlx/boxly/boxlz;
 	}
 	else
 	{

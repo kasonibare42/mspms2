@@ -129,7 +129,9 @@ int md()
 
 	// if not new run, load from old file
 	if (fStart_option!=new_run)
+	{
 		loadit();
+	}
 
 	// calculate total energies
 	erfrc();
@@ -141,6 +143,9 @@ int md()
 	// make snapshots & movies
 	trajectory();
 
+	// above counts as the first step
+	icounter[11]--;
+	
 	if (what_ensemble == nvt_run) // velocity verlet with nose hoover for NVT MD
 	{
 		for (istep=nstep_start; istep<=nstep; istep++) // NOTE: start from 1 and <=
