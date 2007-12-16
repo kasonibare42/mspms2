@@ -8,7 +8,7 @@
 1.0 5                  delt (fs), number of inner steps (cant be zero, 1 is the minimum)
 0.0                    1,4 LJ modifier (0.0 for no 14 TraPPE, 0.5 for OPLS)
 1 1                    simulation type, 0-MD, 1-HMC; ensemble type, 0-nve, 1-nvt, 2-npt;
-0                      isLJswitchOn
+1 0                    isLJlrcOn, isLJswitchOn
 3                      Electrostatic interaction type: 0-no elec intreaction, 1-ewald, 2-wolf, 3-simple coulomb
 3                      number of constraint
 0                      sf_type 0-no sf interaction, 1-hypergeo,2-atomexplicit,3-tasos,4-my interp

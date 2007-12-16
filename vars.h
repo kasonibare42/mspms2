@@ -160,6 +160,7 @@ char sysname[200];
 
 FILE *fpins, *fpouts, *fpcfg, *fplog;
 FILE *fpss, *fptrj, *fpsave, *fpload;
+FILE *fpcoords;
 
 int nstep, nstep_eq, nstep_start; ///< nstep_start is the starting step for continue runs 
 int fStart_option; ///< 1-new run, 2-continue run, 3-new from old
@@ -176,7 +177,7 @@ double rcutoff, rcutoffsq, rcuton, rcutonsq;
 double rcutoffelec, rcutoffelecsq;
 double f0; ///< 1,4 LJ potential modifier for OPLS, set to 1.0 for no modification or 0.5 for OPLS or 0.0 for TraPPE.
 int isLJswitchOn; ///< use switch potential for LJ or not
-int isLJlrc; ///< if L-J long range correction is ON
+int isLJlrcOn; ///< if L-J long range correction is ON
 /** 
  * \brief Electrostatic interaction type
  * 

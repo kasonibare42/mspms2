@@ -235,6 +235,17 @@ int npt_respa()
 		boxlz = boxlz*expfactor;
 		boxv = boxlx*boxly*boxlz;
 
+		// re-calculate box size related variables for ewald summation
+		if (iChargeType == elec_ewald)
+		{
+			Vfactor_ewald = 2.0*pi/(boxlx*boxly*boxlz);
+			TWOPI_LX = 2.0*pi/boxlx;
+			TWOPI_LY = 2.0*pi/boxly;
+			TWOPI_LZ = 2.0*pi/boxlz;
+			// 1D ewald constant
+			twopi_over_3v = 2.0*pi/3.0/boxlx/boxly/boxlz;
+		}
+		
 		// intra forces, short ranged
 		rafrc();
 

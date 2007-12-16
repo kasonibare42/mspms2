@@ -9,8 +9,6 @@
 int fnVolumeChange()
 {
 	// zero the delta energies
-	fDeltaUljlrc = 0.0;
-	fDeltaPljlrc = 0.0;
 	fDeltaU = 0.0;
 
 	// save the old states
@@ -65,7 +63,7 @@ int fnVolumeChange()
 	}
 
 	/// Calculate new LJ lrc is LJlrc is enabled
-	if (isLJlrc)
+	if (isLJlrcOn)
 	{
 		// delv_ljlrc(pBox, del_uljlrc, del_pljlrc, delv);
 		fDeltaUljlrc = uljlrc - uljlrc_old;
@@ -90,7 +88,7 @@ int fnVolumeChange()
 
 	// attempted vc moves
 	icounter[23]++;
-	
+
 	// check if the move is accepted
 	isAccept = 0;
 	if (dH <= 0.0)
@@ -109,14 +107,17 @@ int fnVolumeChange()
 	{
 		// accepted vc moves
 		icounter[24]++;
-		
-		// re-calculate box size related variables
-		Vfactor_ewald = 2.0*pi/(boxlx*boxly*boxlz);
-		TWOPI_LX = 2.0*pi/boxlx;
-		TWOPI_LY = 2.0*pi/boxly;
-		TWOPI_LZ = 2.0*pi/boxlz;
-		// 1D ewald constant
-		twopi_over_3v = 2.0*pi/3.0/boxlx/boxly/boxlz;
+
+		// re-calculate box size related variables for ewald summation
+		if (iChargeType == elec_ewald)
+		{
+			Vfactor_ewald = 2.0*pi/(boxlx*boxly*boxlz);
+			TWOPI_LX = 2.0*pi/boxlx;
+			TWOPI_LY = 2.0*pi/boxly;
+			TWOPI_LZ = 2.0*pi/boxlz;
+			// 1D ewald constant
+			twopi_over_3v = 2.0*pi/3.0/boxlx/boxly/boxlz;
+		}
 	}
 	else
 	{
