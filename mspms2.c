@@ -578,6 +578,14 @@ int ending()
 
 	fprintf(fpouts,
 			"=========================================================\n");
+	
+	// release the dynamically allocated memory for saving old positions for HMC simulation
+	if (what_simulation == hmc_run)
+	{
+		free(xx_old);
+		free(yy_old);
+		free(zz_old);
+	}
 
 	if (sf_type==nanotube_hypergeo)
 	{
@@ -1432,6 +1440,7 @@ int main(int argc, char *argv[])
 	fnValidateInput();
 	init_vars();
 	make_exclude_list();
+	fnValidateInit();
 
 	if (what_simulation == md_run)
 	{

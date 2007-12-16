@@ -233,6 +233,18 @@ double virial_intra;
 double pideal;
 double pinst; ///< instantaneous pressure
 
+/**
+ * Variables used to save the old states
+ */
+double *xx_old, *yy_old, *zz_old;
+double upot_old, utot_old;
+double upot_new, utot_new;
+double uljlrc_old, pljlrc_old;
+double ukin_old, tinst_old, uinter_old, uintra_old, uvdw_old, ubond_old,
+		uangle_old, udih_old, uimp_old, uewald_old, uwolf_old, ucoulomb_old, usflj_old, 
+		unhts_old, unhtss_old, virial_inter_old, virial_intra_old,
+		utsbs_old, pinst_old, boxlx_old, boxly_old, boxlz_old, boxv_old;
+
 /** 
  * The Session variables are used to store the results from one calculation session.
  * E.g., one loop_ij() session. They will be used to calculate the final total energies
@@ -289,6 +301,18 @@ int nstep_md_per_hmc; ///< steps of md moves per hmc cycle
 int nstep_delt_adj_cycle; ///< steps between two delt adjustment
 int nstep_delv_adj_cycle; ///< steps between two delv adjustment
 double delv;
+double prob_vc_upper; ///< upper limit of volume change probability, i.e. prob_cm+prob_vc
+
+int isAccept;
+double rndnum[3];
+double dH;
+double fDeltaU;
+double fDeltaUljlrc, fDeltaPljlrc;
+double fVolumeNew;
+double fLengthNew, fWidthNew, fHeightNew;
+double fRatioNewV2OldV;
+double fRatioNewL2OldL;
+double fMinHalf;
 
 // my interpolations
 // energy and forces interpolation parameters

@@ -94,3 +94,21 @@ int fnValidateInput()
 
 	return 0;
 }
+
+/**
+ * \brief Validate the initialized data.
+ */
+int fnValidateInit()
+{
+	if (prob_cm+prob_vc+prob_id>1.0)
+	{
+		fprintf( stderr, "Warning: prob_cm (%lf) + prob_vc (%lf) + prob_id (%lf) > 1.0 \n", prob_cm, prob_vc, prob_id);
+		fprintf(
+				fpouts,
+				"Warning: prob_cm (%lf) + prob_vc (%lf) + prob_id (%lf) > 1.0 \n",
+				prob_cm, prob_vc, prob_id);
+	}
+	
+	return 0;
+}
+

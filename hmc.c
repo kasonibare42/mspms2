@@ -52,15 +52,17 @@ int init_hmc()
 					&nstep_delt_adj_cycle, &nstep_delv_adj_cycle);
 			sscanf(fgets(buffer, datalen, fpins), "%lf", &delv);
 
-			if (prob_cm+prob_vc+prob_id>1.0)
-			{
-				fprintf( stderr, "Warning: prob_cm (%lf) + prob_vc (%lf) + prob_id (%lf) > 1.0 \n", prob_cm, prob_vc, prob_id);
-				fprintf(
-						fpouts,
-						"Warning: prob_cm (%lf) + prob_vc (%lf) + prob_id (%lf) > 1.0 \n",
-						prob_cm, prob_vc, prob_id);
+			// allocate memory for saving positions
+			_safealloc(xx_old,natom,sizeof(double))
+			;
+			_safealloc(yy_old,natom,sizeof(double))
+			;
+			_safealloc(zz_old,natom,sizeof(double))
+			;
 
-			}
+			// calculate the upper limit of volume changes
+			prob_vc_upper = prob_cm + prob_vc;
+
 			fclose(fpins);
 			return 0;
 		} // if keyword found
@@ -71,32 +73,12 @@ int init_hmc()
 	exit(1);
 }
 
+/**
+ * \brief Hybrid Monte Carlo simulation
+ */
 int hmc()
 {
-	int ii;
-	double prob_vc_upper;
-	double *xx_old, *yy_old, *zz_old;
-	double upot_old, utot_old;
-	double upot_new, utot_new;
-	double ukin_old, tinst_old, uinter_old, uintra_old, uvdw_old, ubond_old,
-			uangle_old, udih_old, uimp_old, uewald_old, usflj_old, unhts_old,
-			unhtss_old, virial_inter_old, virial_intra_old,
-			utsbs_old, pinst_old, boxlx_old, boxly_old, boxlz_old, boxv_old;
-	double dH;
-	int isAccept;
-	double rndnum[3];
 	double ratio;
-
-	// calculate the upper limit of volume changes
-	prob_vc_upper = prob_cm + prob_vc;
-
-	// allocate memory for saving positions
-	_safealloc(xx_old,natom,sizeof(double))
-	;
-	_safealloc(yy_old,natom,sizeof(double))
-	;
-	_safealloc(zz_old,natom,sizeof(double))
-	;
 
 	// start of the HMC simulation
 	// initialize velocities
@@ -105,49 +87,14 @@ int hmc()
 
 	// if not new run, load from old file
 	if (fStart_option!=new_run)
+	{
 		loadit();
+	}
 
 	// calculate total energies
 	erfrc();
 	rafrc();
-
-	// the energies
-	upot_old = uinter + uintra;
-	utot_old = upot_old + ukin;
-	// add energy of thermostat, if nose hoover is not used, they will just be zero
-	utot_old = utot_old + unhts + unhtss + utsbs;
-	// add long range corrections into total energy
-	utot_old = utot_old + uljlrc;
-
-	// save old positions and energies
-	for (ii=0; ii<natom; ii++)
-	{
-		xx_old[ii] = xx[ii];
-		yy_old[ii] = yy[ii];
-		zz_old[ii] = zz[ii];
-	}
-	ukin_old = ukin;
-	tinst_old = tinst;
-	uinter_old = uinter;
-	uintra_old = uintra;
-	uvdw_old = uvdw;
-	ubond_old = ubond;
-	uangle_old = uangle;
-	udih_old = udih;
-	uimp_old = uimp;
-	uewald_old = uewald;
-	usflj_old = usflj;
-	unhts_old = unhts;
-	unhtss_old = unhtss_old;
-	virial_inter_old = virial_inter;
-	virial_intra_old = virial_intra;
-	utsbs_old = utsbs;
-	pinst_old = pinst;
-	boxlx_old = boxlx;
-	boxly_old = boxly;
-	boxlz_old = boxlz;
-	boxv_old = boxv;
-
+	
 	// print out initial values
 	echo();
 	// print initial properties
@@ -162,115 +109,11 @@ int hmc()
 
 		if (rndnum[0] <= prob_cm) // canonical moves
 		{
-			// vel init and energy calcualtions have been done for the 1st step outside the loop
-			if (istep!=nstep_start)
-			{
-				velinit();
-				erfrc();
-				rafrc();
-				// the energies
-				upot_old = uinter + uintra;
-				utot_old = upot_old + ukin;
-				// add energy of thermostat, if nose hoover is not used, they will just be zero
-				utot_old = utot_old + unhts + unhtss + utsbs;
-				// add long range corrections into total energy
-				utot_old = utot_old + uljlrc;
-
-				// save old positions and energies
-				for (ii=0; ii<natom; ii++)
-				{
-					xx_old[ii] = xx[ii];
-					yy_old[ii] = yy[ii];
-					zz_old[ii] = zz[ii];
-				}
-				ukin_old = ukin;
-				tinst_old = tinst;
-				uinter_old = uinter;
-				uintra_old = uintra;
-				uvdw_old = uvdw;
-				ubond_old = ubond;
-				uangle_old = uangle;
-				udih_old = udih;
-				uimp_old = uimp;
-				uewald_old = uewald;
-				usflj_old = usflj;
-				unhts_old = unhts;
-				unhtss_old = unhtss_old;
-				virial_inter_old = virial_inter;
-				virial_intra_old = virial_intra;
-				utsbs_old = utsbs;
-				pinst_old = pinst;
-				boxlx_old = boxlx;
-				boxly_old = boxly;
-				boxlz_old = boxlz;
-				boxv_old = boxv;
-			}
-			// MD moves
-			for (ii=0; ii<nstep_md_per_hmc; ii++)
-			{
-				vver();
-			}
-			upot_new = uinter + uintra;
-			utot_new = upot_new + ukin;
-			// add energy of thermostat, if nose hoover is not used, they will just be zero
-			utot_new = utot_new + unhts + unhtss + utsbs;
-			// add long range corrections into total energy
-			utot_new = utot_new + uljlrc;
-
-			// Hamotonial difference
-			dH = (utot_new - utot_old)*rRgas/treq;
-			isAccept = 0;
-			if (dH <= 0.0)
-			{
-				isAccept = 1;
-			}
-			else
-			{
-				ranmar(rndnum, 1);
-				if (rndnum[0] < exp(-dH))
-					isAccept = 1;
-			}
-
-			icounter[20]++; // canonical moves
-			if (isAccept == 1)
-			{
-				icounter[21]++; // accepted canonical moves
-			}
-			else
-			{
-				// restore old values
-				for (ii=0; ii<natom; ii++)
-				{
-					xx[ii] = xx_old[ii];
-					yy[ii] = yy_old[ii];
-					zz[ii] = zz_old[ii];
-				}
-				ukin = ukin_old;
-				tinst = tinst_old;
-				uinter = uinter_old;
-				uintra = uintra_old;
-				uvdw = uvdw_old;
-				ubond = ubond_old;
-				uangle = uangle_old;
-				udih = udih_old;
-				uimp = uimp_old;
-				uewald = uewald_old;
-				usflj = usflj_old;
-				unhts = unhts_old;
-				unhtss = unhtss_old;
-				virial_inter = virial_inter_old;
-				virial_intra = virial_intra_old;
-				utsbs = utsbs_old;
-				pinst = pinst_old;
-				boxlx = boxlx_old;
-				boxly = boxly_old;
-				boxlz = boxlz_old;
-				boxv = boxv_old;
-			}
+			fnMDmove();
 		}
 		else if (rndnum[0]<=prob_vc_upper) // volume change moves
 		{
-			// volchg(pBox);
+			fnVolumeChange();
 		}
 		else // insertions or deletions
 		{
@@ -320,7 +163,6 @@ int hmc()
 				icounter[23] = 0;
 				// length update
 			}
-
 			continue;
 		}
 
@@ -333,11 +175,6 @@ int hmc()
 			averages();
 		}
 	}
-
-	// release the dynamically allocated memory for saving old positions
-	free(xx_old);
-	free(yy_old);
-	free(zz_old);
 
 	return 0;
 }
