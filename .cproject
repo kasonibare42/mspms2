@@ -327,7 +327,7 @@
 </extensions>
 </storageModule>
 <storageModule moduleId="cdtBuildSystem" version="4.0.0">
-<configuration artifactName="mspms2" buildArtefactType="org.eclipse.cdt.build.core.buildArtefactType.exe" buildProperties="org.eclipse.cdt.build.core.buildType=org.eclipse.cdt.build.core.buildType.release,org.eclipse.cdt.build.core.buildArtefactType=org.eclipse.cdt.build.core.buildArtefactType.exe" cleanCommand="rm -rf" description="" id="cdt.managedbuild.config.gnu.mingw.exe.release.574726965" name="Release" parent="cdt.managedbuild.config.gnu.mingw.exe.release">
+<configuration artifactExtension="exe" artifactName="mspms2" buildArtefactType="org.eclipse.cdt.build.core.buildArtefactType.exe" buildProperties="org.eclipse.cdt.build.core.buildType=org.eclipse.cdt.build.core.buildType.release,org.eclipse.cdt.build.core.buildArtefactType=org.eclipse.cdt.build.core.buildArtefactType.exe" cleanCommand="rm -rf" description="" id="cdt.managedbuild.config.gnu.mingw.exe.release.574726965" name="Release" parent="cdt.managedbuild.config.gnu.mingw.exe.release">
 <folderInfo id="cdt.managedbuild.config.gnu.mingw.exe.release.574726965." name="/" resourcePath="">
 <toolChain id="cdt.managedbuild.toolchain.gnu.mingw.exe.release.1390937836" name="MinGW GCC" superClass="cdt.managedbuild.toolchain.gnu.mingw.exe.release">
 <targetPlatform id="cdt.managedbuild.target.gnu.platform.mingw.exe.release.1032674999" name="Debug Platform" superClass="cdt.managedbuild.target.gnu.platform.mingw.exe.release"/>
@@ -343,9 +343,27 @@
 <tool id="cdt.managedbuild.tool.gnu.c.compiler.mingw.exe.release.164845294" name="GCC C Compiler" superClass="cdt.managedbuild.tool.gnu.c.compiler.mingw.exe.release">
 <option defaultValue="gnu.c.optimization.level.most" id="gnu.c.compiler.mingw.exe.release.option.optimization.level.1247376676" name="Optimization Level" superClass="gnu.c.compiler.mingw.exe.release.option.optimization.level" valueType="enumerated"/>
 <option id="gnu.c.compiler.mingw.exe.release.option.debugging.level.775280355" name="Debug Level" superClass="gnu.c.compiler.mingw.exe.release.option.debugging.level" value="gnu.c.debugging.level.none" valueType="enumerated"/>
+<option id="gnu.c.compiler.option.include.paths.549355435" name="Include paths (-I)" superClass="gnu.c.compiler.option.include.paths" valueType="includePath">
+<listOptionValue builtIn="false" value="&quot;C:\Program Files\GnuWin32\include&quot;"/>
+</option>
+<option id="gnu.c.compiler.option.warnings.allwarn.351964583" superClass="gnu.c.compiler.option.warnings.allwarn" value="false" valueType="boolean"/>
 <inputType id="cdt.managedbuild.tool.gnu.c.compiler.input.60477424" superClass="cdt.managedbuild.tool.gnu.c.compiler.input"/>
 </tool>
 <tool id="cdt.managedbuild.tool.gnu.c.linker.mingw.exe.release.1673504499" name="MinGW C Linker" superClass="cdt.managedbuild.tool.gnu.c.linker.mingw.exe.release">
+<option id="gnu.c.link.option.noshared.1056849550" name="No shared libraries (-static)" superClass="gnu.c.link.option.noshared" value="true" valueType="boolean"/>
+<option id="gnu.c.link.option.libs.2004441520" name="Libraries (-l)" superClass="gnu.c.link.option.libs" valueType="libs">
+<listOptionValue builtIn="false" value="gfortran"/>
+<listOptionValue builtIn="false" value="m"/>
+<listOptionValue builtIn="false" value="gslcblas"/>
+<listOptionValue builtIn="false" value="gsl"/>
+</option>
+<option id="gnu.c.link.option.paths.359621717" name="Library search path (-L)" superClass="gnu.c.link.option.paths" valueType="libPaths">
+<listOptionValue builtIn="false" value="&quot;C:\Program Files\GnuWin32\lib&quot;"/>
+<listOptionValue builtIn="false" value="&quot;C:\Program Files\gfortran\lib&quot;"/>
+</option>
+<option id="gnu.c.link.option.userobjs.1916687739" name="Other objects" superClass="gnu.c.link.option.userobjs" valueType="userObjs">
+<listOptionValue builtIn="false" value="&quot;mylibtasos\libtasos.a&quot;"/>
+</option>
 <inputType id="cdt.managedbuild.tool.gnu.c.linker.input.1172090470" superClass="cdt.managedbuild.tool.gnu.c.linker.input">
 <additionalInput kind="additionalinputdependency" paths="$(USER_OBJS)"/>
 <additionalInput kind="additionalinput" paths="$(LIBS)"/>

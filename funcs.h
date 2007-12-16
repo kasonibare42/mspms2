@@ -27,8 +27,9 @@ int hmc();
 int calculate_ljlrc();
 int fnValidateInput();
 int fnValidateInit();
-int fnMDmoves();
+int fnMDmove();
 int fnVolumeChange();
+int do_accumu();
 
 
 #endif /*FUNCS_H_*/

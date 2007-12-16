@@ -10,19 +10,15 @@
 #include <math.h>
 #include <assert.h>
 #include <ctype.h>
+#include "random.h"
 #include "vars.h"
 #include "funcs.h"
 
 int init_hmc()
 {
-	int ii, jj;
+	int ii;
 	const int datalen = 200;
 	char buffer[200];
-	double auc, buc, cuc, nanotuberadius;
-	int na, nb, nc;
-	int nspecies_yang;
-	int tnuatoms;
-	char szgrid[12][200]; // assuming only 12 types of grids
 	char keyword[100];
 
 	fprintf(stderr,"Reading input data for HMC simulation...\n");

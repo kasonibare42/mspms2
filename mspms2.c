@@ -113,8 +113,6 @@ int fnInitCharge()
 int init_vars()
 {
 	int ii, jj;
-	char buffer[200];
-	const int datalen = 200;
 
 	fprintf(stderr,"Initializing variables...\n");
 	fprintf(fpouts, "Initializing variables...\n");
@@ -1036,7 +1034,6 @@ int readins()
 	for (ii=0; ii<natom; ii++)
 	{
 		fscanf(fpcoords, "%s %lf %lf %lf\n", buffer, &xx[ii], &yy[ii], &zz[ii]);
-		fprintf(stderr,"%s  %lf  %lf  %lf\n",buffer, xx[ii],yy[ii],zz[ii]);
 	}
 	fclose(fpcoords);
 

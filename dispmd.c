@@ -4,7 +4,9 @@
 #include <math.h>
 #include <assert.h>
 #include <ctype.h>
+#include "random.h"
 #include "vars.h"
+#include "funcs.h"
 
 /**
  * \brief MD moves for HMC etc.
