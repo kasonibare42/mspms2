@@ -60,7 +60,7 @@
 </toolChain>
 </folderInfo>
 <sourceEntries>
-<entry excluding="mylibtasos|tools" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
+<entry excluding="insdel.c|mylibtasos|tools" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
 </sourceEntries>
 </configuration>
 </storageModule>
@@ -346,7 +346,7 @@
 <option id="gnu.c.compiler.option.include.paths.549355435" name="Include paths (-I)" superClass="gnu.c.compiler.option.include.paths" valueType="includePath">
 <listOptionValue builtIn="false" value="&quot;C:\Program Files\GnuWin32\include&quot;"/>
 </option>
-<option id="gnu.c.compiler.option.warnings.allwarn.351964583" superClass="gnu.c.compiler.option.warnings.allwarn" value="false" valueType="boolean"/>
+<option id="gnu.c.compiler.option.warnings.allwarn.351964583" name="All warnings (-Wall)" superClass="gnu.c.compiler.option.warnings.allwarn" value="false" valueType="boolean"/>
 <inputType id="cdt.managedbuild.tool.gnu.c.compiler.input.60477424" superClass="cdt.managedbuild.tool.gnu.c.compiler.input"/>
 </tool>
 <tool id="cdt.managedbuild.tool.gnu.c.linker.mingw.exe.release.1673504499" name="MinGW C Linker" superClass="cdt.managedbuild.tool.gnu.c.linker.mingw.exe.release">
@@ -373,7 +373,7 @@
 </toolChain>
 </folderInfo>
 <sourceEntries>
-<entry excluding="mylibtasos|tools" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
+<entry excluding="insdel.c|mylibtasos|tools" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
 </sourceEntries>
 </configuration>
 </storageModule>
