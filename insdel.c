@@ -6,34 +6,55 @@
 #include <ctype.h>
 #include "vars.h"
 
+int GetNextVacancy(int iSpecie)
+{
+	return (vacancy_idx[iSpecie]==-1) ? nmole : vacancy_idx[iSpecie];
+}
+
+int SetNextVacancy(int iSpecie, int index)
+{
+	if (vacancy_idx[ii] != -1 && index > vacancy_idx[iSpecie])
+	{
+		return 0;
+	}
+	else
+	{
+		vacancy_idx[ii] = index;
+	}
+}
+
 int fnInsDelMole()
 {
 	int ii, jj;
+	int iSpecieSelected;
+	int iMoleSelected;
 
 	ranmar(rndnum, 2);
 
-	pSpecie->zact = pSpecie_input[jj].fugacity/_KB_OVER_ANG3/pBox->temperature;
-	
-	for (ii=0; ii<pBox->nspecie; ii++)
+	// Find out which specie to insert/delete
+	for (ii=0; ii<nspecie; ii++)
 	{
-		prob_select = (pSpecie_input+ii)->prob_select;
-		if (rndnum[0] < prob_select)
+		if (rndnum[0] < probability_to_be_selected[ii])
 		{
-			idSpecieSelect = ii;
-			pSpecieSelect = pBox->specie_list + idSpecieSelect;
-			prob_insert = (pSpecie_input+ii)->prob_insert;
-			zact = pSpecieSelect->zact;
+			iSpecieSelected = ii;
 			break;
 		}
 		else
-			rndnum[0] = rndnum[0] - prob_select;
+		{
+			rndnum[0] = rndnum[0] - probability_to_be_selected[ii];
+		}
 	}
 
 	// insert or delete
-	if (rndnum[1] < prob_insert) // insert
+	if (rndnum[1] < probability_to_insert[iSpecieSelected]) // insert
 	{
-		pBox->counter[6]++; // insertions
-		pSpecieSelect->counter[0]++; // insertions for species
+		icounter[26]++; // counter of insertions
+		
+		// get the vacancy where the molecule can be inserted into
+		iMoleSelected = GetNextVacancy(iSpecieSelected);
+		// set the status of the molecule to normal
+		mole_status[iMoleSelected] = MOLE_STATUS_NORMAL;
+
 		// use the molecule next to the last molecule as the inserted molecule
 		pMoleInsert = pSpecieSelect->mole_list + pSpecieSelect->nmole;
 		pSampleMole = pMoleInsert->pSample_mole;
@@ -60,7 +81,9 @@ int fnInsDelMole()
 					gy, gz);
 		}
 		else
+		{
 			pMoleInsert->cal_all_atom_efg2xyz();
+		}
 		// calculate the energy of the inserted molecule
 		del_upoter = 0.0;
 		del_ulj = 0.0;

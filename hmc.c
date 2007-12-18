@@ -20,6 +20,7 @@ int init_hmc()
 	const int datalen = 200;
 	char buffer[200];
 	char keyword[100];
+	int position_counter;
 
 	fprintf(stderr,"Reading input data for HMC simulation...\n");
 	fprintf(fpouts, "Reading input data for HMC simulation...\n");
@@ -47,6 +48,24 @@ int init_hmc()
 			sscanf(fgets(buffer, datalen, fpins), "%d %d",
 					&nstep_delt_adj_cycle, &nstep_delv_adj_cycle);
 			sscanf(fgets(buffer, datalen, fpins), "%lf", &delv);
+
+			// readin insertion/deletion input data if required
+			if (prob_id > 0.0)
+			{
+				fgets(buffer, datalen, fpins);
+				position_counter = 0;
+				for (ii=0; ii<nspecie; ii++)
+				{
+					sscanf(&buffer[position_counter], "%lf %lf %lf%n",
+							&probability_to_be_selected[ii],
+							&probability_to_insert[ii], &fugacity_required[ii],
+							&position_counter);
+				}
+				// initialize zact
+				zact[ii] = fugacity_required[ii]/kb_1e30/treq;
+				// initialize vacancy
+				vacancy_idx[ii] = -1;
+			}
 
 			// allocate memory for saving positions
 			_safealloc(xx_old,natom,sizeof(double))
@@ -90,7 +109,7 @@ int hmc()
 	// calculate total energies
 	erfrc();
 	rafrc();
-	
+
 	// print out initial values
 	echo();
 	// print initial properties
@@ -100,7 +119,7 @@ int hmc()
 
 	// above counts as the first step
 	icounter[11]--;
-	
+
 	// simulation loop
 	for (istep=nstep_start; istep<=nstep; istep++) // NOTE: start from 1 and <=
 	{

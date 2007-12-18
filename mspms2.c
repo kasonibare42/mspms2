@@ -849,6 +849,7 @@ int readins()
 		if (isFirstAtom)
 		{
 			mole_first_atom_idx[nmole] = atomid;
+			mole_status[nmole] = MOLE_STATUS_NORMAL;
 			mole2specie[nmole] = ispecie;
 			nmole++;
 			imole++;

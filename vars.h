@@ -40,16 +40,20 @@
 #define angle_none		0
 #define angle_harmonic		1
 #define angle_TRwater		2  ///< Toukan and Rahman water potentials
+
 #define dih_none		0
 #define dih_opls_cosin		1
 #define dih_charmm		2 ///< charmm type dihedral potential
+
 #define imp_none		0
 #define imp_charmm		1 ///< charmm type improper potential
+
 #define _NO_SF_POTENTIAL	0
 #define nanotube_hypergeo  	1
 #define nanotube_atom_explicit	2
 #define nanotube_tasos		3
 #define nanotube_my_interp	4 ///< my interpolation grid
+
 #define _NO_ELECTROSTATIC_INTERACTION	0
 #define elec_ewald		1
 #define elec_wolf		2
@@ -64,6 +68,10 @@
 
 #define solid_hetero		0  ///< solid type, e.g. mof?
 #define solid_uniform		1 ///< e.g. nanotoubes
+
+#define MOLE_STATUS_VACANCY	0
+#define MOLE_STATUS_NORMAL	1
+
 #define nspecie_max	3
 #define nmole_max	1000
 #define natom_max	4000
@@ -178,6 +186,11 @@ double rcutoffelec, rcutoffelecsq;
 double f0; ///< 1,4 LJ potential modifier for OPLS, set to 1.0 for no modification or 0.5 for OPLS or 0.0 for TraPPE.
 int isLJswitchOn; ///< use switch potential for LJ or not
 int isLJlrcOn; ///< if L-J long range correction is ON
+double probability_to_be_selected[nspecie_max]; ///< The probability for a specie to be selected for insertion/deletion
+double probability_to_insert[nspecie_max]; ///< The probability to insert a molecule for a specie
+double fugacity_required[nspecie_max]; ///< required Fugacity of each specie 
+double zact[nspecie_max]; ///< fugacity related variable for insertion/deletion
+
 /** 
  * \brief Electrostatic interaction type
  * 

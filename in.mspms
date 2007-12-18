@@ -56,3 +56,4 @@ C    14.381768410313    10.229858825919     2.459512146748
 0.5  0.5                      Required acceptance ratio for canonical moves, volumen changes
 100  100                      Number of steps between adjustments for canonical moves, volume changes 
 100.0                         delv
+1.0 0.5 10000.0
