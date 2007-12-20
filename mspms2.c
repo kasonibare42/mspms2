@@ -414,12 +414,12 @@ int init_vars()
 				uljlrc_term[mm][nn] = 0.0;
 				pljlrc_term[mm][nn] = 0.0;
 				// loop through the atoms in one molecule of specie mm
-				for (ii=0; ii<natom_per_mole[mm]; ii++)
+				for (ii=0; ii<sample_natom_per_mole[mm]; ii++)
 				{
 					// use the first molecule of one specie to do the calculation
 					atomid_1 = specie_first_atom_idx[mm] + ii;
 					// loop through all the atoms in one molecule of specie nn
-					for (jj=0; jj<natom_per_mole[nn]; jj++)
+					for (jj=0; jj<sample_natom_per_mole[nn]; jj++)
 					{
 						atomid_2 = specie_first_atom_idx[nn] + ii;
 						sigmaij = 0.5*(sigma[atomid_1]+sigma[atomid_2]);
@@ -801,7 +801,7 @@ int readins()
 	// read the first line of comments
 	// fscanf(fpcfg, "%[^\n]", buffer); /* read in everything to the buffer except the return */
 	fscanf(fpcfg, "%s %d\n", sysname, &nspecie);
-	assert(nspecie<=nspecie_max);
+	assert(nspecie<=NSPECIE_MAX);
 
 	// read in atom list
 	fgets(buffer, datalen, fpcfg);
@@ -809,7 +809,7 @@ int readins()
 	// printf("natom=%d  counter=%d\n",natom,position_counter);
 	// printf("%s",&buffer[position_counter]);
 	// fscanf(fpcfg, "%d atoms%n", &natom,&position_counter);
-	assert(natom<=natom_max);
+	assert(natom<=NATOM_MAX);
 	// read in the information of how many molecules in one specie and
 	// how many atoms in one molecule for a certain specie
 	specie_first_atom_idx[0] = 0;
@@ -818,12 +818,12 @@ int readins()
 	for (ii=0; ii<nspecie; ii++)
 	{
 		sscanf(&buffer[starting_position], "%d %d%n", &nmole_per_specie[ii],
-				&natom_per_mole[ii], &position_counter);
+				&sample_natom_per_mole[ii], &position_counter);
 		// advance the reading position in the string to next data section
 		starting_position += position_counter;
-		// printf("%d %d ",nmole_per_specie[ii],natom_per_mole[ii]);
+		// printf("%d %d ",nmole_per_specie[ii],sample_natom_per_mole[ii]);
 		specie_first_atom_idx[ii+1] = specie_first_atom_idx[ii]
-				+ nmole_per_specie[ii]*natom_per_mole[ii];
+				+ nmole_per_specie[ii]*sample_natom_per_mole[ii];
 		specie_first_mole_idx[ii+1] = specie_first_mole_idx[ii]
 				+ nmole_per_specie[ii];
 	}
@@ -853,7 +853,7 @@ int readins()
 			mole2specie[nmole] = ispecie;
 			nmole++;
 			imole++;
-			assert(nmole<nmole_max+1);
+			assert(nmole<NMOLE_MAX+1);
 			isFirstAtom = 0;
 		}
 		// increase ispecie for correctly assign molecule to specie index
@@ -869,12 +869,12 @@ int readins()
 	// fscanf(fpcfg, "%d bonds\n", &nbond);
 	sscanf(fgets(buffer, datalen, fpcfg), "%d bonds%n", &nbond,
 			&position_counter);
-	assert(nbond<=nbond_max);
+	assert(nbond<=NBOND_MAX);
 	// readin in how many bonds in a molecule of a certain specie
 	starting_position = position_counter;
 	for (ii=0; ii<nspecie; ii++)
 	{
-		sscanf(&buffer[starting_position], "%d%n", &nbond_per_mole[ii],
+		sscanf(&buffer[starting_position], "%d%n", &sample_nbond_per_mole[ii],
 				&position_counter);
 		starting_position += position_counter;
 	}
@@ -892,7 +892,7 @@ int readins()
 		{
 			mole_first_bond_idx[last_mole_id] = ii;
 			last_mole_id++;
-			assert(last_mole_id<nmole_max+1);
+			assert(last_mole_id<NMOLE_MAX+1);
 		}
 	}
 	// set the upper bound for the last molecule
@@ -902,12 +902,12 @@ int readins()
 	// fscanf(fpcfg, "%d angles\n", &nangle);
 	sscanf(fgets(buffer, datalen, fpcfg), "%d angles%n", &nangle,
 			&position_counter);
-	assert(nangle<=nangle_max);
+	assert(nangle<=NANGLE_MAX);
 	// readin in how many angles in a molecule of a certain specie
 	starting_position = position_counter;
 	for (ii=0; ii<nspecie; ii++)
 	{
-		sscanf(&buffer[starting_position], "%d%n", &nangle_per_mole[ii],
+		sscanf(&buffer[starting_position], "%d%n", &sample_nangle_per_mole[ii],
 				&position_counter);
 		starting_position += position_counter;
 	}
@@ -928,7 +928,7 @@ int readins()
 		{
 			mole_first_angle_idx[last_mole_id] = ii;
 			last_mole_id++;
-			assert(last_mole_id<nmole_max+1);
+			assert(last_mole_id<NMOLE_MAX+1);
 		}
 	}
 	// set the upper bound for the last molecule
@@ -937,12 +937,12 @@ int readins()
 	// read in dihedral list
 	sscanf(fgets(buffer, datalen, fpcfg), "%d dihedrals%n", &ndih,
 			&position_counter);
-	assert(ndih<=ndih_max);
+	assert(ndih<=NDIH_MAX);
 	// read in how many angles in a molecule of a certain specie
 	starting_position = position_counter;
 	for (ii=0; ii<nspecie; ii++)
 	{
-		sscanf(&buffer[starting_position], "%d%n", &ndih_per_mole[ii],
+		sscanf(&buffer[starting_position], "%d%n", &sample_ndih_per_mole[ii],
 				&position_counter);
 		starting_position += position_counter;
 	}
@@ -961,7 +961,7 @@ int readins()
 		{
 			mole_first_dih_idx[last_mole_id] = ii;
 			last_mole_id++;
-			assert(last_mole_id<nmole_max+1);
+			assert(last_mole_id<NMOLE_MAX+1);
 		}
 	}
 	// set the upper bound for the last molecule
@@ -970,12 +970,12 @@ int readins()
 	// read in improper list
 	sscanf(fgets(buffer, datalen, fpcfg), "%d impropers%n", &nimp,
 			&position_counter);
-	assert(nimp<=nimp_max);
+	assert(nimp<=NIMP_MAX);
 	// readin how many impropers in a molecule of a certain specie
 	starting_position = position_counter;
 	for (ii=0; ii<nspecie; ii++)
 	{
-		sscanf(&buffer[starting_position], "%d%n", &nimp_per_mole[ii],
+		sscanf(&buffer[starting_position], "%d%n", &sample_nimp_per_mole[ii],
 				&position_counter);
 		starting_position += position_counter;
 	}
@@ -991,7 +991,7 @@ int readins()
 		{
 			mole_first_imp_idx[last_mole_id] = ii;
 			last_mole_id++;
-			assert(last_mole_id<nmole_max+1);
+			assert(last_mole_id<NMOLE_MAX+1);
 		}
 	}
 	// set the upper bound for the last molecule
@@ -1000,12 +1000,12 @@ int readins()
 	// read in nonbonded pair list
 	sscanf(fgets(buffer, datalen, fpcfg), "%d nonbonded%n", &nnbp,
 			&position_counter);
-	assert(nnbp<=nnbp_max);
+	assert(nnbp<=NNBP_MAX);
 	// read in how many nonbonded pairs in a molecule of a certain specie
 	starting_position = position_counter;
 	for (ii=0; ii<nspecie; ii++)
 	{
-		sscanf(&buffer[starting_position], "%d%n", &nnbp_per_mole[ii],
+		sscanf(&buffer[starting_position], "%d%n", &sample_nnbp_per_mole[ii],
 				&position_counter);
 		starting_position += position_counter;
 	}
@@ -1020,7 +1020,7 @@ int readins()
 		{
 			mole_first_nbp_idx[last_mole_id] = ii;
 			last_mole_id++;
-			assert(last_mole_id<nmole_max+1);
+			assert(last_mole_id<NMOLE_MAX+1);
 		}
 	}
 	fclose(fpcfg);
@@ -1058,11 +1058,10 @@ int make_exclude_list()
 	nexcllist = 0;
 	for (ii=0; ii<nspecie; ii++)
 	{
-		pointexcl_specie[ii] = nexcllist;
 		// get the start and end atom index for the specie sample
 		// They are the start and end atom index for the first molecule of the specie
 		iStartAtom = specie_first_atom_idx[ii];
-		iEndAtom = iStartAtom + natom_per_mole[ii];
+		iEndAtom = iStartAtom + sample_natom_per_mole[ii];
 		iatom = 0;
 		for (jj=iStartAtom; jj<iEndAtom; jj++)
 		{
@@ -1073,7 +1072,7 @@ int make_exclude_list()
 			// exclude bonded atoms
 			// get the first bond index of the first molecule of the specie
 			iStartBond = mole_first_bond_idx[specie_first_mole_idx[ii]];
-			iEndBond = iStartBond + nbond_per_mole[ii];
+			iEndBond = iStartBond + sample_nbond_per_mole[ii];
 			for (kk=iStartBond; kk<iEndBond; kk++)
 			{
 				if (bond_idx[kk][0] == jj)
@@ -1086,12 +1085,12 @@ int make_exclude_list()
 					excllist[nexcllist] = bond_idx[kk][0] - jj;
 					nexcllist++;
 				}
-				assert(nexcllist<exclude_max);
+				assert(nexcllist<EXCLUDE_LIST_MAX);
 			}
 			// exclude angled atoms
 			// get first angle index for the first molecule of the specie
 			iStartAngle = mole_first_angle_idx[specie_first_mole_idx[ii]];
-			iEndAngle = iStartAngle + nangle_per_mole[ii];
+			iEndAngle = iStartAngle + sample_nangle_per_mole[ii];
 			for (kk=iStartAngle; kk<iEndAngle; kk++)
 			{
 				if (angle_idx[kk][0] == jj)
@@ -1104,12 +1103,12 @@ int make_exclude_list()
 					excllist[nexcllist] = angle_idx[kk][0] - jj;
 					nexcllist++;
 				}
-				assert(nexcllist<exclude_max);
+				assert(nexcllist<EXCLUDE_LIST_MAX);
 			}
 			// exclude dihedraled atoms
 			// get first dihedral index for the first molecule of the specie
 			iStartDihedral = mole_first_dih_idx[specie_first_mole_idx[ii]];
-			iEndDihedral = iStartDihedral + ndih_per_mole[ii];
+			iEndDihedral = iStartDihedral + sample_ndih_per_mole[ii];
 			for (kk=iStartDihedral; kk<iEndDihedral; kk++)
 			{
 				if (dih_idx[kk][0] == jj)
@@ -1122,12 +1121,12 @@ int make_exclude_list()
 					excllist[nexcllist] = dih_idx[kk][0] - jj;
 					nexcllist++;
 				}
-				assert(nexcllist<exclude_max);
+				assert(nexcllist<EXCLUDE_LIST_MAX);
 			}
 			// exclude non-bonded pair atoms
 			// get first non-bonded pair index for the first molecule of the specie
 			iStartNbp = mole_first_nbp_idx[specie_first_mole_idx[ii]];
-			iEndNbp = iStartNbp + nnbp_per_mole[ii];
+			iEndNbp = iStartNbp + sample_nnbp_per_mole[ii];
 			for (kk=iStartNbp; kk<iEndNbp; kk++)
 			{
 				if (nbp_idx[kk][0] == jj)
@@ -1140,13 +1139,12 @@ int make_exclude_list()
 					excllist[nexcllist] = nbp_idx[kk][0] - jj;
 					nexcllist++;
 				}
-				assert(nexcllist<exclude_max);
+				assert(nexcllist<EXCLUDE_LIST_MAX);
 			}
 			iatom++;
 		}
-		pointexcl_atom[ii][natom_per_mole[ii]] = nexcllist;
+		pointexcl_atom[ii][sample_natom_per_mole[ii]] = nexcllist;
 	}
-	pointexcl_specie[nspecie] = nexcllist;
 
 	fprintf(fpouts, "%d excluding pairs\n", nexcllist);
 

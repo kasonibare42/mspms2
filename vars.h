@@ -1,6 +1,8 @@
 #ifndef VARS_H
 #define VARS_H   
 
+#include "molevars.h"
+
 #define _safealloc(pt,num,size)         pt=calloc(num,size); assert(pt!=NULL)
 #define _safefree(pt)	if ((pt)!=NULL) {free(pt); (pt)=NULL;}
 
@@ -69,21 +71,9 @@
 #define solid_hetero		0  ///< solid type, e.g. mof?
 #define solid_uniform		1 ///< e.g. nanotoubes
 
-#define MOLE_STATUS_VACANCY	0
-#define MOLE_STATUS_NORMAL	1
-
-#define nspecie_max	3
-#define nmole_max	1000
-#define natom_max	4000
-#define nbond_max	2000
-#define nangle_max	2000
-#define ndih_max	2000
-#define nimp_max	2000
-#define nnbp_max	4000
-#define exclude_max	4000
-#define natom_per_mole_max	100
 #define num_counter_max	40
 #define nunique_atom_max	5 ///< number of unqiue atoms for grid interpolation
+
 #define Rgas		8.314472 ///< J/mol/K 
 #define rRgas		0.120272219 ///< reciprocal of Rgas
 #define Avogadro	6.0221415e23    ///< mol^-1
@@ -99,38 +89,6 @@
 #define PascalA3_to_J_mol	6.0221415e-7 ///< Na*1e-30 turn preq*boxv to J/mol
 #define J_mol_A3_to_Pascal	1660538.86313 ///< 1/6.0221415e-7 = 1.0/(6.0221415e23*1.0e-30)
 
-int nspecie, nmole, natom; ///< total number of molecules, atoms, species 
-int nmole_per_specie[nspecie_max]; ///< number of molecules in a certain specie
-int natom_per_mole[nspecie_max]; ///< number of atoms in a molecule, which is belong to a certain specie
-int nbond_per_mole[nspecie_max];
-int nangle_per_mole[nspecie_max];
-int ndih_per_mole[nspecie_max];
-int nimp_per_mole[nspecie_max];
-int nnbp_per_mole[nspecie_max];
-int specie_first_atom_idx[nspecie_max+1];
-int specie_first_mole_idx[nspecie_max+1];
-int mole2specie[nmole_max]; ///< which specie this molecule belongs to
-int mole_first_atom_idx[nmole_max+1]; ///< index of the first atom in a molecule
-double mole_xx[nmole_max], mole_yy[nmole_max], mole_zz[nmole_max];
-int vacancy_idx[nspecie_max]; ///< the index of first vancant molecule for a specie
-int mole_status[nmole_max]; ///< the status of the molecule, e.g. vacancy etc.
-int mole_first_bond_idx[nmole_max+1]; ///< index of the first bond in a molecule
-int mole_first_angle_idx[nmole_max+1]; ///< index of the first angle in a molecule
-int mole_first_dih_idx[nmole_max+1]; ///< index of the first dihedral in a molecule
-int mole_first_imp_idx[nmole_max+1]; ///< index of the first improper in a molecule
-int mole_first_nbp_idx[nmole_max+1]; ///< index of the first nonbonded pair in a molecule
-double mw[nmole_max]; ///< molecule weight
-int atom2mole[natom_max]; ///< which molecule this atom belongs to
-double xx[natom_max], yy[natom_max], zz[natom_max]; ///< atom coordinates
-/// inner coordinates relative to the center of mass, also used for PBC reconstruction of the molecule
-double ex[natom_max], fy[natom_max], gz[natom_max];
-double vx[natom_max], vy[natom_max], vz[natom_max]; ///< atom velocity
-double fxl[natom_max], fyl[natom_max], fzl[natom_max]; ///< inter force
-double fxs[natom_max], fys[natom_max], fzs[natom_max]; ///< intra force
-double aw[natom_max], epsilon[natom_max], sigma[natom_max], charge[natom_max]; ///< atom weight etc. 
-int isghost[natom_max]; ///< flag of ghost atom, including ghost LJ or ghost electrostatic
-int tasostype[natom_max]; ///< atom type for tasos interpolation 
-char atomname[natom_max][5];
 
 /// for atom explicit solid (nanotubes)
 int solid_natom;
@@ -141,27 +99,6 @@ double *solid_sigma, *solid_epsilon, *solid_charge;
 ///< for hypergeometric nanotubes
 int ntube;
 double *hgntc_xx, *hgntc_yy, *hgnt_radius; ///< (h)yper(g)eometric (n)ano(t)ube (c)enter
-
-int nbond, nangle, ndih, nimp, nnbp;
-int bond_idx[nbond_max][2];
-int bond_type[nbond_max];
-double Kb[nbond_max], Req[nbond_max], alpha[nbond_max];
-int angle_idx[nangle_max][3];
-int angle_type[nangle_max];
-double Ktheta[nangle_max], Thetaeq[nangle_max];
-double agl_para_3[nangle_max], agl_para_4[nangle_max], agl_para_5[nangle_max];
-int isAngle_unique[nangle_max]; ///< make sure 1,3 atoms do not make mutiple angles, this is for possible ring structures
-int dih_idx[ndih_max][4];
-int dih_type[ndih_max];
-double c1[ndih_max], c2[ndih_max], c3[ndih_max], c4[ndih_max];
-int isDih_unique[ndih_max]; ///< make sure 1,4 atoms do not make mutiple dihedrals, this is for possible ring structures
-int imp_idx[nimp_max][4];
-int imp_type[nimp_max];
-double komega[nimp_max], omega0[nimp_max];
-int nbp_idx[nnbp_max][2];
-int excllist[exclude_max];
-int pointexcl_specie[nspecie_max+1]; ///< the index of exclude list starts and ends for a specie
-int pointexcl_atom[nspecie_max][natom_per_mole_max+1]; ///< the index of exclude list starts and ends for an atom
 
 /// name of the object system
 char sysname[200];
@@ -186,10 +123,10 @@ double rcutoffelec, rcutoffelecsq;
 double f0; ///< 1,4 LJ potential modifier for OPLS, set to 1.0 for no modification or 0.5 for OPLS or 0.0 for TraPPE.
 int isLJswitchOn; ///< use switch potential for LJ or not
 int isLJlrcOn; ///< if L-J long range correction is ON
-double probability_to_be_selected[nspecie_max]; ///< The probability for a specie to be selected for insertion/deletion
-double probability_to_insert[nspecie_max]; ///< The probability to insert a molecule for a specie
-double fugacity_required[nspecie_max]; ///< required Fugacity of each specie 
-double zact[nspecie_max]; ///< fugacity related variable for insertion/deletion
+double probability_to_be_selected[NSPECIE_MAX]; ///< The probability for a specie to be selected for insertion/deletion
+double probability_to_insert[NSPECIE_MAX]; ///< The probability to insert a molecule for a specie
+double fugacity_required[NSPECIE_MAX]; ///< required Fugacity of each specie 
+double zact[NSPECIE_MAX]; ///< fugacity related variable for insertion/deletion
 
 /** 
  * \brief Electrostatic interaction type
@@ -221,7 +158,6 @@ int whichNH; ///< which nose hoover subroutine to use? usually 3 for molecule, 2
  * 4 - Yang's interpolation
  */
 int sf_type; 
-char atomname[natom_max][5];
 
 int istep; ///< counter of step, current step
 double utot; ///< calculated in printit()
@@ -298,9 +234,9 @@ double utsbs; ///< extra energy for the barostat NPT
 /// frenkel and smit's nose hoover method
 double qq, ps, gg, ss;
 double delt_sqby2, delts_sqby2;
-double vxo[natom_max], vyo[natom_max], vzo[natom_max];
-double vxn[natom_max], vyn[natom_max], vzn[natom_max];
-double bx[natom_max], by[natom_max], bz[natom_max];
+double vxo[NATOM_MAX], vyo[NATOM_MAX], vzo[NATOM_MAX];
+double vxn[NATOM_MAX], vyn[NATOM_MAX], vzn[NATOM_MAX];
+double bx[NATOM_MAX], by[NATOM_MAX], bz[NATOM_MAX];
 double unhts;
 double qqs, pss, ggs, sss;
 double unhtss;
@@ -407,8 +343,8 @@ double xmin, xmax, ymin, ymax, zmin, zmax;
 /// every unique molecule should have two types of long range corrections
 /// one is intra-specie and the other is cross-specie(inter-specie)
 double uljlrc, pljlrc;
-double uljlrc_term[nspecie_max][nspecie_max];
-double pljlrc_term[nspecie_max][nspecie_max];
+double uljlrc_term[NSPECIE_MAX][NSPECIE_MAX];
+double pljlrc_term[NSPECIE_MAX][NSPECIE_MAX];
 
 // counters and accumulators
 int icounter[num_counter_max];

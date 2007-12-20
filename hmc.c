@@ -64,7 +64,7 @@ int init_hmc()
 				// initialize zact
 				zact[ii] = fugacity_required[ii]/kb_1e30/treq;
 				// initialize vacancy
-				vacancy_idx[ii] = -1;
+				specie_first_vacancy_idx[ii] = -1;
 			}
 
 			// allocate memory for saving positions

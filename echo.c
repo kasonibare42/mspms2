@@ -73,11 +73,11 @@ int echo()
 		fprintf(
 				fpouts,
 				"Specie %d has %d molecules.\n    Each molecule has %d atoms, ",
-				ii, nmole_per_specie[ii], natom_per_mole[ii]);
+				ii, nmole_per_specie[ii], sample_natom_per_mole[ii]);
 		fprintf(fpouts, "%d bonds, %d angles, %d dihedrals, ",
-				nbond_per_mole[ii], nangle_per_mole[ii], ndih_per_mole[ii]);
+				sample_nbond_per_mole[ii], sample_nangle_per_mole[ii], sample_ndih_per_mole[ii]);
 		fprintf(fpouts, "%d improper dihedrals, and %d non-bonded pairs.\n",
-				nimp_per_mole[ii], nnbp_per_mole[ii]);
+				sample_nimp_per_mole[ii], sample_nnbp_per_mole[ii]);
 	}
 	switch (fStart_option)
 	{

@@ -103,7 +103,7 @@ int loop_ij(int iStartMole, int iEndMole)
 	double r_r6, r_r12, r_r12_minus_r_r6;
 	double epsiloni, sigmai, chargei;
 	double epsilonij, sigmaij;
-	int isNotexcl[natom_max];
+	int isNotexcl[NATOM_MAX];
 	double uij_vdw, uij_vdw_temp, uij_real, uij_real_temp;
 	double uij_wolf_temp;
 	double fij, fxij, fyij, fzij;
