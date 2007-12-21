@@ -138,7 +138,7 @@ int init_vars()
 			mole_status[iMole] = MOLE_STATUS_NORMAL;
 			iPhysicalMoleIDFromMetaID[iMole] = iMole;
 			iPhysicalMoleIDFromMetaIDinSpecie[ii][jj] = iMole;
-			
+
 			// atom
 			mole_first_atom_idx[iMole] = iAtom;
 			for (kk=sample_mole_first_atom_idx[ii]; kk
@@ -155,13 +155,16 @@ int init_vars()
 				iAtom++;
 			}
 			mole_last_atom_idx[iMole] = iAtom;
-			
+
 			// bond
 			mole_first_bond_idx[iMole] = iBond;
-			for (kk=sample_mole_first_bond_idx[ii];kk<sample_mole_last_bond_idx[ii];kk++)
+			for (kk=sample_mole_first_bond_idx[ii]; kk
+					<sample_mole_last_bond_idx[ii]; kk++)
 			{
-				bond_idx[iBond][0] = sample_bond_idx[kk][0] + jj*sample_natom_per_mole[ii];
-				bond_idx[iBond][1] = sample_bond_idx[kk][1] + jj*sample_natom_per_mole[ii];
+				bond_idx[iBond][0] = sample_bond_idx[kk][0] + jj
+						*sample_natom_per_mole[ii];
+				bond_idx[iBond][1] = sample_bond_idx[kk][1] + jj
+						*sample_natom_per_mole[ii];
 				bond_type[iBond] = sample_bond_type[kk];
 				Kb[iBond] = sample_Kb[kk];
 				Req[iBond] = sample_Req[kk];
@@ -169,14 +172,18 @@ int init_vars()
 				iBond++;
 			}
 			mole_last_bond_idx[iMole] = iBond;
-			
+
 			// angle
 			mole_first_angle_idx[iMole] = iAngle;
-			for (kk=sample_mole_first_angle_idx[ii];kk<sample_mole_last_angle_idx[ii];kk++)
+			for (kk=sample_mole_first_angle_idx[ii]; kk
+					<sample_mole_last_angle_idx[ii]; kk++)
 			{
-				angle_idx[iAngle][0] = sample_angle_idx[kk][0] + jj*sample_natom_per_mole[ii];
-				angle_idx[iAngle][1] = sample_angle_idx[kk][1] + jj*sample_natom_per_mole[ii];
-				angle_idx[iAngle][2] = sample_angle_idx[kk][2] + jj*sample_natom_per_mole[ii];
+				angle_idx[iAngle][0] = sample_angle_idx[kk][0] + jj
+						*sample_natom_per_mole[ii];
+				angle_idx[iAngle][1] = sample_angle_idx[kk][1] + jj
+						*sample_natom_per_mole[ii];
+				angle_idx[iAngle][2] = sample_angle_idx[kk][2] + jj
+						*sample_natom_per_mole[ii];
 				angle_type[iAngle] = sample_angle_type[kk];
 				Ktheta[iAngle] = sample_Ktheta[kk];
 				Thetaeq[iAngle] = sample_Thetaeq[kk];
@@ -186,15 +193,20 @@ int init_vars()
 				iAngle++;
 			}
 			mole_last_angle_idx[iMole] = iAngle;
-			
+
 			// dihedral
 			mole_first_dih_idx[iMole] = iDih;
-			for (kk=sample_mole_first_dih_idx[ii];kk<sample_mole_last_dih_idx[ii];kk++)
+			for (kk=sample_mole_first_dih_idx[ii]; kk
+					<sample_mole_last_dih_idx[ii]; kk++)
 			{
-				dih_idx[iDih][0] = sample_dih_idx[kk][0] + jj*sample_natom_per_mole[ii];
-				dih_idx[iDih][1] = sample_dih_idx[kk][1] + jj*sample_natom_per_mole[ii];
-				dih_idx[iDih][2] = sample_dih_idx[kk][2] + jj*sample_natom_per_mole[ii];
-				dih_idx[iDih][3] = sample_dih_idx[kk][3] + jj*sample_natom_per_mole[ii];
+				dih_idx[iDih][0] = sample_dih_idx[kk][0] + jj
+						*sample_natom_per_mole[ii];
+				dih_idx[iDih][1] = sample_dih_idx[kk][1] + jj
+						*sample_natom_per_mole[ii];
+				dih_idx[iDih][2] = sample_dih_idx[kk][2] + jj
+						*sample_natom_per_mole[ii];
+				dih_idx[iDih][3] = sample_dih_idx[kk][3] + jj
+						*sample_natom_per_mole[ii];
 				dih_type[iDih] = sample_dih_type[kk];
 				c1[iDih] = sample_c1[kk];
 				c2[iDih] = sample_c2[kk];
@@ -203,32 +215,40 @@ int init_vars()
 				iDih++;
 			}
 			mole_last_dih_idx[iMole] = iDih;
-			
+
 			// improper
 			mole_first_imp_idx[iMole] = iImp;
-			for (kk=sample_mole_first_imp_idx[ii];kk<sample_mole_last_imp_idx[ii];kk++)
+			for (kk=sample_mole_first_imp_idx[ii]; kk
+					<sample_mole_last_imp_idx[ii]; kk++)
 			{
-				imp_idx[iImp][0] = sample_imp_idx[kk][0] + jj*sample_natom_per_mole[ii];
-				imp_idx[iImp][1] = sample_imp_idx[kk][1] + jj*sample_natom_per_mole[ii];
-				imp_idx[iImp][2] = sample_imp_idx[kk][2] + jj*sample_natom_per_mole[ii];
-				imp_idx[iImp][3] = sample_imp_idx[kk][3] + jj*sample_natom_per_mole[ii];
+				imp_idx[iImp][0] = sample_imp_idx[kk][0] + jj
+						*sample_natom_per_mole[ii];
+				imp_idx[iImp][1] = sample_imp_idx[kk][1] + jj
+						*sample_natom_per_mole[ii];
+				imp_idx[iImp][2] = sample_imp_idx[kk][2] + jj
+						*sample_natom_per_mole[ii];
+				imp_idx[iImp][3] = sample_imp_idx[kk][3] + jj
+						*sample_natom_per_mole[ii];
 				imp_type[iImp] = sample_imp_type[kk];
 				komega[iImp] = sample_komega[kk];
 				omega0[iImp] = sample_omega0[kk];
 				iImp++;
 			}
 			mole_last_imp_idx[iMole] = iImp;
-			
+
 			// non-bonded
 			mole_first_nbp_idx[iMole] = iNbp;
-			for(kk=sample_mole_first_nbp_idx[ii];kk<sample_mole_last_nbp_idx[ii];kk++)
+			for (kk=sample_mole_first_nbp_idx[ii]; kk
+					<sample_mole_last_nbp_idx[ii]; kk++)
 			{
-				nbp_idx[iNbp][0] = sample_nbp_idx[kk][0] + jj*sample_natom_per_mole[ii];
-				nbp_idx[iNbp][1] = sample_nbp_idx[kk][1] + jj*sample_natom_per_mole[ii];
+				nbp_idx[iNbp][0] = sample_nbp_idx[kk][0] + jj
+						*sample_natom_per_mole[ii];
+				nbp_idx[iNbp][1] = sample_nbp_idx[kk][1] + jj
+						*sample_natom_per_mole[ii];
 				iNbp++;
 			}
 			mole_last_nbp_idx[iMole] = iNbp;
-			
+
 			// molecule increament
 			iMole++;
 		}
@@ -503,13 +523,50 @@ int init_vars()
 		}
 	}
 
+	// Set the angle, dihedral unique for Samples using the information from real lists.
+	// This is the reverse way to what we have done to populate the real lists using Samples.
+	// It is because we do not want to make many changes to the existing code of checking uniques for real lists.
+	// So we assign the uniques for Samples using the info from the real lists. 
+	int FirstMoleIDofSpecieii;
+	int FirstAngleIDofTheMole;
+	int LastAngleIDofTheMole;
+	int FirstDihIDofTheMole;
+	int LastDihIDofTheMole;
+	iAngle = 0;
+	iDih = 0;
+	for (ii=0; ii<nspecie; ii++)
+	{
+		// Get ID of the first molecule for this specie
+		FirstMoleIDofSpecieii = iPhysicalMoleIDFromMetaIDinSpecie[ii][0]; // molecule's physical id of the first molecule of specie ii
+		
+		// unique angles
+		// Get the first and last Angle ID for this molecule
+		FirstAngleIDofTheMole = mole_first_angle_idx[FirstMoleIDofSpecieii]; // this molecule's first bond index
+		LastAngleIDofTheMole = mole_last_angle_idx[FirstMoleIDofSpecieii]; // this molecule's last bond index
+		for (jj=FirstAngleIDofTheMole; jj<LastAngleIDofTheMole; jj++)
+		{
+			sample_isAngle_unique[iAngle] = isAngle_unique[jj];
+			iAngle++;
+		}
+		
+		// unique dihedrals
+		// Get the first and last dihedral ID for this molecule
+		FirstDihIDofTheMole = mole_first_dih_idx[FirstMoleIDofSpecieii];
+		LastDihIDofTheMole = mole_last_dih_idx[FirstMoleIDofSpecieii];
+		for (jj=FirstDihIDofTheMole; jj<LastDihIDofTheMole;jj++)
+		{
+			sample_isDih_unique[iDih] = isDih_unique[jj];
+			iDih++;
+		}
+	}
+
+	// Calculate the common terms for LJ lrc
 	double uljlrc_term1, uljlrc_term2;
 	double pljlrc_term1, pljlrc_term2;
 	int mm, nn;
 	int atomid_1, atomid_2;
 	double sigmaij, epsilonij;
 	double temp1, temp2, temp3;
-
 	// set lrc to zero even long range correction is not needed just in case
 	uljlrc = 0.0;
 	pljlrc = 0.0;
@@ -538,8 +595,10 @@ int init_vars()
 					for (jj=0; jj<sample_natom_per_mole[nn]; jj++)
 					{
 						atomid_2 = sample_mole_first_atom_idx[nn] + ii;
-						sigmaij = 0.5*(sample_sigma[atomid_1]+sample_sigma[atomid_2]);
-						epsilonij = sqrt(sample_epsilon[atomid_1]*sample_epsilon[atomid_2]);
+						sigmaij = 0.5*(sample_sigma[atomid_1]
+								+sample_sigma[atomid_2]);
+						epsilonij = sqrt(sample_epsilon[atomid_1]
+								*sample_epsilon[atomid_2]);
 						temp1 = pow(sigmaij, 9.0)*uljlrc_term1 + pow(sigmaij,
 								3.0) *uljlrc_term2;
 						temp2 = epsilonij*pow(sigmaij, 3.0);
