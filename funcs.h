@@ -15,6 +15,7 @@ int velinit();
 int echo();
 int vver_nh_3();
 int npt_respa();
+int init_vars();
 int init_sf_hypergeo();
 int init_sf_atom_explicit();
 int init_tasos_grid();

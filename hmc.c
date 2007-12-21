@@ -95,11 +95,6 @@ int hmc()
 {
 	double ratio;
 
-	// start of the HMC simulation
-	// initialize velocities
-	fprintf(fpouts, "initializing velocities...\n");
-	velinit();
-
 	// if not new run, load from old file
 	if (fStart_option!=new_run)
 	{

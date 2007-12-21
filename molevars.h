@@ -94,6 +94,7 @@ double komega[NIMP_MAX], omega0[NIMP_MAX];
 int nbp_idx[NNBP_MAX][2]; ///< non-bonded pairs
 
 // Sample species/molecules				
+double sample_mw[NSPECIE_MAX]; ///< molcule weight for Samples
 int sample_natom_per_mole[NSPECIE_MAX]; ///< number of atoms in a Sample
 int sample_nbond_per_mole[NSPECIE_MAX];
 int sample_nangle_per_mole[NSPECIE_MAX];
