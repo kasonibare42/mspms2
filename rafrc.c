@@ -30,7 +30,7 @@ int bndfrc(int iMole)
 	else if (iMole >= 0)
 	{
 		iiStart = mole_first_bond_idx[iMole];
-		iiEnd = mole_first_bond_idx[iMole+1];
+		iiEnd = mole_last_bond_idx[iMole];
 	}
 	else
 	{
@@ -158,7 +158,7 @@ int aglfrc(int iMole)
 	else if (iMole >= 0)
 	{
 		iiStart = mole_first_angle_idx[iMole];
-		iiEnd = mole_first_angle_idx[iMole+1];
+		iiEnd = mole_last_angle_idx[iMole];
 	}
 	else
 	{
@@ -362,7 +362,7 @@ int dihfrc(int iMole)
 	else if (iMole >= 0)
 	{
 		iiStart = mole_first_dih_idx[iMole];
-		iiEnd = mole_first_dih_idx[iMole+1];
+		iiEnd = mole_last_dih_idx[iMole];
 	}
 	else
 	{
@@ -640,7 +640,7 @@ int impfrc(int iMole) // improper energy/force calculations
 	else if (iMole >= 0)
 	{
 		iiStart = mole_first_imp_idx[iMole];
-		iiEnd = mole_first_imp_idx[iMole+1];
+		iiEnd = mole_last_imp_idx[iMole];
 	}
 	else
 	{

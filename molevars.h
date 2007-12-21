@@ -42,20 +42,18 @@ double fxs[NATOM_MAX], fys[NATOM_MAX], fzs[NATOM_MAX]; ///< intra force
 
 // molecule
 int nmole; ///< total number of molecules in the system
-int iPhysicalMoleID[NMOLE_MAX]; ///< stores the physical ID of a molecule
-int iPhysicalMoleIDinSpecie[NMOLE_MAX]; ///< stores the physical ID of a molecule within its specie
-int iMetaMoleID[NMOLE_MAX]; ///< stores the meta ID of a molecule
-int iMetaMoleIDinSpecie[NMOLE_MAX]; ///< stores the meta ID of a molecule within its specie
+int iPhysicalMoleIDFromMetaID[NMOLE_MAX]; ///< get the physical ID of a molecule using its meta ID
+int iPhysicalMoleIDFromMetaIDinSpecie[NSPECIE_MAX][NMOLE_MAX]; ///< get the physical ID of a molecule using its meta ID within its specie
 int mole2specie[NMOLE_MAX]; ///< which specie this molecule belongs to
 double mw[NMOLE_MAX]; ///< molecule weight
 int mole_status[NMOLE_MAX]; ///< the status of the molecule, e.g. vacancy etc.
 double mole_xx[NMOLE_MAX], mole_yy[NMOLE_MAX], mole_zz[NMOLE_MAX];
-int mole_first_atom_idx[NMOLE_MAX+1]; ///< index of the first atom in a molecule
-int mole_first_bond_idx[NMOLE_MAX+1]; ///< index of the first bond in a molecule
-int mole_first_angle_idx[NMOLE_MAX+1]; ///< index of the first angle in a molecule
-int mole_first_dih_idx[NMOLE_MAX+1]; ///< index of the first dihedral in a molecule
-int mole_first_imp_idx[NMOLE_MAX+1]; ///< index of the first improper in a molecule
-int mole_first_nbp_idx[NMOLE_MAX+1]; ///< index of the first nonbonded pair in a molecule
+int mole_first_atom_idx[NMOLE_MAX]; ///< index of the first atom in a molecule
+int mole_first_bond_idx[NMOLE_MAX]; ///< index of the first bond in a molecule
+int mole_first_angle_idx[NMOLE_MAX]; ///< index of the first angle in a molecule
+int mole_first_dih_idx[NMOLE_MAX]; ///< index of the first dihedral in a molecule
+int mole_first_imp_idx[NMOLE_MAX]; ///< index of the first improper in a molecule
+int mole_first_nbp_idx[NMOLE_MAX]; ///< index of the first nonbonded pair in a molecule
 int mole_last_atom_idx[NMOLE_MAX]; ///< index of the last atom in a molecule
 int mole_last_bond_idx[NMOLE_MAX]; ///< index of the last bond in a molecule
 int mole_last_angle_idx[NMOLE_MAX]; ///< index of the last angle in a molecule
@@ -65,10 +63,16 @@ int mole_last_nbp_idx[NMOLE_MAX]; ///< index of the last nonbonded pair in a mol
 
 // specie
 int nspecie; ///< total number of species in the system
+char szSpecieName[NSPECIE_MAX][200]; ///< the name of each specie
 int nmole_per_specie[NSPECIE_MAX]; ///< number of molecules in a certain specie
-int specie_first_atom_idx[NSPECIE_MAX+1];
-int specie_first_mole_idx[NSPECIE_MAX+1];
+int specie_first_atom_idx[NSPECIE_MAX];
+int specie_last_atom_idx[NSPECIE_MAX];
+int specie_first_mole_idx[NSPECIE_MAX];
+int specie_last_mole_idx[NSPECIE_MAX];
 int specie_first_vacancy_idx[NSPECIE_MAX]; ///< the index of first vancant molecule for a specie
+
+// System
+char sysname[200]; ///< name of the object system
 
 // bond, angle, dihedral, improper, non-bonded pair				
 int nbond, nangle, ndih, nimp, nnbp; ///< bond
@@ -96,12 +100,19 @@ int sample_nangle_per_mole[NSPECIE_MAX];
 int sample_ndih_per_mole[NSPECIE_MAX];
 int sample_nimp_per_mole[NSPECIE_MAX];
 int sample_nnbp_per_mole[NSPECIE_MAX];
+char sample_atomname[SAMPLE_NATOM_MAX][5];
 double sample_xx[SAMPLE_NATOM_MAX];
 double sample_yy[SAMPLE_NATOM_MAX];
 double sample_zz[SAMPLE_NATOM_MAX];
 double sample_ee[SAMPLE_NATOM_MAX];
 double sample_ff[SAMPLE_NATOM_MAX];
 double sample_gg[SAMPLE_NATOM_MAX];
+double sample_aw[SAMPLE_NATOM_MAX]; 
+double sample_epsilon[SAMPLE_NATOM_MAX]; 
+double sample_sigma[SAMPLE_NATOM_MAX]; 
+double sample_charge[SAMPLE_NATOM_MAX]; 
+double sample_isghost[SAMPLE_NATOM_MAX]; 
+double sample_tasostype[SAMPLE_NATOM_MAX];
 int sample_mole_first_atom_idx[NSPECIE_MAX];
 int sample_mole_first_bond_idx[NSPECIE_MAX];
 int sample_mole_first_angle_idx[NSPECIE_MAX];
@@ -119,6 +130,7 @@ int sample_angle_idx[SAMPLE_NANGLE_MAX][3];
 int sample_dih_idx[SAMPLE_NDIH_MAX][4];
 int sample_imp_idx[SAMPLE_NIMP_MAX][4];
 int sample_nbp_idx[SAMPLE_NNBP_MAX][2];
+int sample_bond_type[SAMPLE_NBOND_MAX];
 double sample_Kb[SAMPLE_NBOND_MAX];
 double sample_Req[SAMPLE_NBOND_MAX];
 double sample_alpha[SAMPLE_NBOND_MAX];
@@ -137,7 +149,6 @@ int sample_imp_type[SAMPLE_NIMP_MAX];
 double sample_komega[SAMPLE_NIMP_MAX];
 double sample_omega0[SAMPLE_NIMP_MAX];
 int excllist[EXCLUDE_LIST_MAX]; ///< The list of excluding pair of atoms
-int pointexcl_specie[NSPECIE_MAX+1]; ///< the index of exclude list starts and ends for a specie
 int pointexcl_atom[NSPECIE_MAX][SAMPLE_NATOM_PER_MOLE_MAX+1]; ///< the index of exclude list starts and ends for an atom
 
 

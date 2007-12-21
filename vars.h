@@ -100,9 +100,6 @@ double *solid_sigma, *solid_epsilon, *solid_charge;
 int ntube;
 double *hgntc_xx, *hgntc_yy, *hgnt_radius; ///< (h)yper(g)eometric (n)ano(t)ube (c)enter
 
-/// name of the object system
-char sysname[200];
-
 FILE *fpins, *fpouts, *fpcfg, *fplog;
 FILE *fpss, *fptrj, *fpsave, *fpload;
 FILE *fpcoords;

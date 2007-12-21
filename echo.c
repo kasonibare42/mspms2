@@ -313,19 +313,19 @@ int echo()
 	for (ii=0; ii<nspecie; ii++)
 	{
 		fprintf(fpouts, "Speice %d\n", ii);
-		for (jj=specie_first_mole_idx[ii]; jj<specie_first_mole_idx[ii+1]; jj++)
+		for (jj=specie_first_mole_idx[ii]; jj<specie_last_mole_idx[ii]; jj++)
 		{
 			fprintf(fpouts, " Mole %d, index %d in specie %d.\n", jj, jj
 					-specie_first_mole_idx[ii], ii);
 			fprintf(
 					fpouts,
 					"      ATOM PARAM: name, idx_global, idx_local, coordinates, soft-forces, rigid-forces\n");
-			for (kk=mole_first_atom_idx[jj]; kk<mole_first_atom_idx[jj+1]; kk++)
+			for (kk=mole_first_atom_idx[jj]; kk<mole_last_atom_idx[jj]; kk++)
 			{
 				iAtomPosInMole = kk - mole_first_atom_idx[jj];
 				fprintf(fpouts,
 						"  %s %d %d %lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf\n",
-						atomname, kk, iAtomPosInMole, xx[kk], yy[kk], zz[kk],
+						atomname[kk], kk, iAtomPosInMole, xx[kk], yy[kk], zz[kk],
 						fxl[kk], fyl[kk], fzl[kk], fxs[kk], fys[kk], fzs[kk]);
 				fprintf(fpouts, "      Excluding pairs: ");
 				for (ll=pointexcl_atom[ii][iAtomPosInMole]; ll
@@ -338,7 +338,7 @@ int echo()
 			fprintf(
 					fpouts,
 					"      BOND PARAM: idx_global, idx_local, bond_composition, type, Kb, Req, alpha\n");
-			for (kk=mole_first_bond_idx[jj]; kk<mole_first_bond_idx[jj+1]; kk++)
+			for (kk=mole_first_bond_idx[jj]; kk<mole_last_bond_idx[jj]; kk++)
 			{
 				fprintf(fpouts, "  Bond %d %d, %d-%d, %d, %lf, %lf, %lf\n", kk,
 						kk -mole_first_bond_idx[jj], bond_idx[kk][0],
@@ -348,7 +348,7 @@ int echo()
 			fprintf(
 					fpouts,
 					"      ANGLE PARAM: idx_global, idx_local, angle_composition, type, Ktheta, ThetaEq, angle_para_3, angle_para_4, angle_para_5\n");
-			for (kk=mole_first_angle_idx[jj]; kk<mole_first_angle_idx[jj+1]; kk++)
+			for (kk=mole_first_angle_idx[jj]; kk<mole_last_angle_idx[jj]; kk++)
 			{
 				fprintf(
 						fpouts,
@@ -361,7 +361,7 @@ int echo()
 			fprintf(
 					fpouts,
 					"      DIHEDRAL PARAM: idx_global, idx_local, dihedral_composition, type, c1, c2, c3, c4\n");
-			for (kk=mole_first_dih_idx[jj]; kk<mole_first_dih_idx[jj+1]; kk++)
+			for (kk=mole_first_dih_idx[jj]; kk<mole_last_dih_idx[jj]; kk++)
 			{
 				fprintf(fpouts,
 						"  Dih %d %d, %d-%d-%d-%d, %d, %lf, %lf, %lf, %lf\n",
@@ -372,7 +372,7 @@ int echo()
 			fprintf(
 					fpouts,
 					"      IMPROPER PARAM: idx_global, idx_local, improper_composition, type, Komega, Omega0\n");
-			for (kk=mole_first_imp_idx[jj]; kk<mole_first_imp_idx[jj+1]; kk++)
+			for (kk=mole_first_imp_idx[jj]; kk<mole_last_imp_idx[jj]; kk++)
 			{
 				fprintf(fpouts, "  Imp %d %d, %d-%d-%d-%d, %d, %lf, %lf\n", kk,
 						kk-mole_first_imp_idx[jj], imp_idx[kk][0],
@@ -382,7 +382,7 @@ int echo()
 			fprintf(
 					fpouts,
 					"      NON-BONDED PARAM: idx_global, idx_local, non-bonded_composition\n");
-			for (kk=mole_first_nbp_idx[jj]; kk<mole_first_nbp_idx[jj+1]; kk++)
+			for (kk=mole_first_nbp_idx[jj]; kk<mole_last_nbp_idx[jj]; kk++)
 			{
 				fprintf(fpouts,"  Nbp %d %d", kk, kk-mole_first_nbp_idx[jj], nbp_idx[kk][0], nbp_idx[kk][1]);
 			}

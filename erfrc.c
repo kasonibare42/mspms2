@@ -30,7 +30,7 @@ int cal_com_and_inner_coords()
 		mole_yy[ii] = 0.0;
 		mole_zz[ii] = 0.0;
 		// calculate the center of mass
-		for (jj=mole_first_atom_idx[ii]; jj<mole_first_atom_idx[ii+1]; jj++)
+		for (jj=mole_first_atom_idx[ii]; jj<mole_last_atom_idx[ii]; jj++)
 		{
 			mole_xx[ii] += xx[jj]*aw[jj];
 			mole_yy[ii] += yy[jj]*aw[jj];
@@ -40,7 +40,7 @@ int cal_com_and_inner_coords()
 		mole_yy[ii] /= mw[ii];
 		mole_zz[ii] /= mw[ii];
 		// calculate the relative position of the atoms to the center of mass
-		for (jj=mole_first_atom_idx[ii]; jj<mole_first_atom_idx[ii+1]; jj++)
+		for (jj=mole_first_atom_idx[ii]; jj<mole_last_atom_idx[ii]; jj++)
 		{
 			ex[jj] = xx[jj] - mole_xx[ii];
 			fy[jj] = yy[jj] - mole_yy[ii];
@@ -57,7 +57,7 @@ int reconstruct_coords_from_com()
 
 	for (ii=0; ii<nmole; ii++)
 	{
-		for (jj=mole_first_atom_idx[ii]; jj<mole_first_atom_idx[ii+1]; jj++)
+		for (jj=mole_first_atom_idx[ii]; jj<mole_last_atom_idx[ii]; jj++)
 		{
 			ex[jj] = ex[jj] + mole_xx[ii];
 			fy[jj] = fy[jj] + mole_yy[ii];
@@ -134,16 +134,16 @@ int loop_ij(int iStartMole, int iEndMole)
 	else if (iStartMole>=0 && iEndMole==-1)
 	{
 		iiStart = mole_first_atom_idx[iStartMole];
-		iiEnd = mole_first_atom_idx[iStartMole+1];
+		iiEnd = mole_last_atom_idx[iStartMole];
 		jjStart = 0;
 		jjEnd = natom;
 	}
 	else if (iStartMole>=0 && iEndMole>=0)
 	{
 		iiStart = mole_first_atom_idx[iStartMole];
-		iiEnd = mole_first_atom_idx[iStartMole+1];
+		iiEnd = mole_last_atom_idx[iStartMole];
 		jjStart = mole_first_atom_idx[iEndMole];
-		jjEnd = mole_first_atom_idx[iEndMole+1];
+		jjEnd = mole_last_atom_idx[iEndMole];
 	}
 	else
 	{
@@ -408,7 +408,7 @@ int loop_14(int iMole)
 	else if (iMole >= 0)
 	{
 		iiStart = mole_first_dih_idx[iMole];
-		iiEnd = mole_first_dih_idx[iMole+1];
+		iiEnd = mole_last_dih_idx[iMole];
 	}
 	else
 	{
@@ -694,7 +694,7 @@ int loop_13(int iMole)
 	else if (iMole >= 0)
 	{
 		iiStart = mole_first_angle_idx[iMole];
-		iiEnd = mole_first_angle_idx[iMole+1];
+		iiEnd = mole_last_angle_idx[iMole];
 	}
 	else
 	{
@@ -964,7 +964,7 @@ int loop_12(int iMole)
 	else if (iMole >= 0)
 	{
 		iiStart = mole_first_bond_idx[iMole];
-		iiEnd = mole_first_bond_idx[iMole+1];
+		iiEnd = mole_last_bond_idx[iMole];
 	}
 	else
 	{
@@ -1229,7 +1229,7 @@ int loop_nbp(int iMole)
 	else if (iMole >= 0)
 	{
 		iiStart = mole_first_nbp_idx[iMole];
-		iiEnd = mole_first_nbp_idx[iMole+1];
+		iiEnd = mole_last_nbp_idx[iMole];
 	}
 	else
 	{
@@ -1730,9 +1730,9 @@ int simple_coulomb_inter_mole(int iStartMole, int iEndMole)
 			{
 				// get index for the atoms from each molecules
 				first_atom_of_mole_mm = mole_first_atom_idx[mm];
-				first_atom_of_mole_mm_plus_one = mole_first_atom_idx[mm+1];
+				first_atom_of_mole_mm_plus_one = mole_last_atom_idx[mm];
 				first_atom_of_mole_nn = mole_first_atom_idx[nn];
-				first_atom_of_mole_nn_plus_one = mole_first_atom_idx[nn+1];
+				first_atom_of_mole_nn_plus_one = mole_last_atom_idx[nn];
 				// distance between two center of mass
 				rmn = sqrt(rmnsq);
 				// first atom
