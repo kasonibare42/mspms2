@@ -533,13 +533,13 @@ int init_vars()
 				for (ii=0; ii<sample_natom_per_mole[mm]; ii++)
 				{
 					// use the first molecule of one specie to do the calculation
-					atomid_1 = specie_first_atom_idx[mm] + ii;
+					atomid_1 = sample_mole_first_atom_idx[mm] + ii;
 					// loop through all the atoms in one molecule of specie nn
 					for (jj=0; jj<sample_natom_per_mole[nn]; jj++)
 					{
-						atomid_2 = specie_first_atom_idx[nn] + ii;
-						sigmaij = 0.5*(sigma[atomid_1]+sigma[atomid_2]);
-						epsilonij = sqrt(epsilon[atomid_1]*epsilon[atomid_2]);
+						atomid_2 = sample_mole_first_atom_idx[nn] + ii;
+						sigmaij = 0.5*(sample_sigma[atomid_1]+sample_sigma[atomid_2]);
+						epsilonij = sqrt(sample_epsilon[atomid_1]*sample_epsilon[atomid_2]);
 						temp1 = pow(sigmaij, 9.0)*uljlrc_term1 + pow(sigmaij,
 								3.0) *uljlrc_term2;
 						temp2 = epsilonij*pow(sigmaij, 3.0);
@@ -1075,8 +1075,8 @@ int make_exclude_list()
 	{
 		// get the start and end atom index for the specie sample
 		// They are the start and end atom index for the first molecule of the specie
-		iStartAtom = specie_first_atom_idx[ii];
-		iEndAtom = iStartAtom + sample_natom_per_mole[ii];
+		iStartAtom = sample_mole_first_atom_idx[ii];
+		iEndAtom = sample_mole_last_atom_idx[ii];
 		iatom = 0;
 		for (jj=iStartAtom; jj<iEndAtom; jj++)
 		{
