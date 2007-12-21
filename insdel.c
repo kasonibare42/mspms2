@@ -54,6 +54,8 @@ int fnInsDelMole()
 		iMoleSelected = GetNextVacancy(iSpecieSelected);
 		// set the status of the molecule to normal
 		mole_status[iMoleSelected] = MOLE_STATUS_NORMAL;
+		
+		// use the Sample of this specie to build up the insert molecule
 
 		// use the molecule next to the last molecule as the inserted molecule
 		pMoleInsert = pSpecieSelect->mole_list + pSpecieSelect->nmole;

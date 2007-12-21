@@ -89,17 +89,7 @@
 #define PascalA3_to_J_mol	6.0221415e-7 ///< Na*1e-30 turn preq*boxv to J/mol
 #define J_mol_A3_to_Pascal	1660538.86313 ///< 1/6.0221415e-7 = 1.0/(6.0221415e23*1.0e-30)
 
-
-/// for atom explicit solid (nanotubes)
-int solid_natom;
-double *solid_xx, *solid_yy, *solid_zz;
-int fSolid_type; ///< 0-heterogeneous; 1-uniform (e.g. nanotubes); 
-double *solid_sigma, *solid_epsilon, *solid_charge;
-
-///< for hypergeometric nanotubes
-int ntube;
-double *hgntc_xx, *hgntc_yy, *hgnt_radius; ///< (h)yper(g)eometric (n)ano(t)ube (c)enter
-
+/// File operators
 FILE *fpins, *fpouts, *fpcfg, *fplog;
 FILE *fpss, *fptrj, *fpsave, *fpload;
 FILE *fpcoords;
@@ -128,10 +118,10 @@ double zact[NSPECIE_MAX]; ///< fugacity related variable for insertion/deletion
 /** 
  * \brief Electrostatic interaction type
  * 
- * 0 - No electrostatic interaction
- * 1 - Ewald Summation
- * 2 - Wolf's method
- * 3 - Simple direct coulomb interaction
+ * 0 - No electrostatic interaction\n
+ * 1 - Ewald Summation\n
+ * 2 - Wolf's method\n
+ * 3 - Simple direct coulomb interaction\n
  */
 int iChargeType; 
 int isEwaldOn; ///< Ewald summation electrostatic interactions
@@ -150,9 +140,9 @@ int whichNH; ///< which nose hoover subroutine to use? usually 3 for molecule, 2
  * 
  * 0 - No solid-fluid interaction\n
  * 1 - Hypergeo nanotube potential\n
- * 2 - Atom explicit nanotube/other materials potentials
- * 3 - Tasos interpolation
- * 4 - Yang's interpolation
+ * 2 - Atom explicit nanotube/other materials potentials\n
+ * 3 - Tasos interpolation\n
+ * 4 - Yang's interpolation\n
  */
 int sf_type; 
 
@@ -260,6 +250,16 @@ double fLengthNew, fWidthNew, fHeightNew;
 double fRatioNewV2OldV;
 double fRatioNewL2OldL;
 double fMinHalf;
+
+/// for atom explicit solid (nanotubes)
+int solid_natom;
+double *solid_xx, *solid_yy, *solid_zz;
+int fSolid_type; ///< 0-heterogeneous; 1-uniform (e.g. nanotubes); 
+double *solid_sigma, *solid_epsilon, *solid_charge;
+
+///< for hypergeometric nanotubes
+int ntube;
+double *hgntc_xx, *hgntc_yy, *hgnt_radius; ///< (h)yper(g)eometric (n)ano(t)ube (c)enter
 
 // my interpolations
 // energy and forces interpolation parameters
