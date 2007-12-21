@@ -538,7 +538,7 @@ int init_vars()
 	{
 		// Get ID of the first molecule for this specie
 		FirstMoleIDofSpecieii = iPhysicalMoleIDFromMetaIDinSpecie[ii][0]; // molecule's physical id of the first molecule of specie ii
-		
+
 		// unique angles
 		// Get the first and last Angle ID for this molecule
 		FirstAngleIDofTheMole = mole_first_angle_idx[FirstMoleIDofSpecieii]; // this molecule's first bond index
@@ -548,12 +548,12 @@ int init_vars()
 			sample_isAngle_unique[iAngle] = isAngle_unique[jj];
 			iAngle++;
 		}
-		
+
 		// unique dihedrals
 		// Get the first and last dihedral ID for this molecule
 		FirstDihIDofTheMole = mole_first_dih_idx[FirstMoleIDofSpecieii];
 		LastDihIDofTheMole = mole_last_dih_idx[FirstMoleIDofSpecieii];
-		for (jj=FirstDihIDofTheMole; jj<LastDihIDofTheMole;jj++)
+		for (jj=FirstDihIDofTheMole; jj<LastDihIDofTheMole; jj++)
 		{
 			sample_isDih_unique[iDih] = isDih_unique[jj];
 			iDih++;
@@ -974,7 +974,6 @@ int readins()
 	fscanf(fpcfg, "%s\n", sysname);
 	sscanf(fgets(buffer, datalen, fpcfg), "%d", &nspecie);
 	assert(nspecie<=NSPECIE_MAX);
-
 	iAtom = 0;
 	iMole = 0;
 	iBond = 0;
@@ -1219,7 +1218,6 @@ int make_exclude_list()
 		}
 		pointexcl_atom[ii][sample_natom_per_mole[ii]] = nexcllist;
 	}
-
 	fprintf(fpouts, "%d excluding pairs\n", nexcllist);
 
 	return 0;
@@ -1537,11 +1535,6 @@ int main(int argc, char *argv[])
 	{
 		// HMC simulation
 		hmc();
-	}
-	else
-	{
-		fprintf(stderr,"Error: unknown simulation type.\n");
-		fprintf(fpouts, "Error: unknown simulation type.\n");
 	}
 
 	snapshot();

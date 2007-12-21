@@ -33,6 +33,13 @@ int fnValidateInput()
 				jk);
 		isError = 1;
 	}
+	
+	if (what_simulation<md_run || what_simulation>hmc_run)
+	{
+		fprintf(stderr,"Error: unknown simulation type.\n");
+		fprintf(fpouts, "Error: unknown simulation type.\n");
+		isError = 1;
+	}
 
 	if (treq < 0.0)
 	{
