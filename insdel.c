@@ -4,23 +4,58 @@
 #include <assert.h>
 #include <string.h>
 #include <ctype.h>
+#include "random.h"
 #include "vars.h"
+#include "funcs.h"
 
 int GetNextVacancy(int iSpecie)
 {
-	return (vacancy_idx[iSpecie]==-1) ? nmole : vacancy_idx[iSpecie];
+	return (specie_first_vacancy_idx[iSpecie]==-1) ? nmole
+			: specie_first_vacancy_idx[iSpecie];
 }
 
 int SetNextVacancy(int iSpecie, int index)
 {
-	if (vacancy_idx[ii] != -1 && index > vacancy_idx[iSpecie])
+	int ii;
+
+	if (specie_first_vacancy_idx[ii] != -1 && index
+			> specie_first_vacancy_idx[iSpecie])
 	{
 		return 0;
 	}
 	else
 	{
-		vacancy_idx[ii] = index;
+		specie_first_vacancy_idx[ii] = index;
 	}
+
+	return 0;
+}
+
+/// Build the inserted molecule using Sample template
+int BulidInsertedMole()
+{
+	// copy efg coordinates for atoms
+	// generate new molecule xyz coordinates
+	// ranmar(rndnum, 3);
+	// xxnew = pBox->length*(rndnum[0]-0.5);
+	// yynew = pBox->width*(rndnum[1]-0.5);
+	// zznew = pBox->height*(rndnum[2]-0.5);
+
+	// choose orientation and calculate efg2xyz according to orientation if multi-atom molecule
+	/*
+	 if (pMoleInsert->natom > 1)
+	 {
+	 normvec(ex, ey, ez, fx, fy, fz, gx, gy, gz);
+	 pMoleInsert->cal_all_atom_efg2xyz_ortn(ex, ey, ez, fx, fy, fz, gx,
+	 gy, gz);
+	 }
+	 else
+	 {
+	 pMoleInsert->cal_all_atom_efg2xyz();
+	 }
+	 */
+
+	return 0;
 }
 
 int fnInsDelMole()
@@ -28,6 +63,7 @@ int fnInsDelMole()
 	int ii, jj;
 	int iSpecieSelected;
 	int iMoleSelected;
+	double pcreate, pkill;
 
 	ranmar(rndnum, 2);
 
@@ -49,212 +85,93 @@ int fnInsDelMole()
 	if (rndnum[1] < probability_to_insert[iSpecieSelected]) // insert
 	{
 		icounter[26]++; // counter of insertions
-		
+
 		// get the vacancy where the molecule can be inserted into
 		iMoleSelected = GetNextVacancy(iSpecieSelected);
 		// set the status of the molecule to normal
 		mole_status[iMoleSelected] = MOLE_STATUS_NORMAL;
-		
-		// use the Sample of this specie to build up the insert molecule
 
-		// use the molecule next to the last molecule as the inserted molecule
-		pMoleInsert = pSpecieSelect->mole_list + pSpecieSelect->nmole;
-		pSampleMole = pMoleInsert->pSample_mole;
-		for (ii=0; ii<pMoleInsert->natom; ii++)
-		{
-			pAtomFromInsert = pMoleInsert->atom_list + ii;
-			pAtomFromSample = pSampleMole->atom_list + ii;
-			pAtomFromInsert->ee = pAtomFromSample->ee;
-			pAtomFromInsert->ff = pAtomFromSample->ff;
-			pAtomFromInsert->gg = pAtomFromSample->gg;
-		}
-		ranmar(rndnum, 3);
-		xxnew = pBox->length*(rndnum[0]-0.5);
-		yynew = pBox->width*(rndnum[1]-0.5);
-		zznew = pBox->height*(rndnum[2]-0.5);
-		*(pMoleInsert->pXx) = xxnew;
-		*(pMoleInsert->pYy) = yynew;
-		*(pMoleInsert->pZz) = zznew;
-		// choose orientation and calculate efg2xyz according to orientation if multi-atom molecule
-		if (pMoleInsert->natom > 1)
-		{
-			normvec(ex, ey, ez, fx, fy, fz, gx, gy, gz);
-			pMoleInsert->cal_all_atom_efg2xyz_ortn(ex, ey, ez, fx, fy, fz, gx,
-					gy, gz);
-		}
-		else
-		{
-			pMoleInsert->cal_all_atom_efg2xyz();
-		}
-		// calculate the energy of the inserted molecule
-		del_upoter = 0.0;
-		del_ulj = 0.0;
-		del_ucs = 0.0;
-		del_plj = 0.0;
-		for (ii=0; ii<pBox->nspecie; ii++)
-		{
-			pSpecie = pBox->specie_list + ii;
-			for (jj=0; jj<pSpecie->nmole; jj++)
-			{
-				pMole = pSpecie->mole_list + jj;
-				ljfrc(pMoleInsert, pMole, pBox, ulj, ucs, plj, false);
-				del_upoter += ulj;
-				del_ulj += ulj;
-				del_ucs += ucs;
-				del_plj += plj;
-			}
-		}
-		// calculate the solid-fluid energy of the inserted molecule if nanotube exists
-		if (pBox->nnanotube)
-		{
-			sfljfrc(pMoleInsert, pBox, del_usflj, del_usfljcs, del_psflj, false);
-			del_upoter += del_usflj;
-		}
+		// use the Sample of this specie to build up the insert molecule
+		BulidInsertedMole();
+
+		// Calculate the energy of the inserted molecule
+		// del_upoter = 0.0;
+		// del_ulj = 0.0;
+		// del_ucs = 0.0;
+		// del_plj = 0.0;
+
 		// long range correction part
-		del_uljlrc = 0.0;
-		del_pljlrc = 0.0;
-		if (input_data.bLrc)
-			deln_ljlrc(pBox, del_uljlrc, del_pljlrc, idSpecieSelect, 1); // calculate the change of ljlrc
-		del_upoter = del_upoter + del_uljlrc;
-		pcreate = exp(-del_upoter*_R_RGAS/tset)*zact*pBox->volume
-				/(pSpecieSelect->nmole+1.0);
+		// del_upoter = del_upoter + del_uljlrc;
+
+		// Accept probability
+		// pcreate = exp(-del_upoter*_R_RGAS/tset)*zact*pBox->volume/(pSpecieSelect->nmole+1.0);
+
+		// acceptance?
 		ranmar(rndnum, 1);
 		if (rndnum[0] < pcreate) // accept
 		{
-			if (pSpecieSelect->nmole == pSpecieSelect->nmole_max)
-			{
-				std::cout << "ERROR: Too many molecules in specie " << idSpecieSelect << ".\n";
-				exit(1);
-			}
-			pBox->counter[7]++; // accepted insertions
-			pSpecieSelect->counter[1]++; // accepted insertions for the specie
-			pSpecieSelect->nmole += 1;
-			pSpecieSelect->natom += pMoleInsert->natom;
-			box_nmole_old = pBox->nmole;
-			pBox->nmole = box_nmole_new = box_nmole_old + 1;
-			pBox->natom += pMoleInsert->natom;
-			pBox->weight += pMoleInsert->weight;
-			pBox->rho_atom = pBox->natom/pBox->volume;
-			pBox->rho_mole = pBox->nmole/pBox->volume;
-			pBox->pideal = pBox->rho_atom*pBox->temperature*_KB_OVER_ANG3;
-			pBox->ulj += del_ulj;
-			pBox->uljcs += del_ucs;
-			pBox->plj += del_plj;
-			if (pBox->nnanotube)
-			{
-				pBox->usflj += del_usflj;
-				pBox->usfljcs += del_usfljcs;
-				pBox->psflj += del_psflj;
-			}
-			pBox->uljlrc = pBox->uljlrc*box_nmole_old/box_nmole_new + del_uljlrc/box_nmole_new; // del_uljlrc is for the whole system
-			pBox->pljlrc += del_pljlrc;
-			pBox->rfree = 1.0/(3.0*pBox->natom-3.0);
+			// number of molecules should be smaller than the NMOLE_MAX
+
+			// accepted insertions
+			// accepted insertions for the specie
+
+			// update number of molecule
+			// number of molecule in the specie
+			// density
+			// ideal pressure
+			// degree of freedom
+			// energies and others
 		}
 		else // reject
-
-		{}
+		{
+		}
 	}
 	else // delete
-
 	{
-		pBox->counter[8]++;
-		pSpecieSelect->counter[2]++;
-		if (pSpecieSelect->nmole == 0) // empty
+		// counter of reject
+		// count of reject for this specie
 
-		{}
+		// cannot be empty specie
+		if (nmole == 0) // empty
+		{
+		}
 		else
 		{
 			ranmar(rndnum, 1);
-			idMoleDelete = int(rndnum[0]*pSpecieSelect->nmole);
-			pMoleDelete = pSpecieSelect->mole_list + idMoleDelete;
+			// which molecule to delete
+
 			// calculate the energy for the deleted molecule
-			del_upoter = 0.0;
-			del_ulj = 0.0;
-			del_ucs = 0.0;
-			del_plj = 0.0;
-			for (ii=0;ii<pBox->nspecie;ii++)
-			{
-				pSpecie = pBox->specie_list + ii;
-				for (jj=0;jj<pSpecie->nmole;jj++)
-				{
-					if (ii!=idSpecieSelect || jj!=idMoleDelete)
-					{
-						pMole = pSpecie->mole_list + jj;
-						ljfrc(pMoleDelete, pMole, pBox, ulj, ucs, plj, false);
-						del_upoter += ulj;
-						del_ulj += ulj;
-						del_ucs += ucs;
-						del_plj += plj;
-					}
-				}
-			}
-			// calculate the solid-fluid energy of the inserted molecule if nanotube exists
-			if (pBox->nnanotube)
-			{
-				sfljfrc(pMoleDelete, pBox, del_usflj, del_usfljcs, del_psflj, false);
-				del_upoter += del_usflj;
-			}
+			// del_upoter = 0.0;
+			// del_ulj = 0.0;
+			// del_ucs = 0.0;
+			// del_plj = 0.0;
+
 			// long range correction part
-			del_uljlrc = 0.0;
-			del_pljlrc = 0.0;
-			if (input_data.bLrc)
-			deln_ljlrc(pBox, del_uljlrc, del_pljlrc, idSpecieSelect, -1);
-			del_upoter = -del_upoter + del_uljlrc;
-			pkill = exp(-del_upoter*_R_RGAS/tset)*pSpecieSelect->nmole/zact/pBox->volume;
+			// del_upoter = -del_upoter + del_uljlrc;
+
+			// acceptance probability
+			// pkill = exp(-del_upoter*_R_RGAS/tset)*pSpecieSelect->nmole/zact/pBox->volume;
+
 			ranmar(rndnum, 1);
 			if (rndnum[0] < pkill) // accept
 
 			{
-				pBox->counter[9]++; // accepted deletions
-				pSpecieSelect->counter[3]++; // accepted deletions for the specie
-				// get the address of the last molecule
-				pMoleLast = pSpecieSelect->mole_list + (pSpecieSelect->nmole-1);
-				// copy the last molecule to the positon of the deleted molecule
-				*(pMoleDelete->pXx) = *(pMoleLast->pXx);
-				*(pMoleDelete->pYy) = *(pMoleLast->pYy);
-				*(pMoleDelete->pZz) = *(pMoleLast->pZz);
-				for (ii=0;ii<pMoleLast->natom;ii++)
-				{
-					pAtomFromLast = pMoleLast->atom_list + ii;
-					pAtomFromDelete = pMoleDelete->atom_list + ii;
-					pAtomFromDelete->xx = pAtomFromLast->xx;
-					pAtomFromDelete->yy = pAtomFromLast->yy;
-					pAtomFromDelete->zz = pAtomFromLast->zz;
-					pAtomFromDelete->xdisp = pAtomFromLast->xdisp;
-					pAtomFromDelete->ydisp = pAtomFromLast->ydisp;
-					pAtomFromDelete->zdisp = pAtomFromLast->zdisp;
-					// do not need to copy the velocities and forces
-					// since v and f will be generated or calculated
-					// before a new dispmd cycle for a HMC run
-				}
-				pSpecieSelect->nmole -= 1;
-				pSpecieSelect->natom -= pMoleDelete->natom;
-				box_nmole_old = pBox->nmole;
-				pBox->nmole = box_nmole_new = box_nmole_old - 1;
-				pBox->natom -= pMoleDelete->natom;
-				pBox->weight -= pMoleDelete->weight;
-				pBox->rho_atom = pBox->natom/pBox->volume;
-				pBox->rho_mole = pBox->nmole/pBox->volume;
-				pBox->pideal = pBox->rho_atom*pBox->temperature*_KB_OVER_ANG3;
-				pBox->ulj -= del_ulj;
-				pBox->uljcs -= del_ucs;
-				pBox->plj -= del_plj;
-				if (pBox->nnanotube)
-				{
-					pBox->usflj -= del_usflj;
-					pBox->usfljcs -= del_usfljcs;
-					pBox->psflj -= del_psflj;
-				}
-				if (box_nmole_new==0) // sanity check for empty box
-				pBox->uljlrc = 0.0;
-				else
-				pBox->uljlrc = pBox->uljlrc*box_nmole_old/box_nmole_new + del_uljlrc/box_nmole_new;
-				pBox->pljlrc += del_pljlrc;
-				pBox->rfree = 1.0/(3.0*pBox->natom-3.0);
+				// accepted deletions
+				// accepted deletions for the specie
+
+				// turn the molecule status of the deleted molecule to vacancy
+
+				// update number of molecule, atoms
+				// number of molecule, atom for this specie
+				// densities
+				// ideal pressure
+				// sanity check for empty box: pBox->uljlrc = 0.0;
+				// LJ lrc changes
+				// degree of freedom
 			}
 			else // reject
-
-			{}
+			{
+			}
 		} // if not empty
 
 	} // if (rndnum[1] < prob_insert)
