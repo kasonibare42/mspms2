@@ -12,6 +12,7 @@
 #define NIMP_MAX	2000
 #define NNBP_MAX	4000
 
+#define MOLE_STATUS_UNINIT	-1
 #define MOLE_STATUS_VACANCY	0
 #define MOLE_STATUS_NORMAL	1
 
