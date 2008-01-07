@@ -202,6 +202,12 @@ int InitReplicateSamples()
 {
 	int ii, jj, kk;
 	int iAtom, iMole, iBond, iAngle, iDih, iImp, iNbp;
+	
+	// initialize the properties for maximal number of molecules
+	for (ii=0;ii<NMOLE_MAX;ii++)
+	{
+		mole_status[ii] = MOLE_STATUS_UNINIT;
+	}
 
 	// init the real atom, bond, angle, dihedral, improper, non-bonded list
 	iAtom = 0;
