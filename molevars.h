@@ -61,6 +61,9 @@ int mole_last_angle_idx[NMOLE_MAX]; ///< index of the last angle in a molecule
 int mole_last_dih_idx[NMOLE_MAX]; ///< index of the last dihedral in a molecule
 int mole_last_imp_idx[NMOLE_MAX]; ///< index of the last improper in a molecule
 int mole_last_nbp_idx[NMOLE_MAX]; ///< index of the last nonbonded pair in a molecule
+double fOrientE_x, fOrientE_y, fOrientE_z; ///< the E axis of the orientation vectors
+double fOrientF_x, fOrientF_y, fOrientF_z;
+double fOrientG_x, fOrientG_y, fOrientG_z;
 
 // specie
 int nspecie; ///< total number of species in the system
