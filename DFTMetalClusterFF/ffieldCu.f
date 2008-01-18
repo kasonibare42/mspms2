@@ -90,6 +90,163 @@ c
 c     stop
 c     end
 
+
+c*****************************************************************
+c
+c  FF code to evaluate the energy of one atom in a copper cluster
+c
+c234567
+      subroutine ffieldCu_Single(nm,ndata,x,y,z,ff)
+      implicit none
+      integer i,j,k,l,m,n,p,nmax,nm,ierror,lcount,lmax,ndata
+      parameter (nmax=4000)
+      real*8 nc(nmax),mc(nmax)
+      real*8 f,x(*),y(*),z(*),r(nmax,nmax),fc(nmax,nmax),
+     #       vr,va,de,re,se,beta,rsq,e,fcutoff,rmin,rmax,
+     #       costheta,sum,term,arg,pi,a0,a,b,nu,g,h,num,den,
+     #       alpha1,delta1,theta1,theta2,theta3,theta4,req,deq,
+     #       a1,c1,d1,h1,g1,a2,c2,d2,h2,g2,alpha,arg1,arg2,arg3,
+     #       a3,c3,d3,h3,g3,a4,c4,d4,h4,g4,term1,term2,term3,
+     #       bsym1,bsym2,b1(nmax,nmax),b2(nmax,nmax),ff,arg4,
+     #       alpha2,alpha3,alpha4,delta2,delta3,delta4,term4,
+     #       gamma1,gamma2,gamma3,gamma4,gamma5,gamma6,gamma7,
+     #       seq,betaq,gc(nmax,nmax),gcutoff,sum1,sum2,
+     #       anew,bnew,cnew,dnew,enew,shift,defect
+      character*2 atom
+ 
+      if(nm.gt.nmax)then
+        write(*,*)'dimension error in ffield'
+        return
+      endif
+
+      de=2.15049644d0
+      re=2.31115983d0
+      se=3.07088775d0
+      beta=1.34410778d0
+      alpha1=13.597996d0
+      delta1=0.911726d0
+      a1=1.069328d0
+      c1=0.000000d0
+      d1=0.100000d0
+      h1=0.866030d0
+      gamma1=0.024585d0
+      gamma2=0.004134d0
+      gamma3=0.008292d0
+      gamma4=0.000761d0
+      gamma5=-0.007840d0
+      gamma6=0.496589d0
+      gamma7=-0.001215d0
+
+      sum1=0.d0
+      do i=1,nm
+      sum2=0.d0
+      do j=1,nm
+        rsq=(x(i)-x(j))**2+(y(i)-y(j))**2+(z(i)-z(j))**2
+        r(i,j)=sqrt(rsq)
+        fc(i,j)=fcutoff(r(i,j),1)
+        sum2=sum2+fc(i,j)
+      end do
+      nc(i)=sum2-1
+      sum1=sum1+shift(sum2)
+c     write(88,*)i,sum2,shift(sum2)
+      end do
+      defect=sum1
+
+      do i=1,nm
+      sum1=0.d0
+      do j=1,nm
+        gc(i,j)=gcutoff(r(i,j),nc(i)+1)
+        sum1=sum1+gc(i,j)
+      end do
+      mc(i)=sum1-1
+c     write(99,*)i,nc(i)+1,mc(i)+1,defect/nm
+      end do
+
+      do i=1,nm
+      sum1=0.d0
+      do j=1,nm
+        fc(i,j)=fcutoff(r(i,j),2)
+        sum1=sum1+fc(i,j)
+      end do
+      nc(i)=sum1-1
+      end do
+
+      do i=1,nm
+      if(nc(i).le.11)then
+      enew=0.716359395
+      else
+      enew=1.d0
+      endif
+      do j=1,nm
+      if(i.eq.j .or. fc(i,j).eq.0.d0)then
+      b1(i,j)=0.d0
+      else
+      term1=0.d0
+      do k=1,nm
+        if(k.ne.i .and. k.ne.j .and. fc(i,k).ne.0.d0)then
+c       arg=nc(k)-fc(i,k)-fc(j,k)
+        arg=mc(k)-gc(i,k)-gc(j,k)
+        arg1=gamma5*arg+(alpha1+gamma6*arg)*(r(i,j)-r(i,k))
+        g1=a1*fc(i,k)*exp(arg1)
+        else
+        g1=0.d0
+        endif
+        term1=term1+g1
+      end do
+c     arg=min(20,enew*(nc(i)+nc(j)-2*fc(i,j)-2))
+      arg=min(20,enew*(mc(i)+mc(j)-2*gc(i,j)-2))
+      delta2=delta1*exp(gamma7*arg)
+      b1(i,j)=(1.d0+term1)**(-delta2)
+      endif
+      end do
+      end do
+
+      sum=0.d0
+c     for only the atom with index ndata
+      do i=ndata,ndata
+      if(nc(i).le.11)then
+      anew=1.87897233
+      bnew=0.945024341
+      cnew=1.46407271
+      dnew=1.39023338
+      else
+      anew=1.d0
+      bnew=1.d0
+      cnew=1.d0
+      dnew=1.d0
+      endif
+      do j=1,nm
+c     do NOT self calculation
+        if (i .ne. j) then
+        bsym1=(b1(i,j)+b1(j,i))/2.d0
+        arg1=min(20,anew*(mc(i)+mc(j)-2*gc(i,j)-2))
+        arg2=min(20,bnew*(mc(i)+mc(j)-2*gc(i,j)-2))
+        arg3=min(20,cnew*(mc(i)+mc(j)-2*gc(i,j)-2))
+        arg4=min(20,dnew*(mc(i)+mc(j)-2*gc(i,j)-2))
+        deq=de*exp(gamma1*arg1)
+        req=re*exp(gamma2*arg2)
+        seq=se*exp(gamma3*arg3)
+        betaq=beta*exp(gamma4*arg4)
+        vr=deq/(seq-1.d0)*exp(-(sqrt(2*seq)*betaq*(r(i,j)-req)))
+        va=deq*seq/(seq-1.d0)*exp(-(sqrt(2/seq)*betaq*(r(i,j)-req)))
+        sum=sum+fc(i,j)*(vr-va)*bsym1 
+        endif
+      end do
+      end do
+
+c     return the energy for the atom
+      ff=sum-defect/nm
+
+      return
+      end
+ 
+
+
+
+
+
+
+
 c*****************************************************************
 c
 c  FF code to evaluate the energy of a copper cluster
