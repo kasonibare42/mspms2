@@ -71,6 +71,9 @@
 #define solid_hetero		0  ///< solid type, e.g. mof?
 #define solid_uniform		1 ///< e.g. nanotoubes
 
+#define NO_OTHER_FF			0
+#define DFT_METAL_CLUSTER_FF	1
+
 #define num_counter_max	40
 #define nunique_atom_max	5 ///< number of unqiue atoms for grid interpolation
 
@@ -88,6 +91,8 @@
 #define c3_pisq_theta 	11.3105666436484 
 #define PascalA3_to_J_mol	6.0221415e-7 ///< Na*1e-30 turn preq*boxv to J/mol
 #define J_mol_A3_to_Pascal	1660538.86313 ///< 1/6.0221415e-7 = 1.0/(6.0221415e23*1.0e-30)
+
+#define EV_TO_J_PER_MOLE	96485.3840868795   ///< 1 electronvolt = 1.6021773e-19 joule
 
 /// File operators
 FILE *fpins, *fpouts, *fpcfg, *fplog;
@@ -135,6 +140,7 @@ int KSQMAX; ///< ewald parameter
 int what_simulation; ///< simulation type, MD, HMC, etc.
 int what_ensemble; ///< what type of ensemble, NVT, NPT etc.
 int whichNH; ///< which nose hoover subroutine to use? usually 3 for molecule, 2 for atoms, see more details in nvtnh.c
+int fOtherFF; ///< flag of other non-standard force fields
 /** 
  * \brief solid-fluid type. for different nanotube potentials and future possible other materials
  * 
@@ -164,6 +170,7 @@ double uGz0; ///< 1D ewald Gz=0 term
 double LJswitch; ///< switch factor for LJ
 double usflj; ///< solid-fluid LJ energy
 double ucoulomb; ///< direct coulomb energy
+double udftmcff; ///< DFT metal cluster FF energy
 double virial; ///< calculated in printit()
 double virial_inter;
 double virial_intra;
@@ -197,6 +204,7 @@ double gUcoulombSession, gVirialSession, gVirialInterSession,
 		gVirialIntraSession;
 double gPidealSession, gPinstSession;
 double gUwolfSession, gUwolfrealSession, gUwolfconSession;
+double gUMetalClusterSession;
 
 int nfree; ///< freedom
 double tinst; ///< instantaneous temperature

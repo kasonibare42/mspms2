@@ -374,6 +374,7 @@ int readins()
 	sscanf(fgets(buffer, datalen, fpins), "%d", &iChargeType);
 	sscanf(fgets(buffer, datalen, fpins), "%d", &nconstraint);
 	sscanf(fgets(buffer, datalen, fpins), "%d", &sf_type);
+	sscanf(fgets(buffer, datalen, fpins), "%d", &fOtherFF);
 	fclose(fpins);
 
 	fprintf(stderr,"reading cfg file...\n");
@@ -532,6 +533,17 @@ int velinit()
 	double stdvtmp, stdv;
 	double totalmass;
 	double scaling;
+	
+	// if at zero temperature, everything should be zero
+	if (treq == 0.0)
+	{
+		for (ii=0;ii<natom;ii++)
+		{
+			vx[ii] = vy[ii] = vz[ii] = 0.0;
+			ukin = tinst = 0.0;
+		}
+		return 0;
+	}
 
 	totalmass = 0.0;
 	px = py = pz = 0.0;

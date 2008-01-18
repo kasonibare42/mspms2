@@ -116,7 +116,7 @@ double sample_aw[SAMPLE_NATOM_MAX];
 double sample_epsilon[SAMPLE_NATOM_MAX]; 
 double sample_sigma[SAMPLE_NATOM_MAX]; 
 double sample_charge[SAMPLE_NATOM_MAX]; 
-double sample_isghost[SAMPLE_NATOM_MAX]; 
+int sample_isghost[SAMPLE_NATOM_MAX]; 
 double sample_tasostype[SAMPLE_NATOM_MAX];
 int sample_mole_first_atom_idx[NSPECIE_MAX];
 int sample_mole_first_bond_idx[NSPECIE_MAX];

@@ -1909,6 +1909,14 @@ int fnErfrcSession()
 		// Add into total Inter Energy
 		gUinterSession += gUsfljSession;
 	}
+	
+	// calculate metal cluster energy if necessary
+	if (fOtherFF == DFT_METAL_CLUSTER_FF)
+	{
+		fnMetalClusterFF();
+		// add into total inter energy
+		gUinterSession += gUMetalClusterSession;
+	}
 
 	return 0;
 }
@@ -1932,6 +1940,7 @@ int erfrc()
 	uvacuum = gUvacuumSession;
 	uGz0 = gUGz0Session;
 	ucoulomb = gUcoulombSession;
+	udftmcff = gUMetalClusterSession;
 
 	virial_inter = gVirialInterSession;
 	uewald = gUewaldSession;

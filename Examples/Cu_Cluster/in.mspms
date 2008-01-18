@@ -1,15 +1,15 @@
 1024 768               random seeds
-298.0                  Temperature
+0.0                  Temperature
 8000.0                 Pressure (Pascal)
 100.0 100.0 100.0      box length, width, height
 20.0 20.0 20.0         rcuton, rcutoff, rcutoffelec
 1000 1 0               number of total steps, starting option (1-new;2-continue;3-new from old), equilibrium steps
 100 1 100 100 0        number of steps for averages, print, save, snapshots, trajectory
-1.0 5                  delt (fs), number of inner steps (cant be zero, 1 is the minimum)
+0.001 1                  delt (fs), number of inner steps (cant be zero, 1 is the minimum)
 0.0                    1,4 LJ modifier (0.0 for no 14 TraPPE, 0.5 for OPLS)
-1 1                    simulation type, 0-MD, 1-HMC; ensemble type, 0-nve, 1-nvt, 2-npt;
-1 0                    isLJlrcOn, isLJswitchOn
-3                      Electrostatic interaction type: 0-no elec intreaction, 1-ewald, 2-wolf, 3-simple coulomb
+0 0                    simulation type, 0-MD, 1-HMC; ensemble type, 0-nve, 1-nvt, 2-npt;
+0 0                    isLJlrcOn, isLJswitchOn
+0                      Electrostatic interaction type: 0-no elec intreaction, 1-ewald, 2-wolf, 3-simple coulomb
 3                      number of constraint
 0                      sf_type 0-no sf interaction, 1-hypergeo,2-atomexplicit,3-tasos,4-my interp
 1                      Other force fields, 1-metal cluster FF

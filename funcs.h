@@ -31,6 +31,7 @@ int fnValidateInit();
 int fnMDmove();
 int fnVolumeChange();
 int do_accumu();
+int fnMetalClusterFF();
 
 
 #endif /*FUNCS_H_*/

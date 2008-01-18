@@ -415,6 +415,7 @@ int echo()
 	fprintf(fpouts, "uwolf_real=%lf\n", uwolf_real);
 	fprintf(fpouts, "uwolf_con=%lf\n", uwolf_con);
 	fprintf(fpouts, "ucoulomb=%lf\n", ucoulomb);
+	fprintf(fpouts, "udftmcff=%lf\n", udftmcff);
 
 	fprintf(fpouts, "tinst=%lf\n", tinst);
 

@@ -45,12 +45,14 @@
 </option>
 <option id="gnu.c.link.option.libs.1247758673" name="Libraries (-l)" superClass="gnu.c.link.option.libs" valueType="libs">
 <listOptionValue builtIn="false" value="gfortran"/>
+<listOptionValue builtIn="false" value="g2c"/>
 <listOptionValue builtIn="false" value="gsl"/>
 <listOptionValue builtIn="false" value="gslcblas"/>
 <listOptionValue builtIn="false" value="m"/>
 </option>
 <option id="gnu.c.link.option.userobjs.438440916" name="Other objects" superClass="gnu.c.link.option.userobjs" valueType="userObjs">
 <listOptionValue builtIn="false" value="&quot;mylibtasos\libtasos.a&quot;"/>
+<listOptionValue builtIn="false" value="&quot;DFTMetalClusterFF\DFTMetalClusterFF.a&quot;"/>
 </option>
 <option id="gnu.c.link.option.noshared.860297486" name="No shared libraries (-static)" superClass="gnu.c.link.option.noshared" value="true" valueType="boolean"/>
 <inputType id="cdt.managedbuild.tool.gnu.c.linker.input.162484767" superClass="cdt.managedbuild.tool.gnu.c.linker.input">
