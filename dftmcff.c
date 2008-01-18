@@ -18,46 +18,53 @@
 extern void ffieldcu_(int* nm, int* ndata, double* x, double* y, double* z,
 		double* ff);
 
-typedef struct _dftmcffparam {
+typedef struct _dftmcffparam
+{
 	int iWhichAxis;
 	int index;
 } DFTMCFFPARAM;
 
-double deriv_ffieldcu(double pos, void* params) {
+double deriv_ffieldcu(double pos, void* params)
+{
 	int ndata;
 	double posold;
 	double energy;
 
 	DFTMCFFPARAM *p = (DFTMCFFPARAM *)params;
-	if (p->iWhichAxis == X_AXIS) {
+	if (p->iWhichAxis == X_AXIS)
+	{
 		posold = xx[p->index];
 		xx[p->index] = pos;
 		ffieldcu_(&natom, &ndata, xx, yy, zz, &energy);
 		xx[p->index] = posold;
-	} else if (p->iWhichAxis == Y_AXIS) {
+	}
+	else if (p->iWhichAxis == Y_AXIS)
+	{
 		posold = yy[p->index];
 		yy[p->index] = pos;
 		ffieldcu_(&natom, &ndata, xx, yy, zz, &energy);
 		yy[p->index] = posold;
-	} else // Z_AXIS
+	}
+	else // Z_AXIS
 	{
 		posold = zz[p->index];
 		zz[p->index] = pos;
 		ffieldcu_(&natom, &ndata, xx, yy, zz, &energy);
 		zz[p->index] = posold;
 	}
-	
+
 	return energy*EV_TO_J_PER_MOLE;
 }
 
-int fnMetalClusterFF() {
+int fnMetalClusterFF()
+{
 	int ii;
 	int ndata; // no use at all, just for consistency with the FORTRAN code
 	double energy;
 
 	// energy calculation
 	ffieldcu_(&natom, &ndata, xx, yy, zz, &energy);
-	
+
 	gUMetalClusterSession = energy*EV_TO_J_PER_MOLE; // conver to J/mol
 
 	// numerical forces
@@ -67,14 +74,15 @@ int fnMetalClusterFF() {
 	FF.params = &param;
 	double value, abserr;
 
-	for (ii=0; ii<natom; ii++) {
+	for (ii=0; ii<natom; ii++)
+	{
 		param.index = ii;
-		
+
 		param.iWhichAxis = X_AXIS;
 		gsl_deriv_central(&FF, xx[ii], 1.0e-8, &value, &abserr);
 		fxl[ii] += value;
 		// printf("%lf   ", value);
-		
+
 		param.iWhichAxis = Y_AXIS;
 		gsl_deriv_central(&FF, yy[ii], 1.0e-8, &value, &abserr);
 		fyl[ii] += value;
@@ -85,6 +93,6 @@ int fnMetalClusterFF() {
 		fzl[ii] += value;
 		// printf("%lf   \n", value);
 	}
-	
+
 	return 0;
 }
