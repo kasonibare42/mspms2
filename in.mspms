@@ -12,7 +12,7 @@
 3                      Electrostatic interaction type: 0-no elec intreaction, 1-ewald, 2-wolf, 3-simple coulomb
 3                      number of constraint
 0                      sf_type 0-no sf interaction, 1-hypergeo,2-atomexplicit,3-tasos,4-my interp
-1                      Other force fields, 1-metal cluster FF
+0                      Other force fields, 1-metal cluster FF
 
    Electrostatic
 0.2                   kappa ~4/cutoff
