@@ -28,7 +28,7 @@ int hmc();
 int calculate_ljlrc();
 int fnValidateInput();
 int fnValidateInit();
-int fnMDmove();
+int fnMDmove(int nStepMD, int (*pfnAlgorithm)());
 int fnVolumeChange();
 int do_accumu();
 int fnMetalClusterFF();

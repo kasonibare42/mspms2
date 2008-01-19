@@ -122,7 +122,7 @@ int hmc()
 
 		if (rndnum[0] <= prob_cm) // canonical moves
 		{
-			fnMDmove();
+			fnMDmove(nstep_md_per_hmc, &vver);
 		}
 		else if (rndnum[0]<=prob_vc_upper) // volume change moves
 		{

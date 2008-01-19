@@ -11,7 +11,7 @@
 /**
  * \brief MD moves for HMC etc.
  */
-int fnMDmove()
+int fnMDmove(int nStepMD, int (*pfnAlgorithm)())
 {
 	int ii;
 	
@@ -50,9 +50,10 @@ int fnMDmove()
 	virial_intra_old = virial_intra;
 
 	// MD moves
-	for (ii=0; ii<nstep_md_per_hmc; ii++)
+	// callback
+	for (ii=0; ii<nStepMD; ii++)
 	{
-		vver();
+		pfnAlgorithm();
 	}
 
 	// calculate the energy difference
