@@ -620,7 +620,7 @@ int printit()
 		utot += uljlrc;
 		pinst += pljlrc;
 	}
-	fprintf(stderr,"%10d %10.4le %10.4le %10.4le %10.4le %10.4le %10.4le\n",
+	fprintf(stdout,"%10d %10.4le %10.4le %10.4le %10.4le %10.4le %10.4le\n",
 	istep,utot,upot,ukin,tinst,pinst,boxv);
 
 	fprintf(

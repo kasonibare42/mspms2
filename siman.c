@@ -86,7 +86,7 @@ void take_step_func(const gsl_rng * r, void *xp, double step_size)
 		utot += uljlrc;
 	}
 
-	printit();
+	// printit();
 
 	// copy the values back to the parameter xp as the new value set
 	memcpy(ptr_x, xx, iSize);

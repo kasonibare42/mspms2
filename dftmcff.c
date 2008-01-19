@@ -40,28 +40,28 @@ double deriv_ffieldcu(double pos, void* params)
 	{
 		posold = xx[ndata];
 		xx[ndata] = pos;
-		// fntmp(&natom, &indexF, xx, yy, zz, &energy);
-		ffieldcu_single__(&natom, &indexF, xx, yy, zz, &energy);
+		// ffieldcu_single__(&natom, &indexF, xx, yy, zz, &energy);
+		ffieldcu_(&natom, &indexF, xx, yy, zz, &energy);
 		xx[ndata] = posold;
 	}
 	else if (p->iWhichAxis == Y_AXIS)
 	{
 		posold = yy[ndata];
 		yy[ndata] = pos;
-		// fntmp(&natom, &indexF, xx, yy, zz, &energy);
-		ffieldcu_single__(&natom, &indexF, xx, yy, zz, &energy);
+		// ffieldcu_single__(&natom, &indexF, xx, yy, zz, &energy);
+		ffieldcu_(&natom, &indexF, xx, yy, zz, &energy);
 		yy[ndata] = posold;
 	}
 	else // Z_AXIS
 	{
 		posold = zz[ndata];
 		zz[ndata] = pos;
-		// fntmp(&natom, &indexF, xx, yy, zz, &energy);
-		ffieldcu_single__(&natom, &indexF, xx, yy, zz, &energy);
+		// ffieldcu_single__(&natom, &indexF, xx, yy, zz, &energy);
+		ffieldcu_(&natom, &indexF, xx, yy, zz, &energy);
 		zz[ndata] = posold;
 	}
 
-	return energy*EV_TO_J_PER_MOLE;
+	return energy*EV_TO_J_PER_MOLE*natom;
 }
 
 int fnMetalClusterFF()
