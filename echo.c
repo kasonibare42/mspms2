@@ -415,7 +415,7 @@ int echo()
 	fprintf(fpouts, "uwolf_real=%lf\n", uwolf_real);
 	fprintf(fpouts, "uwolf_con=%lf\n", uwolf_con);
 	fprintf(fpouts, "ucoulomb=%lf\n", ucoulomb);
-	fprintf(fpouts, "udftmcff=%lf\n", udftmcff);
+	fprintf(fpouts, "udftmcff=%lf (%lf ev/atom)\n", udftmcff, udftmcff/EV_TO_J_PER_MOLE/natom);
 
 	fprintf(fpouts, "tinst=%lf\n", tinst);
 

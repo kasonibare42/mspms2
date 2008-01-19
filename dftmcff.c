@@ -11,9 +11,6 @@
 #include <gsl/gsl_deriv.h>
 #include "vars.h"
 
-#define X_AXIS	0
-#define Y_AXIS	1
-#define Z_AXIS	2
 
 extern void ffieldcu_(int* nm, int* ndata, double* x, double* y, double* z,
 		double* ff);
@@ -27,12 +24,6 @@ typedef struct _dftmcffparam
 	int iWhichAxis;
 	int index;
 } DFTMCFFPARAM;
-
-double fntmp(int* nm, int* ndata, double* x, double* y, double* z, double *ff)
-{
-	*ff = xx[0]*xx[0] + yy[0]*yy[0]*yy[0] + zz[0] + xx[1] + yy[1]*yy[1] + zz[1]*zz[1]*zz[1];
-	return *ff;
-}
 
 double deriv_ffieldcu(double pos, void* params)
 {
@@ -83,6 +74,7 @@ int fnMetalClusterFF()
 	ffieldcu_(&natom, &ndata, xx, yy, zz, &energy);
 
 	gUMetalClusterSession = energy*EV_TO_J_PER_MOLE; // conver to J/mol
+	gUMetalClusterSession *= natom; // convert to total energy for the system, keep consistence with other energies
 
 	/*
 	printf("energy = %lf\n",energy);
@@ -113,17 +105,17 @@ int fnMetalClusterFF()
 		// printf("ii=%d\n", ii);
 		
 		param.iWhichAxis = X_AXIS;
-		gsl_deriv_central(&FF, xx[ii], 1.0e-8, &value, &abserr);
+		gsl_deriv_central(&FF, xx[ii], STEP_SIZE, &value, &abserr);
 		fxl[ii] -= value;
 		// printf("dx = %lf (%lf)  ", value, abserr);
 
 		param.iWhichAxis = Y_AXIS;
-		gsl_deriv_central(&FF, yy[ii], 1.0e-8, &value, &abserr);
+		gsl_deriv_central(&FF, yy[ii], STEP_SIZE, &value, &abserr);
 		fyl[ii] -= value;
 		// printf("dy = %lf (%lf)  ", value, abserr);
 
 		param.iWhichAxis = Z_AXIS;
-		gsl_deriv_central(&FF, zz[ii], 1.0e-8, &value, &abserr);
+		gsl_deriv_central(&FF, zz[ii], STEP_SIZE, &value, &abserr);
 		fzl[ii] -= value;
 		// printf("dz = %lf (%lf)  \n", value, abserr);
 	}

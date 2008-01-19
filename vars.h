@@ -77,6 +77,13 @@
 #define num_counter_max	40
 #define nunique_atom_max	5 ///< number of unqiue atoms for grid interpolation
 
+// For numerical derivatives
+#define X_AXIS	0
+#define Y_AXIS	1
+#define Z_AXIS	2
+
+#define STEP_SIZE	1.0e-8
+
 #define Rgas		8.314472 ///< J/mol/K 
 #define rRgas		0.120272219 ///< reciprocal of Rgas
 #define Avogadro	6.0221415e23    ///< mol^-1
