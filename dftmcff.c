@@ -28,6 +28,12 @@ typedef struct _dftmcffparam
 	int index;
 } DFTMCFFPARAM;
 
+double fntmp(int* nm, int* ndata, double* x, double* y, double* z, double *ff)
+{
+	*ff = xx[0]*xx[0] + yy[0]*yy[0]*yy[0] + zz[0] + xx[1] + yy[1]*yy[1] + zz[1]*zz[1]*zz[1];
+	return *ff;
+}
+
 double deriv_ffieldcu(double pos, void* params)
 {
 	int ndata, indexF;
@@ -43,6 +49,7 @@ double deriv_ffieldcu(double pos, void* params)
 	{
 		posold = xx[ndata];
 		xx[ndata] = pos;
+		// fntmp(&natom, &indexF, xx, yy, zz, &energy);
 		ffieldcu_single__(&natom, &indexF, xx, yy, zz, &energy);
 		xx[ndata] = posold;
 	}
@@ -50,6 +57,7 @@ double deriv_ffieldcu(double pos, void* params)
 	{
 		posold = yy[ndata];
 		yy[ndata] = pos;
+		// fntmp(&natom, &indexF, xx, yy, zz, &energy);
 		ffieldcu_single__(&natom, &indexF, xx, yy, zz, &energy);
 		yy[ndata] = posold;
 	}
@@ -57,6 +65,7 @@ double deriv_ffieldcu(double pos, void* params)
 	{
 		posold = zz[ndata];
 		zz[ndata] = pos;
+		// fntmp(&natom, &indexF, xx, yy, zz, &energy);
 		ffieldcu_single__(&natom, &indexF, xx, yy, zz, &energy);
 		zz[ndata] = posold;
 	}
@@ -101,21 +110,25 @@ int fnMetalClusterFF()
 	{
 		param.index = ii;
 		
+		// printf("ii=%d\n", ii);
+		
 		param.iWhichAxis = X_AXIS;
 		gsl_deriv_central(&FF, xx[ii], 1.0e-8, &value, &abserr);
 		fxl[ii] -= value;
-		// printf("%lf   ", value);
+		// printf("dx = %lf (%lf)  ", value, abserr);
 
 		param.iWhichAxis = Y_AXIS;
 		gsl_deriv_central(&FF, yy[ii], 1.0e-8, &value, &abserr);
 		fyl[ii] -= value;
-		// printf("%lf   ", value);
+		// printf("dy = %lf (%lf)  ", value, abserr);
 
 		param.iWhichAxis = Z_AXIS;
 		gsl_deriv_central(&FF, zz[ii], 1.0e-8, &value, &abserr);
 		fzl[ii] -= value;
-		// printf("%lf   \n", value);
+		// printf("dz = %lf (%lf)  \n", value, abserr);
 	}
+	
+	// exit(1);
 
 	return 0;
 }
