@@ -858,6 +858,11 @@ int main(int argc, char *argv[])
 		// HMC simulation
 		hmc();
 	}
+	else if (what_simulation == SIMULATED_ANNEALING)
+	{
+		// Simulated Annealing
+		siman();
+	}
 
 	/// Take the last snapshot of the system.
 	snapshot();

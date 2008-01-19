@@ -21,6 +21,7 @@
 
 #define md_run		0
 #define hmc_run		1
+#define SIMULATED_ANNEALING	2
 
 #define nve_run		0
 #define nvt_run		1

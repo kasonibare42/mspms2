@@ -34,7 +34,7 @@ int fnValidateInput()
 		isError = 1;
 	}
 	
-	if (what_simulation<md_run || what_simulation>hmc_run)
+	if (what_simulation<md_run || what_simulation>SIMULATED_ANNEALING)
 	{
 		fprintf(stderr,"Error: unknown simulation type.\n");
 		fprintf(fpouts, "Error: unknown simulation type.\n");
