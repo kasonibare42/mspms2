@@ -29,6 +29,7 @@ $(BIN): $(OBJ) $(HISTOBJ)
 	$(CC) msd.c -o "msd.exe" -lm
 	$(CC) sfgridgen.c -o "sfgridgen.exe" -lm
 	$(CC) trjparser.c -o "trjparser.exe" -lm
+	$(CC) trj2xyz.c -o "trj2xyz.exe" -lm
 
 atom.o: atom.cpp
 	$(CPP) -c atom.cpp -o atom.o $(CXXFLAGS)
@@ -53,4 +54,7 @@ cfgmaker.o: cfgmaker.cpp
 
 histogramtube.o: histogramtube.c
 	$(CC) -c histogramtube.c -o histogramtube.o $(CFLAGS)
+
+trj2xyz.o: trj2xyz.c
+	$(CC) -c trj2xyz.c -o trj2xyz.o $(CFLAGS)
 

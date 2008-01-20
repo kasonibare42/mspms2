@@ -1,7 +1,7 @@
 [Project]
 FileName=tools.dev
 Name=tools
-UnitCount=19
+UnitCount=20
 Type=1
 Ver=1
 ObjFiles=
@@ -236,4 +236,14 @@ OriginalFilename=
 ProductName=
 ProductVersion=
 AutoIncBuildNr=0
+
+[Unit20]
+FileName=trj2xyz.c
+CompileCpp=0
+Folder=tools
+Compile=1
+Link=1
+Priority=1000
+OverrideBuildCmd=0
+BuildCmd=
 
