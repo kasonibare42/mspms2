@@ -82,8 +82,8 @@ int init_hmc()
 			return 0;
 		} // if keyword found
 	} // read through the lines
-	fprintf(stderr,"Error: data for HMC simulation not found.\n");
-	fprintf(fpouts, "Error: data for HMC simulation not found.\n");
+	fprintf(stderr,"Error: Data for HMC simulation not found.\n");
+	fprintf(fpouts, "Error: Data for HMC simulation not found.\n");
 	fclose(fpins);
 	exit(1);
 }
@@ -122,6 +122,13 @@ int hmc()
 
 		if (rndnum[0] <= prob_cm) // canonical moves
 		{
+			// velocity init and energy calcualtions have been done for the 1st step outside the loop
+			if (istep!=nstep_start)
+			{
+				velinit();
+				erfrc();
+				rafrc(); // we may not need rafrc here??
+			}
 			fnMDmove(nstep_md_per_hmc, &vver);
 		}
 		else if (rndnum[0]<=prob_vc_upper) // volume change moves

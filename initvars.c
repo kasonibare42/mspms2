@@ -714,6 +714,19 @@ int init_vars()
 	{
 		init_hmc();
 	}
+	else if (what_simulation == SIMULATED_ANNEALING)
+	{
+		init_siman();
+		init_nvt();
+	}
+	
+	// initialize velocities for needed simulations
+	if (what_simulation==md_run || what_simulation==hmc_run || what_simulation==SIMULATED_ANNEALING)
+	{
+		fprintf(stderr, "initializing velocities...\n");
+		fprintf(fpouts, "initializing velocities...\n");
+		velinit();
+	}
 
 	// If Solid-fluid interaction is required,
 	// initiliaze the related variables
@@ -755,14 +768,6 @@ int init_vars()
 		InitLJlrcCommonTerms();
 		// calculate the total lj lrc
 		calculate_ljlrc();
-	}
-
-	// initialize velocities for MD and HMC simulations
-	if (what_simulation==md_run || what_simulation==hmc_run)
-	{
-		fprintf(stderr, "initializing velocities...\n");
-		fprintf(fpouts, "initializing velocities...\n");
-		velinit();
 	}
 
 	return 0;

@@ -58,3 +58,7 @@ C    14.381768410313    10.229858825919     2.459512146748
 100  100                      Number of steps between adjustments for canonical moves, volume changes 
 100.0                         delv
 1.0 0.5 10000.0
+
+  SimAn
+10  1						How many steps before move to next temperature; How many MD steps before use acceptance rule
+1000.0 300.0 1.01			Initial temperature; Minimal temperature; cooling parameter

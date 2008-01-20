@@ -2,138 +2,182 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
-#include <gsl/gsl_siman.h>
+#include <assert.h>
 #include "vars.h"
 #include "funcs.h"
 
 /* set up parameters for this simulated annealing run */
 
-/* how many points do we try before stepping */
+/* how many points do we try before stepping (move to the next temperature) */
 double n_tries;
-/* how many iterations for each T? */
+/* how many iterations for each T? (how many MD steps before use the acceptance critirea) */
 int iters_fixed_t;
 /* initial temperature */
 double t_initial;
 /* damping factor for temperature */
 double mu_t, t_min;
 
-// The x array used for simulated annealing
-double *siman_x;
-
 int init_siman()
 {
-	int iSize;
-	iSize = natom*sizeof(double);
-
-	siman_x = (double *) malloc(3*iSize); // factor of 3 for x,y,z
-	// copy the x, y, z coordinate values
-	memcpy(siman_x, xx, iSize);
-	memcpy(siman_x+natom, yy, iSize);
-	memcpy(siman_x+2*natom, zz, iSize);
-
-	return 0;
-}
-
-// Add a initialize function for initialize the *xp needed for the calculations
-
-/* now some functions to test in one dimension */
-double target_energy_func(void *xp)
-{
-	return utot;
-}
-
-// This function is not used in the current version of gsl_siman
-double distance_func(void *xp, void *yp)
-{
-
-	return 0.0;
-}
-
-// This function is used to generate the new value set for x
-void take_step_func(const gsl_rng * r, void *xp, double step_size)
-{
-	// We do not need step_size 
-	// We use MD code to generate the new value set for x (i.e. x, y, z)
-	// Use the initial values of xp
 	int ii;
-	int iSize;
-	double *ptr_x, *ptr_y, *ptr_z;
-	double target_energy;
+	const int datalen = 200;
+	char buffer[200];
+	char keyword[100];
+	int position_counter;
 
-	// set the initial x,y,z values based on the passed parameter xp
-	iSize = natom*sizeof(double);
+	fprintf(stderr, "Reading input data for Simulated Annealing...\n");
+	fprintf(fpouts, "Reading input data for Simulated Annealing...\n");
 
-	ptr_x = (double *)xp;
-	ptr_y = ptr_x + natom;
-	ptr_z = ptr_y + natom;
+	// re-open input file to read extra data section
+	fpins = fopen(INPUT,"r");
 
-	memcpy(xx, ptr_x, iSize);
-	memcpy(yy, ptr_y, iSize);
-	memcpy(zz, ptr_z, iSize);
-
-	// Now we can start the MD moves
-	vver();
-
-	// potential energy
-	upot = uinter + uintra;
-	// total energy
-	utot = upot + ukin;
-	// add energy of thermostat, if nose hoover is not used, they will just be zero
-	utot = utot + unhts + unhtss + utsbs;
-	// add long range corrections into total energy and pressure if needed
-	if (isLJlrcOn)
+	while (fgets(buffer, datalen, fpins)!=NULL)
 	{
-		utot += uljlrc;
-	}
+		sscanf(buffer, "%s", keyword);
+		for (ii=0; ii<strlen(keyword); ii++)
+		{
+			keyword[ii] = toupper(keyword[ii]);
+		}
+		if (!strcmp(keyword, "SIMAN"))
+		{
+			fprintf(stderr,"Data section for Simulated Annealing found...\n");
+			fprintf(fpouts, "Data section for Simulated Annealing found...\n");
 
-	// printit();
+			sscanf(fgets(buffer, datalen, fpins), "%d %d", &n_tries,
+					&iters_fixed_t);
+			sscanf(fgets(buffer, datalen, fpins), "%lf %lf %lf", &t_initial,
+					&t_min, &mu_t);
 
-	// copy the values back to the parameter xp as the new value set
-	memcpy(ptr_x, xx, iSize);
-	memcpy(ptr_y, yy, iSize);
-	memcpy(ptr_z, zz, iSize);
-}
+			// set the required temperature for velocity initialization
+			treq = t_initial;
 
-void print_func(void *xp)
-{
-	printit();
+			// allocate memory for saving positions
+			_safealloc(xx_old,natom,sizeof(double))
+			;
+			_safealloc(yy_old,natom,sizeof(double))
+			;
+			_safealloc(zz_old,natom,sizeof(double))
+			;
+
+			fclose(fpins);
+			return 0;
+		} // if keyword found
+	} // read through the lines
+	fprintf(stderr,"Error: Data for Simulated Annealing not found.\n");
+	fprintf(fpouts, "Error: Data for Simulated Annealing not found.\n");
+	fclose(fpins);
+	exit(1);
 }
 
 int siman()
 {
-	gsl_siman_params_t params;
+	int ii, done;
+	double T;
+	int n_accepts, n_rejects;
 
-	init_siman();
+	istep = 0;
 
-	n_tries = 20;
-	iters_fixed_t = 1000;
-	t_initial = 1000;
-	mu_t = 1.01;
-	t_min = 50;
+	// if not new run, load from old file
+	// FIXME: NOT tested for simulated annealing
+	if (fStart_option!=new_run)
+	{
+		loadit();
+	}
 
-	params.n_tries = n_tries;
-	params.iters_fixed_T = iters_fixed_t;
-	params.k = Rgas;
-	params.t_initial = t_initial;
-	params.mu_t = mu_t;
-	params.t_min = t_min;
-	/* max step size in random walk for simulated annealing */
-	// It is not used for the 
-	params.step_size = 0.0;
+	// calculate total energies
+	erfrc();
+	rafrc();
 
-	const gsl_rng_type * T;
-	gsl_rng * r;
+	// print out initial values
+	echo();
+	// print initial properties
+	printit();
+	// make snapshots & movies
+	trajectory();
 
-	gsl_rng_env_setup();
+	n_accepts = 0;
+	n_rejects = 0;
 
-	T = gsl_rng_default;
-	r = gsl_rng_alloc(T);
+	T = t_initial;
+	done = 0;
 
-	gsl_siman_solve(r, siman_x, target_energy_func, take_step_func,
-			distance_func, print_func, NULL, NULL, NULL,
-			3*natom*sizeof(double), params);
+	istep = nstep_start;
 
-	gsl_rng_free(r);
+	while (!done)
+	{
+		for (ii = 0; ii < n_tries; ii++)
+		{
+			if (istep != nstep_start)
+			{
+				treq = T;
+				velinit();
+				erfrc();
+				rafrc(); // we may not need rafrc here??
+				// rezero nvt related variables
+				unhts = 0.0;
+				ss = 0.0;
+				ps = 0.0;
+				sss = 0.0;
+				pss = 0.0;
+				unhtss = 0.0;
+			}
+			if (fnMDmove(iters_fixed_t, &vver_nh_3) == 1) // if accepted
+			{
+				++n_accepts;
+			}
+			else
+			{
+				++n_rejects;
+			}
+
+		}
+
+		// print out, snapshot, trajectory, save
+		if (istep%nstep_print == 0)
+		{
+			printit();
+		}
+		if (nstep_ss && istep%nstep_ss == 0)
+		{
+			snapshot();
+		}
+		if (nstep_trj && istep%nstep_trj==0)
+		{
+			trajectory();
+		}
+		if (istep%nstep_save==0)
+		{
+			saveit();
+		}
+		
+		istep++;
+		if (T < t_min)
+		{
+			done = 1;
+		}
+
+		icounter[11]--;
+		// if still in equilibrium run
+		// do not do averages
+		if (icounter[11]>=0)
+		{
+			continue;
+		}
+
+		// accumulators
+		do_accumu();
+
+		// do averages
+		if ((istep-nstep_eq)%nstep_ave==0)
+		{
+			averages();
+		}
+		
+		/* apply the cooling schedule to the temperature */
+		T /= mu_t;
+	}
+
+	fprintf(stderr, "accepted = %d     rejected = %d\n", n_accepts, n_rejects);
 
 	return 0;
 }

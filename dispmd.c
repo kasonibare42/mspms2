@@ -14,17 +14,9 @@
 int fnMDmove(int nStepMD, int (*pfnAlgorithm)())
 {
 	int ii;
-	
+
 	// initialize energy difference
 	fDeltaU = 0.0;
-
-	// velocity init and energy calcualtions have been done for the 1st step outside the loop
-	if (istep!=nstep_start)
-	{
-		velinit();
-		erfrc();
-		rafrc(); // we may not need rafrc here??
-	}
 
 	// save the old states
 	for (ii=0; ii<natom; ii++)
@@ -57,8 +49,7 @@ int fnMDmove(int nStepMD, int (*pfnAlgorithm)())
 	}
 
 	// calculate the energy difference
-	fDeltaU = (uinter - uinter_old) + (uintra - uintra_old)
-			+ (ukin - ukin_old);
+	fDeltaU = (uinter - uinter_old) + (uintra - uintra_old); // + (ukin - ukin_old);  kinetic energy should NOT be included
 
 	// Hamotonial difference
 	dH = fDeltaU*rRgas/treq;
@@ -109,5 +100,5 @@ int fnMDmove(int nStepMD, int (*pfnAlgorithm)())
 		virial_intra = virial_intra_old;
 	}
 
-	return 0;
+	return isAccept;
 }

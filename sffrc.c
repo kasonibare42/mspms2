@@ -110,7 +110,9 @@ int init_my_interp()
 	// change the atom type from tasos type to myinterp type
 	// myinterp type = tasos type - 1
 	for (ii=0; ii<natom; ii++)
+	{
 		tasostype[ii] -= 1;
+	}
 
 	// set up the variable needed for interpolation
 	_safealloc(interp_vector,32,sizeof(double))
@@ -950,7 +952,9 @@ int init_sf_hypergeo()
 	{
 		sscanf(buffer, "%s", keyword);
 		for (ii=0; ii<strlen(keyword); ii++)
+		{
 			keyword[ii] = toupper(keyword[ii]);
+		}
 		if (!strcmp(keyword, "HYPERGEO"))
 		{
 			fprintf(stderr,"Data section for hypergeometric nanotoubes found...\n");
