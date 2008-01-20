@@ -94,6 +94,20 @@ int init_hmc()
 int hmc()
 {
 	double ratio;
+	int (*pfnMDtype)();
+	
+	if (what_ensemble == nvt_run)
+	{ 
+		pfnMDtype = &vver_nh_3;
+	}
+	else if (what_ensemble == nve_run)
+	{
+		pfnMDtype = &vver;
+	}
+	else if (what_ensemble == npt_run)
+	{
+		pfnMDtype = &npt_respa;
+	}
 
 	// if not new run, load from old file
 	if (fStart_option!=new_run)
@@ -129,7 +143,7 @@ int hmc()
 				erfrc();
 				rafrc(); // we may not need rafrc here??
 			}
-			fnMDmove(nstep_md_per_hmc, &vver);
+			fnMDmove(nstep_md_per_hmc, pfnMDtype);
 		}
 		else if (rndnum[0]<=prob_vc_upper) // volume change moves
 		{

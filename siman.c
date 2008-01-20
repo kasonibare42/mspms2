@@ -64,7 +64,20 @@ int siman()
 	double T;
 	int n_accepts, n_rejects;
 
-	istep = 0;
+	int (*pfnMDtype)();
+	
+	if (what_ensemble == nvt_run)
+	{ 
+		pfnMDtype = &vver_nh_3;
+	}
+	else if (what_ensemble == nve_run)
+	{
+		pfnMDtype = &vver;
+	}
+	else if (what_ensemble == npt_run)
+	{
+		pfnMDtype = &npt_respa;
+	}
 
 	// if not new run, load from old file
 	// FIXME: NOT tested for simulated annealing
@@ -110,7 +123,7 @@ int siman()
 				pss = 0.0;
 				unhtss = 0.0;
 			}
-			if (fnMDmove(iters_fixed_t, &vver_nh_3) == 1) // if accepted
+			if (fnMDmove(iters_fixed_t, pfnMDtype) == 1) // if accepted
 			{
 				++n_accepts;
 			}

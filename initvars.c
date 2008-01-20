@@ -700,15 +700,6 @@ int init_vars()
 
 	if (what_simulation == md_run)
 	{
-		// initialize thermostat/baron stat input data
-		if (what_ensemble == npt_run)
-		{
-			init_npt_respa();
-		}
-		else if (what_ensemble == nvt_run)
-		{
-			init_nvt();
-		}
 	}
 	else if (what_simulation == hmc_run) // initialize HMC input data
 	{
@@ -717,6 +708,15 @@ int init_vars()
 	else if (what_simulation == SIMULATED_ANNEALING)
 	{
 		init_siman();
+	}
+	
+	// initialize thermostat/baron stat input data
+	if (what_ensemble == npt_run)
+	{
+		init_npt_respa();
+	}
+	else if (what_ensemble == nvt_run)
+	{
 		init_nvt();
 	}
 	
