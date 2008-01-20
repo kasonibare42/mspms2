@@ -115,13 +115,6 @@ int siman()
 				velinit();
 				erfrc();
 				rafrc(); // we may not need rafrc here??
-				// rezero nvt related variables
-				unhts = 0.0;
-				ss = 0.0;
-				ps = 0.0;
-				sss = 0.0;
-				pss = 0.0;
-				unhtss = 0.0;
 			}
 			if (fnMDmove(iters_fixed_t, pfnMDtype) == 1) // if accepted
 			{

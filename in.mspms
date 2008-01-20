@@ -7,7 +7,7 @@
 100 1 100 100 0        number of steps for averages, print, save, snapshots, trajectory
 1.0 5                  delt (fs), number of inner steps (cant be zero, 1 is the minimum)
 0.0                    1,4 LJ modifier (0.0 for no 14 TraPPE, 0.5 for OPLS)
-1 1                    simulation type, 0-MD, 1-HMC; ensemble type, 0-nve, 1-nvt, 2-npt;
+1 0                    simulation type, 0-MD, 1-HMC; ensemble type, 0-nve, 1-nvt, 2-npt;
 1 0                    isLJlrcOn, isLJswitchOn
 3                      Electrostatic interaction type: 0-no elec intreaction, 1-ewald, 2-wolf, 3-simple coulomb
 3                      number of constraint
