@@ -163,7 +163,7 @@ int ending()
 			"=========================================================\n");
 
 	// release the dynamically allocated memory for saving old positions for HMC simulation
-	if (what_simulation == hmc_run)
+	if (what_simulation == hmc_run || what_simulation==SIMULATED_ANNEALING)
 	{
 		free(xx_old);
 		free(yy_old);
