@@ -64,7 +64,8 @@ int fnMDmove(int nStepMD, int (*pfnAlgorithm)())
 	}
 	else
 	{
-		ranmar(rndnum, 1);
+		ranmar(rndnum, 1); 
+		// printf("delta_U=%lf   dH=%lf   %lf < %lf ?\n",fDeltaU, dH, rndnum[0], exp(-dH));
 		if (rndnum[0] < exp(-dH))
 		{
 			isAccept = 1;
