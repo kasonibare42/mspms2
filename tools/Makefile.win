@@ -5,7 +5,7 @@ CPP  = g++
 CC   = gcc
 RES  = 
 OBJ  = atom.o box.o inirw.o mole.o specie.o nanotube.o cfgmaker.o
-HISTOBJ = histogramtube.o
+HISTOBJ = histogramtube.o gofr.o
 LIBS = -L"C:/Dev-Cpp/lib" -L"C:/Program Files/GnuWin32/lib"
 INCS =  -I"C:/Dev-Cpp/include"  -I"C:/Program Files/GnuWin32/include" 
 CXXINCS =  -I"C:/Dev-Cpp/lib/gcc/mingw32/3.4.2/include"  -I"C:/Dev-Cpp/include/c++/3.4.2/backward"  -I"C:/Dev-Cpp/include/c++/3.4.2/mingw32"  -I"C:/Dev-Cpp/include/c++/3.4.2"  -I"C:/Dev-Cpp/include"  -I"C:/Program Files/GnuWin32/include" 
@@ -26,6 +26,7 @@ $(BIN): $(OBJ) $(HISTOBJ)
 	$(CPP) $(OBJ) -o "cfgmaker.exe" $(LIBS)
 	$(CPP) convertmakefile.cpp -o "convertmakefile.exe" 
 	$(CC) histogramtube.o -o "histogramtube.exe" $(LIBS) -lgsl -lgslcblas -lm
+	$(CC) gofr.o -o "gofr.exe" $(LIBS) -lgsl -lgslcblas -lm
 	$(CC) msd.c -o "msd.exe" -lm
 	$(CC) sfgridgen.c -o "sfgridgen.exe" -lm
 	$(CC) trjparser.c -o "trjparser.exe" -lm
@@ -54,6 +55,9 @@ cfgmaker.o: cfgmaker.cpp
 
 histogramtube.o: histogramtube.c
 	$(CC) -c histogramtube.c -o histogramtube.o $(CFLAGS)
+
+gofr.o: gofr.c
+	$(CC) -c gofr.c -o gofr.o $(CFLAGS)
 
 trj2xyz.o: trj2xyz.c
 	$(CC) -c trj2xyz.c -o trj2xyz.o $(CFLAGS)
