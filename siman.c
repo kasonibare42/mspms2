@@ -6,17 +6,6 @@
 #include "vars.h"
 #include "funcs.h"
 
-/* set up parameters for this simulated annealing run */
-
-/* how many points do we try before stepping (move to the next temperature) */
-double n_tries;
-/* how many iterations for each T? (how many MD steps before use the acceptance critirea) */
-int iters_fixed_t;
-/* initial temperature */
-double t_initial;
-/* damping factor for temperature */
-double mu_t, t_min;
-
 int init_siman()
 {
 	int ii;

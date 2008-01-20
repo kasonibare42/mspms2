@@ -256,6 +256,22 @@ int nstep_delv_adj_cycle; ///< steps between two delv adjustment
 double delv;
 double prob_vc_upper; ///< upper limit of volume change probability, i.e. prob_cm+prob_vc
 
+/* set up parameters for this simulated annealing run */
+/* how many points do we try before stepping (move to the next temperature) */
+double n_tries;
+/* how many iterations for each T? (how many MD steps before use the acceptance critirea) */
+int iters_fixed_t;
+/* initial temperature */
+double t_initial;
+/* damping factor for temperature */
+double mu_t, t_min;
+
+typedef struct _dftmcffparam
+{
+	int iWhichAxis;
+	int index;
+} DFTMCFFPARAM;
+
 int isAccept;
 double rndnum[3];
 double dH;

@@ -18,13 +18,6 @@ extern void ffieldcu_(int* nm, int* ndata, double* x, double* y, double* z,
 extern void ffieldcu_single__(int* nm, int* ndata, double* x, double* y, double* z,
 		double* ff);
 
-
-typedef struct _dftmcffparam
-{
-	int iWhichAxis;
-	int index;
-} DFTMCFFPARAM;
-
 double deriv_ffieldcu(double pos, void* params)
 {
 	int ndata, indexF;
