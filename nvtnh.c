@@ -64,6 +64,17 @@ int init_nvt()
 	exit(1);
 }
 
+void rezero_nvt_ts()
+{
+	// rezero nvt related variables
+	unhts = 0.0;
+	ss = 0.0;
+	ps = 0.0;
+	sss = 0.0;
+	pss = 0.0;
+	unhtss = 0.0;
+}
+
 // velocity verlet with nose hoover thermostat
 // based on Frenkel and Smit's codes
 // use one thermostat for long range forces

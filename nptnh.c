@@ -60,6 +60,15 @@ int init_npt_respa()
 	exit(1);
 }
 
+void rezero_npt_ts()
+{
+	// thermo/barostat
+	utsbs = 0.0;
+	vts = sqrt((nfree+1.0)*Rgas/Qts);
+	vbs = sqrt((nfree+1.0)*Rgas/Qbs);
+	rts = 0.0;
+}
+
 int npt_nh_operator()
 {
 	int ii;

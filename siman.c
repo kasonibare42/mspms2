@@ -64,18 +64,22 @@ int siman()
 	double T;
 	int n_accepts, n_rejects;
 
+	void (*pfnRezero)();
 	int (*pfnMDtype)();
 	
 	if (what_ensemble == nvt_run)
 	{ 
+		pfnRezero = &rezero_nvt_ts;
 		pfnMDtype = &vver_nh_3;
 	}
 	else if (what_ensemble == nve_run)
 	{
+		pfnRezero = NULL;
 		pfnMDtype = &vver;
 	}
 	else if (what_ensemble == npt_run)
 	{
+		pfnRezero = &rezero_npt_ts;
 		pfnMDtype = &npt_respa;
 	}
 
@@ -116,7 +120,7 @@ int siman()
 				erfrc();
 				rafrc(); // we may not need rafrc here??
 			}
-			if (fnMDmove(iters_fixed_t, pfnMDtype) == 1) // if accepted
+			if (fnMDmove(iters_fixed_t, pfnRezero, pfnMDtype) == 1) // if accepted
 			{
 				++n_accepts;
 			}

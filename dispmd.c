@@ -11,29 +11,16 @@
 /**
  * \brief MD moves for HMC etc.
  */
-int fnMDmove(int nStepMD, int (*pfnAlgorithm)())
+int fnMDmove(int nStepMD, void(*pfnRezero)(), int (*pfnAlgorithm)())
 {
 	int ii;
-	
-	if (pfnAlgorithm == &vver_nh_3)
-	{
-		// rezero nvt related variables
-		unhts = 0.0;
-		ss = 0.0;
-		ps = 0.0;
-		sss = 0.0;
-		pss = 0.0;
-		unhtss = 0.0;
-	}
-	else if (pfnAlgorithm == &npt_respa)
-	{
-		// thermo/barostat
-		utsbs = 0.0;
-		vts = sqrt((nfree+1.0)*Rgas/Qts);
-		vbs = sqrt((nfree+1.0)*Rgas/Qbs);
-		rts = 0.0;
-	}
 
+	// rezero thermostat
+	if (pfnRezero)
+	{
+		pfnRezero();
+	}
+	
 	// initialize energy difference
 	fDeltaU = 0.0;
 

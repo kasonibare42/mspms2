@@ -33,7 +33,6 @@ double deriv_ffieldcu(double pos, void* params)
 	{
 		posold = xx[ndata];
 		xx[ndata] = pos;
-		// ffieldcu_single__(&natom, &indexF, xx, yy, zz, &energy);
 		ffieldcu_(&natom, &indexF, xx, yy, zz, &energy);
 		xx[ndata] = posold;
 	}
@@ -41,7 +40,6 @@ double deriv_ffieldcu(double pos, void* params)
 	{
 		posold = yy[ndata];
 		yy[ndata] = pos;
-		// ffieldcu_single__(&natom, &indexF, xx, yy, zz, &energy);
 		ffieldcu_(&natom, &indexF, xx, yy, zz, &energy);
 		yy[ndata] = posold;
 	}
@@ -49,7 +47,6 @@ double deriv_ffieldcu(double pos, void* params)
 	{
 		posold = zz[ndata];
 		zz[ndata] = pos;
-		// ffieldcu_single__(&natom, &indexF, xx, yy, zz, &energy);
 		ffieldcu_(&natom, &indexF, xx, yy, zz, &energy);
 		zz[ndata] = posold;
 	}
@@ -69,21 +66,6 @@ int fnMetalClusterFF()
 	gUMetalClusterSession = energy*EV_TO_J_PER_MOLE; // conver to J/mol
 	gUMetalClusterSession *= natom; // convert to total energy for the system, keep consistence with other energies
 
-	/*
-	printf("energy = %lf\n",energy);
-	double tmp = 0.0;
-	int index;
-	for (ii=0;ii<natom;ii++)
-	{
-		index = ii+1;
-		ffieldcu_single__(&natom, &index, xx, yy, zz, &energy);
-		tmp += energy;
-	}
-	tmp = tmp/natom/2.0;
-	printf("tmp = %lf\n",tmp);
-	exit(1);
-	*/
-	
 	// numerical forces
 	DFTMCFFPARAM param;
 	gsl_function FF;
@@ -94,8 +76,6 @@ int fnMetalClusterFF()
 	for (ii=0; ii<natom; ii++)
 	{
 		param.index = ii;
-		
-		// printf("ii=%d\n", ii);
 		
 		param.iWhichAxis = X_AXIS;
 		gsl_deriv_central(&FF, xx[ii], STEP_SIZE, &value, &abserr);
@@ -113,7 +93,5 @@ int fnMetalClusterFF()
 		// printf("dz = %lf (%lf)  \n", value, abserr);
 	}
 	
-	// exit(1);
-
 	return 0;
 }
