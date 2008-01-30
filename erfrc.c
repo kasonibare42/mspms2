@@ -1812,7 +1812,7 @@ int simple_coulomb_inter_mole(int iStartMole, int iEndMole)
  * We should note that currently the forces are not stored in Session variables.
  * Because pair interactions usually do not require calculations for forces.
  */
-int fnErfrcSession()
+int fnErfrcSession(int iStartMole, int iEndMole)
 {
 	int ii;
 
@@ -1842,11 +1842,11 @@ int fnErfrcSession()
 	}
 
 	// i-j loop, nonboned loop, 1-4 loop, 1-3 loop and 1-2 loop
-	loop_ij(-1, -1); // Calculate the energy for the whole system
-	loop_nbp(-1); // Calculate the non-bonded energy for the whole system
-	loop_14(-1); // Calculate the 1,4 energy for the whole system
-	loop_13(-1); // Calculate the 1,3 energy for the whole system
-	loop_12(-1); // Calculate the 1,2 energy for the whole system
+	loop_ij(iStartMole, iEndMole); // Calculate the energy for the whole system
+	loop_nbp(iStartMole); // Calculate the non-bonded energy for the whole system
+	loop_14(iStartMole); // Calculate the 1,4 energy for the whole system
+	loop_13(iStartMole); // Calculate the 1,3 energy for the whole system
+	loop_12(iStartMole); // Calculate the 1,2 energy for the whole system
 
 	// 4.0 factor for LJ energies
 	gUvdwSession *= 4.0;
@@ -1897,7 +1897,7 @@ int fnErfrcSession()
 	}
 	else if (isSimpleCoulomb) // if simple coulomb is used, calculate inter-mole coulomb
 	{
-		simple_coulomb_inter_mole(-1, -1); // constant is already applied inside the function
+		simple_coulomb_inter_mole(iStartMole, iEndMole); // constant is already applied inside the function
 		// Add into total Inter Energy
 		gUinterSession += gUcoulombSession;
 	}
@@ -1924,7 +1924,7 @@ int fnErfrcSession()
 int erfrc()
 {
 	// call session Erfrc
-	fnErfrcSession();
+	fnErfrcSession(ENTIRE_SYSTEM, ENTIRE_SYSTEM);
 
 	// set the energies for the whole system
 	uvdw = gUvdwSession;

@@ -27,6 +27,8 @@
 #define nvt_run		1
 #define npt_run		2
 
+#define ENTIRE_SYSTEM	-1
+
 #define not_ghost	0
 #define lj_ghost	1
 #define all_ghost	2

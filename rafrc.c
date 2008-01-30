@@ -811,7 +811,7 @@ int impfrc(int iMole) // improper energy/force calculations
 	return 0;
 }
 
-int fnRafrcSession()
+int fnRafrcSession(int iMole)
 {
 	int ii;
 
@@ -832,25 +832,25 @@ int fnRafrcSession()
 
 	if (nbond > 0)
 	{
-		bndfrc(-1);
+		bndfrc(iMole);
 		gUintraSession += gUbondSession;
 	}
 
 	if (nangle > 0)
 	{
-		aglfrc(-1);
+		aglfrc(iMole);
 		gUintraSession += gUangleSession;
 	}
 
 	if (ndih > 0)
 	{
-		dihfrc(-1);
+		dihfrc(iMole);
 		gUintraSession += gUdihSession;
 	}
 
 	if (nimp > 0)
 	{
-		impfrc(-1);
+		impfrc(iMole);
 		gUintraSession += gUimpSession;
 	}
 
@@ -860,7 +860,7 @@ int fnRafrcSession()
 int rafrc()
 {
 	// calculate the session energies
-	fnRafrcSession();
+	fnRafrcSession(ENTIRE_SYSTEM);
 
 	// energies
 	uintra = gUintraSession;

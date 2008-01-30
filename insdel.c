@@ -214,7 +214,7 @@ int InitInsertedMole(int iSpecieSelected, int iMoleSelected)
 	// specie_first_atom_idx[iSpecieSelected] = iAtom;
 	// specie_first_mole_idx[iSpecieSelected] = iMole;
 	idMoleInSpecie = nmole_per_specie[iSpecieSelected];
-	nmole_per_specie[iSpecieSelected]++;
+	// nmole_per_specie[iSpecieSelected]++; // DO NOT increase till we accept
 
 	mole2specie[iMole] = iSpecieSelected;
 	mole_status[iMole] = MOLE_STATUS_NORMAL;
@@ -350,6 +350,7 @@ int fnInsDelMole()
 	int ii, jj;
 	int iSpecieSelected;
 	int iMoleSelected;
+	double del_u;
 	double pcreate, pkill;
 
 	ranmar(rndnum, 2);
@@ -384,14 +385,17 @@ int fnInsDelMole()
 		{
 			InitInsertedMole(iSpecieSelected, iMoleSelected);
 		}
+		else // set the status of the molecule to normal 
+		{ 		
+			mole_status[iMoleSelected] = MOLE_STATUS_NORMAL;
+		}
 
-		// set the status of the molecule to normal
-		mole_status[iMoleSelected] = MOLE_STATUS_NORMAL;
-
-		// Calculate the energy of the inserted molecule
-		// del_upoter = 0.0;
-		// del_ulj = 0.0;
-		// del_ucs = 0.0;
+		// Calculate the inter-molecular potential energy of the inserted molecule
+		fnErfrcSession(iMoleSelected, ENTIRE_SYSTEM);
+		del_u = gUinterSession;
+		// Calculate the intra-molecular potential energy of the inserted molecule
+		fnRafrcSession(iMoleSelected);
+		del_u += gUintraSession;
 		// del_plj = 0.0;
 
 		// long range correction part

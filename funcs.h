@@ -2,6 +2,8 @@
 #define FUNCS_H_
 
 int fnSffrcSession();
+int fnErfrcSession(int iStartMole, int iEndMole);
+int fnRafrcSession(int iMole);
 int vver();
 int erfrc();
 int rafrc();
