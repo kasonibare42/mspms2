@@ -128,7 +128,10 @@ int hmc()
 	// print initial properties
 	printit();
 	// make snapshots & movies
-	trajectory();
+	if (nstep_trj)
+	{ 	
+		trajectory();
+	}
 
 	// above counts as the first step
 	icounter[11]--;

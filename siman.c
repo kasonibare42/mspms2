@@ -99,7 +99,10 @@ int siman()
 	// print initial properties
 	printit();
 	// make snapshots & movies
-	trajectory();
+	if (nstep_trj)
+	{ 
+		trajectory();
+	}
 
 	n_accepts = 0;
 	n_rejects = 0;

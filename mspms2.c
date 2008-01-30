@@ -51,7 +51,7 @@ int ending()
 {
 	int ii;
 	double fExecutionTime;
-	
+
 	fprintf(stderr,"%d frames in the trajectory file.\n",nframe);
 	fprintf(fpouts, "%d frames in the trajectory file.\n", nframe);
 
@@ -533,11 +533,11 @@ int velinit()
 	double stdvtmp, stdv;
 	double totalmass;
 	double scaling;
-	
+
 	// if at zero temperature, everything should be zero
 	if (treq == 0.0)
 	{
-		for (ii=0;ii<natom;ii++)
+		for (ii=0; ii<natom; ii++)
 		{
 			vx[ii] = vy[ii] = vz[ii] = 0.0;
 			ukin = tinst = 0.0;
@@ -658,7 +658,28 @@ int snapshot()
 
 int trajectory()
 {
+	int ii, jj;
+
+	// write out molecular information at the beginning of the trajectory file
+	if (!nframe)
+	{
+		fwrite(&nspecie, sizeof(int), 1, fptrj);
+		fwrite(&nmole, sizeof(int), 1, fptrj);
+		fwrite(&natom, sizeof(int), 1, fptrj);
+		for (ii=0; ii<nspecie; ii++)
+		{
+			fwrite(&nmole_per_specie[ii], sizeof(int), 1, fptrj);
+			fwrite(&sample_natom_per_mole[ii], sizeof(int), 1, fptrj);
+			for (jj=sample_mole_first_atom_idx[ii]; jj
+					<sample_mole_last_atom_idx[ii]; jj++)
+			{
+				fwrite(sample_atomname[jj], sizeof(char), 5, fptrj);
+				fwrite(&sample_aw[jj], sizeof(double), 1, fptrj);
+			}
+		}
+	}
 	nframe++;
+	fwrite(nmole_per_specie, sizeof(int), nspecie, fptrj);
 	fwrite(xx, sizeof(double), natom, fptrj);
 	fwrite(yy, sizeof(double), natom, fptrj);
 	fwrite(zz, sizeof(double), natom, fptrj);
@@ -846,7 +867,7 @@ int main(int argc, char *argv[])
 	init_vars();
 	/// Validate the initialized variables.
 	fnValidateInit();
-	
+
 	/// Decide what type of simulation to run. 
 	if (what_simulation == md_run)
 	{

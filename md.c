@@ -136,11 +136,14 @@ int md()
 	// print initial properties
 	printit();
 	// make snapshots & movies
-	trajectory();
+	if (nstep_trj)
+	{
+		trajectory();
+	}
 
 	// above counts as the first step
 	icounter[11]--;
-	
+
 	if (what_ensemble == nvt_run) // velocity verlet with nose hoover for NVT MD
 	{
 		for (istep=nstep_start; istep<=nstep; istep++) // NOTE: start from 1 and <=
@@ -173,7 +176,7 @@ int md()
 			}
 			// accumulators
 			do_accumu();
-			
+
 			// do averages
 			if ((istep-nstep_eq)%nstep_ave==0)
 			{
@@ -213,7 +216,7 @@ int md()
 			}
 			// accumulators
 			do_accumu();
-			
+
 			// do averages
 			if ((istep-nstep_eq)%nstep_ave==0)
 			{
@@ -253,7 +256,7 @@ int md()
 			}
 			// accumulators
 			do_accumu();
-			
+
 			// do averages
 			if ((istep-nstep_eq)%nstep_ave==0)
 			{
