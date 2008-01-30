@@ -28,6 +28,10 @@
 #define SAMPLE_NATOM_PER_MOLE_MAX	100
 
 // variables
+// tracking varaibles
+int idAtomUninit; ///< The index of the first atom which is NOT initialized (used by any molecules)
+int idBondUninit, idAngleUninit, idDihUninit, idImpUninit, idNbpUninit;
+
 // atoms
 int natom; ///< total number of atoms in the system
 char atomname[NATOM_MAX][5];
@@ -66,6 +70,7 @@ double fOrientF_x, fOrientF_y, fOrientF_z;
 double fOrientG_x, fOrientG_y, fOrientG_z;
 
 // specie
+// All the index number are based on the entire molecule list (not restricted to a single specie)
 int nspecie; ///< total number of species in the system
 char szSpecieName[NSPECIE_MAX][200]; ///< the name of each specie
 int nmole_per_specie[NSPECIE_MAX]; ///< number of molecules in a certain specie

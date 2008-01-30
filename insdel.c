@@ -183,12 +183,164 @@ int BulidInsertedMole(int iSpecieSelected, int iMoleSelected)
 	{
 		// If the multiple atom molecule, we need to generate a random orientation for it
 		normvec();
-		cal_all_atom_efg2xyz_ortn(iSpecieSelected, iMoleSelected, xxnew, yynew, zznew);
+		cal_all_atom_efg2xyz_ortn(iSpecieSelected, iMoleSelected, xxnew, yynew,
+				zznew);
 	}
 	else // single atom, spherical molecule does not need orientation
 	{
-		cal_all_atom_efg2xyz(iSpecieSelected, iMoleSelected, xxnew, yynew, zznew);
+		cal_all_atom_efg2xyz(iSpecieSelected, iMoleSelected, xxnew, yynew,
+				zznew);
 	}
+
+	return 0;
+}
+
+/// Initialize the inserted molecule if it is NOT initialized
+int InitInsertedMole(int iSpecieSelected, int iMoleSelected)
+{
+	int ii, jj, kk;
+	int iAtom, iMole, iBond, iAngle, iDih, iImp, iNbp;
+	int idMoleInSpecie;
+
+	// init the real atom, bond, angle, dihedral, improper, non-bonded list
+	iAtom = idAtomUninit;
+	iMole = iMoleSelected;
+	iBond = idBondUninit;
+	iAngle = idAngleUninit;
+	iDih = idDihUninit;
+	iImp = idImpUninit;
+	iNbp = idNbpUninit;
+	
+	// specie_first_atom_idx[iSpecieSelected] = iAtom;
+	// specie_first_mole_idx[iSpecieSelected] = iMole;
+	idMoleInSpecie = nmole_per_specie[iSpecieSelected];
+	nmole_per_specie[iSpecieSelected]++;
+
+	mole2specie[iMole] = iSpecieSelected;
+	mole_status[iMole] = MOLE_STATUS_NORMAL;
+	iPhysicalMoleIDFromMetaID[iMole] = iMole;
+	iPhysicalMoleIDFromMetaIDinSpecie[iSpecieSelected][idMoleInSpecie] = iMole;
+
+	// atom
+	mole_first_atom_idx[iMole] = iAtom;
+	for (kk=sample_mole_first_atom_idx[iSpecieSelected]; kk
+			<sample_mole_last_atom_idx[iSpecieSelected]; kk++)
+	{
+		atom2mole[iAtom] = iMole;
+		strcpy(atomname[iAtom], sample_atomname[kk]);
+		aw[iAtom] = sample_aw[kk];
+		epsilon[iAtom] = sample_epsilon[kk];
+		sigma[iAtom] = sample_sigma[kk];
+		charge[iAtom] = sample_charge[kk];
+		isghost[iAtom] = sample_isghost[kk];
+		tasostype[iAtom] = sample_tasostype[kk];
+		iAtom++;
+	}
+	mole_last_atom_idx[iMole] = iAtom;
+
+	// bond
+	mole_first_bond_idx[iMole] = iBond;
+	for (kk=sample_mole_first_bond_idx[iSpecieSelected]; kk
+			<sample_mole_last_bond_idx[iSpecieSelected]; kk++)
+	{
+		bond_idx[iBond][0] = sample_bond_idx[kk][0] + idMoleInSpecie
+			*sample_natom_per_mole[iSpecieSelected];
+		bond_idx[iBond][1] = sample_bond_idx[kk][1] + idMoleInSpecie
+			*sample_natom_per_mole[iSpecieSelected];
+		bond_type[iBond] = sample_bond_type[kk];
+		Kb[iBond] = sample_Kb[kk];
+		Req[iBond] = sample_Req[kk];
+		alpha[iBond] = sample_alpha[kk];
+		iBond++;
+	}
+	mole_last_bond_idx[iMole] = iBond;
+
+	// angle
+	mole_first_angle_idx[iMole] = iAngle;
+	for (kk=sample_mole_first_angle_idx[iSpecieSelected]; kk
+			<sample_mole_last_angle_idx[iSpecieSelected]; kk++)
+	{
+		angle_idx[iAngle][0] = sample_angle_idx[kk][0] + idMoleInSpecie
+			*sample_natom_per_mole[iSpecieSelected];
+		angle_idx[iAngle][1] = sample_angle_idx[kk][1] + idMoleInSpecie
+			*sample_natom_per_mole[iSpecieSelected];
+		angle_idx[iAngle][2] = sample_angle_idx[kk][2] + idMoleInSpecie
+			*sample_natom_per_mole[iSpecieSelected];
+		angle_type[iAngle] = sample_angle_type[kk];
+		Ktheta[iAngle] = sample_Ktheta[kk];
+		Thetaeq[iAngle] = sample_Thetaeq[kk];
+		agl_para_3[iAngle] = sample_agl_para_3[kk];
+		agl_para_4[iAngle] = sample_agl_para_4[kk];
+		agl_para_5[iAngle] = sample_agl_para_5[kk];
+		iAngle++;
+	}
+	mole_last_angle_idx[iMole] = iAngle;
+
+	// dihedral
+	mole_first_dih_idx[iMole] = iDih;
+	for (kk=sample_mole_first_dih_idx[iSpecieSelected]; kk
+			<sample_mole_last_dih_idx[iSpecieSelected]; kk++)
+	{
+		dih_idx[iDih][0] = sample_dih_idx[kk][0] + idMoleInSpecie
+			*sample_natom_per_mole[iSpecieSelected];
+		dih_idx[iDih][1] = sample_dih_idx[kk][1] + idMoleInSpecie
+			*sample_natom_per_mole[iSpecieSelected];
+		dih_idx[iDih][2] = sample_dih_idx[kk][2] + idMoleInSpecie
+			*sample_natom_per_mole[iSpecieSelected];
+		dih_idx[iDih][3] = sample_dih_idx[kk][3] + idMoleInSpecie
+			*sample_natom_per_mole[iSpecieSelected];
+		dih_type[iDih] = sample_dih_type[kk];
+		c1[iDih] = sample_c1[kk];
+		c2[iDih] = sample_c2[kk];
+		c3[iDih] = sample_c3[kk];
+		c4[iDih] = sample_c4[kk];
+		iDih++;
+	}
+	mole_last_dih_idx[iMole] = iDih;
+
+	// improper
+	mole_first_imp_idx[iMole] = iImp;
+	for (kk=sample_mole_first_imp_idx[iSpecieSelected]; kk
+			<sample_mole_last_imp_idx[iSpecieSelected]; kk++)
+	{
+		imp_idx[iImp][0] = sample_imp_idx[kk][0] + idMoleInSpecie
+			*sample_natom_per_mole[iSpecieSelected];
+		imp_idx[iImp][1] = sample_imp_idx[kk][1] + idMoleInSpecie
+			*sample_natom_per_mole[iSpecieSelected];
+		imp_idx[iImp][2] = sample_imp_idx[kk][2] + idMoleInSpecie
+			*sample_natom_per_mole[iSpecieSelected];
+		imp_idx[iImp][3] = sample_imp_idx[kk][3] + idMoleInSpecie
+			*sample_natom_per_mole[iSpecieSelected];
+		imp_type[iImp] = sample_imp_type[kk];
+		komega[iImp] = sample_komega[kk];
+		omega0[iImp] = sample_omega0[kk];
+		iImp++;
+	}
+	mole_last_imp_idx[iMole] = iImp;
+
+	// non-bonded
+	mole_first_nbp_idx[iMole] = iNbp;
+	for (kk=sample_mole_first_nbp_idx[iSpecieSelected]; kk
+			<sample_mole_last_nbp_idx[iSpecieSelected]; kk++)
+	{
+		nbp_idx[iNbp][0] = sample_nbp_idx[kk][0] + idMoleInSpecie
+			*sample_natom_per_mole[iSpecieSelected];
+		nbp_idx[iNbp][1] = sample_nbp_idx[kk][1] + idMoleInSpecie
+			*sample_natom_per_mole[iSpecieSelected];
+		iNbp++;
+	}
+	mole_last_nbp_idx[iMole] = iNbp;
+
+	specie_last_atom_idx[iSpecieSelected] = iAtom;
+	specie_last_mole_idx[iSpecieSelected] = iMole;
+	
+	// track the uninit lists
+	idAtomUninit = iAtom;
+	idBondUninit = iBond;
+	idAngleUninit = iAngle;
+	idDihUninit = iDih;
+	idImpUninit = iImp;
+	idNbpUninit = iNbp;
 
 	return 0;
 }
@@ -226,6 +378,12 @@ int fnInsDelMole()
 
 		// use the Sample of this specie to build up the insert molecule
 		BulidInsertedMole(iSpecieSelected, iMoleSelected);
+
+		// Initialize bond, angle, dih, imp, nbp if the molecule status is un-initialized
+		if (mole_status[iMoleSelected] == MOLE_STATUS_UNINIT)
+		{
+			InitInsertedMole(iSpecieSelected, iMoleSelected);
+		}
 
 		// set the status of the molecule to normal
 		mole_status[iMoleSelected] = MOLE_STATUS_NORMAL;

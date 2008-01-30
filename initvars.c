@@ -634,6 +634,14 @@ int init_vars()
 
 	fprintf(stderr,"Initializing variables...\n");
 	fprintf(fpouts, "Initializing variables...\n");
+	
+	/// Set the un-initialized ID for atom, bond, angle, dih, imp, nbp lists
+	idAtomUninit = natom;
+	idBondUninit = nbond;
+	idAngleUninit = nangle;
+	idDihUninit = ndih;
+	idImpUninit = nimp;
+	idNbpUninit = nnbp;
 
 	/// Initialize the real atom, bond, angle, dihedral, improper, nbp lists using Samples
 	InitReplicateSamples();
