@@ -11,12 +11,17 @@
 #include <gsl/gsl_deriv.h>
 #include "vars.h"
 
+extern void ffield_(int* nm, double* x, double* y, double* z, double* ff);
 
-extern void ffieldcu_(int* nm, int* ndata, double* x, double* y, double* z,
-		double* ff);
-
-extern void ffieldcu_single__(int* nm, int* ndata, double* x, double* y, double* z,
-		double* ff);
+/**
+ * \ This is just a wrapper function for the actually fortran subroutine.
+ * This function is kept just for compatability with the old code and keep
+ * the modification to the minimal.
+ */
+void ffieldcu_(int* nm, int* ndata, double* x, double* y, double* z, double* ff)
+{
+	ffield_(nm, x, y, z, ff);
+}
 
 double deriv_ffieldcu(double pos, void* params)
 {
@@ -25,10 +30,10 @@ double deriv_ffieldcu(double pos, void* params)
 	double energy;
 
 	DFTMCFFPARAM *p = (DFTMCFFPARAM *)params;
-	
+
 	ndata = p->index;
 	indexF = ndata + 1; // Fortran index
-	
+
 	if (p->iWhichAxis == X_AXIS)
 	{
 		posold = xx[ndata];
@@ -76,7 +81,7 @@ int fnMetalClusterFF()
 	for (ii=0; ii<natom; ii++)
 	{
 		param.index = ii;
-		
+
 		param.iWhichAxis = X_AXIS;
 		gsl_deriv_central(&FF, xx[ii], STEP_SIZE, &value, &abserr);
 		fxl[ii] -= value;
@@ -92,6 +97,6 @@ int fnMetalClusterFF()
 		fzl[ii] -= value;
 		// printf("dz = %lf (%lf)  \n", value, abserr);
 	}
-	
+
 	return 0;
 }
