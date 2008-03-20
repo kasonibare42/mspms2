@@ -370,6 +370,7 @@ int readins()
 	sscanf(fgets(buffer, datalen, fpins), "%lf", &f0);
 	sscanf(fgets(buffer, datalen, fpins), "%d %d", &what_simulation,
 			&what_ensemble);
+	sscanf(fgets(buffer, datalen, fpins), "%d", &iInterMolePotType);
 	sscanf(fgets(buffer, datalen, fpins), "%d %d", &isLJlrcOn, &isLJswitchOn);
 	sscanf(fgets(buffer, datalen, fpins), "%d", &iChargeType);
 	sscanf(fgets(buffer, datalen, fpins), "%d", &nconstraint);

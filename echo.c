@@ -117,6 +117,12 @@ int echo()
 			fpouts,
 			"The Cutoff for LJ interaction is %lf, for Coulomb interactions is %lf.\n    The squares are %lf and %lf, respectively.\n",
 			rcutoff, rcutoffelec, rcutoffsq, rcutoffelecsq);
+	if (iInterMolePotType == INTER_MOLE_SG)
+	{
+		fprintf(fpouts, "The Silvera-Goldman potential has been set as the inter-molecular potential.\n");
+		
+	}
+	
 	fprintf(fpouts, "The 1,4 LJ interaction modifier is %lf.\n", f0);
 	if (f0==0.0)
 	{
@@ -398,6 +404,7 @@ int echo()
 	fprintf(fpouts, "uvdw=%lf\n", uvdw);
 	fprintf(fpouts, "uer_vdw=%lf\n", uvdw-unbp_vdw);
 	fprintf(fpouts, "unbp_vdw=%lf\n", unbp_vdw);
+	fprintf(fpouts, "usg=%lf\n", usg);
 	fprintf(fpouts, "ubond=%lf\n", ubond);
 	fprintf(fpouts, "uangle=%lf\n", uangle);
 	fprintf(fpouts, "udih=%lf\n", udih);

@@ -15,6 +15,7 @@ int bndfrc(int iMole)
 	double rijsq, rij;
 	double delta_r;
 	double ubond_temp;
+	double virij;
 	double fij, fxij, fyij, fzij;
 	double De;
 	double exp_term, one_minus_exp_term;
@@ -105,6 +106,25 @@ int bndfrc(int iMole)
 			fzij = fij*rzij;
 			// contribution to virial
 			gVirialIntraSession = gVirialIntraSession + fxij*rxij + fyij*ryij + fzij*rzij;
+			// force on atom 1
+			fxs[ii1] += fxij;
+			fys[ii1] += fyij;
+			fzs[ii1] += fzij;
+			// force on atom 2
+			fxs[ii2] -= fxij;
+			fys[ii2] -= fyij;
+			fzs[ii2] -= fzij;
+			break;
+		case BOND_SPRING_PATH_INTEGRAL: //4
+            ubond_temp = 0.5*spring*rijsq;
+            gUbondSession += ubond_temp;
+			virij = -spring*rijsq;
+			gVirialIntraSession += virij;
+			// virbond
+			fij = -spring;
+            fxij = fij*rxij;
+            fyij = fij*ryij;
+            fzij = fij*rzij;
 			// force on atom 1
 			fxs[ii1] += fxij;
 			fys[ii1] += fyij;

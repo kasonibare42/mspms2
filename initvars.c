@@ -86,6 +86,55 @@ int fnInitCharge()
 	exit(1);
 }
 
+/// Read in Silvera-Goldman parametes and initialize related variables
+int fnInitSG()
+{
+	int ii;
+	const int datalen = 200;
+	char buffer[200];
+	char keyword[100];
+
+	fprintf(stderr,"Reading input data for Silvera-Goldman potential");
+	fprintf(fpouts, "Reading input data for Silvera-Goldman potential");
+
+	// re-open input file to read extra data section
+	fpins = fopen(INPUT,"r");
+
+	while (fgets(buffer, datalen, fpins)!=NULL)
+	{
+		sscanf(buffer, "%s", keyword);
+		for (ii=0; ii<strlen(keyword); ii++)
+		{
+			keyword[ii] = toupper(keyword[ii]);
+		}
+		if (!strcmp(keyword, "SG"))
+		{
+			fprintf(stderr,"Data section for Slivera-Goldman found...\n");
+			fprintf(fpouts, "Data section for Slivera-Goldman found...\n");
+
+			sscanf(fgets(buffer, datalen, fpins), "%lf %lf %lf", &sg_alpha,
+					&sg_beta, &sg_gama);
+			sscanf(fgets(buffer, datalen, fpins), "%lf %lf %lf %lf", &sg_c6,
+					&sg_c8, &sg_c9, &sg_c10);
+			sscanf(fgets(buffer, datalen, fpins), "%lf", &sg_rc);
+			
+			/*
+			 * * Calculate the constant part of spring constant: 
+			 * K = m * P * (kB T)^2 / hbar^2
+			 * the dimensions are mass/time^2 = energy/length^2
+			 */
+			// spring  = mass*natom*(R*T)^2/hbar^2
+
+			fclose(fpins);
+			return 0;
+		} // if keyword found
+	} // read through lines
+	fprintf(stderr,"Error: data for Slivera-Goldman not found.\n");
+	fprintf(fpouts, "Error: data for Slivera-Goldman not found.\n");
+	fclose(fpins);
+	exit(1);
+}
+
 /**
  * \brief Initialize the excluding pair list.
  */
@@ -202,9 +251,9 @@ int InitReplicateSamples()
 {
 	int ii, jj, kk;
 	int iAtom, iMole, iBond, iAngle, iDih, iImp, iNbp;
-	
+
 	// initialize the properties for maximal number of molecules
-	for (ii=0;ii<NMOLE_MAX;ii++)
+	for (ii=0; ii<NMOLE_MAX; ii++)
 	{
 		mole_status[ii] = MOLE_STATUS_UNINIT;
 	}
@@ -634,7 +683,7 @@ int init_vars()
 
 	fprintf(stderr,"Initializing variables...\n");
 	fprintf(fpouts, "Initializing variables...\n");
-	
+
 	/// Set the un-initialized ID for atom, bond, angle, dih, imp, nbp lists
 	idAtomUninit = natom;
 	idBondUninit = nbond;
@@ -717,7 +766,7 @@ int init_vars()
 	{
 		init_siman();
 	}
-	
+
 	// initialize thermostat/baron stat input data
 	if (what_ensemble == npt_run)
 	{
@@ -727,9 +776,10 @@ int init_vars()
 	{
 		init_nvt();
 	}
-	
+
 	// initialize velocities for needed simulations
-	if (what_simulation==md_run || what_simulation==hmc_run || what_simulation==SIMULATED_ANNEALING)
+	if (what_simulation==md_run || what_simulation==hmc_run || what_simulation
+			==SIMULATED_ANNEALING)
 	{
 		fprintf(stderr, "initializing velocities...\n");
 		fprintf(fpouts, "initializing velocities...\n");
@@ -759,6 +809,12 @@ int init_vars()
 	if (iChargeType != _NO_ELECTROSTATIC_INTERACTION)
 	{
 		fnInitCharge();
+	}
+	
+	// Read in SG potential parameters if required
+	if (iInterMolePotType == INTER_MOLE_SG)
+	{
+		fnInitSG();
 	}
 
 	// Check if any bond, angle, dihedral share the same ending pairs

@@ -37,10 +37,15 @@
 #define continue_run	2
 #define new_from_old	3
 
+/// Inter-molecular potentials
+#define INTER_MOLE_LJ	0
+#define INTER_MOLE_SG	1
+
 #define bond_none		0
 #define bond_harmonic		1
 #define bond_morse		2
 #define bond_fene		3
+#define BOND_SPRING_PATH_INTEGRAL	4
 
 #define angle_none		0
 #define angle_harmonic		1
@@ -104,6 +109,8 @@
 
 #define EV_TO_J_PER_MOLE	96485.3840868795   ///< 1 electronvolt = 1.6021773e-19 joule
 
+#define HARTREE_TO_J_PER_MOL	2625499.6295540055		///< 1 hartree = 4.359 744 17(75)×10-18 J
+
 /// File operators
 FILE *fpins, *fpouts, *fpcfg, *fplog;
 FILE *fpss, *fptrj, *fpsave, *fpload;
@@ -122,6 +129,7 @@ double boxv, boxlx, boxly, boxlz; ///< box size
 int nconstraint; ///< constraint, 3 for periodic, 6 for aperiodic
 double rcutoff, rcutoffsq, rcuton, rcutonsq;
 double rcutoffelec, rcutoffelecsq;
+int iInterMolePotType; ///< Inter molecular potential model type
 double f0; ///< 1,4 LJ potential modifier for OPLS, set to 1.0 for no modification or 0.5 for OPLS or 0.0 for TraPPE.
 int isLJswitchOn; ///< use switch potential for LJ or not
 int isLJlrcOn; ///< if L-J long range correction is ON
@@ -168,6 +176,7 @@ double upot; ///< calculated in printit()
 double ukin;
 double uinter, uintra; ///< inter and intra molecular energy
 double uvdw; ///< van der wall energy, LJ energy, include unbp
+double usg; ///< Silvera-Goldman potential
 double unbp_vdw; ///< nonbonded pair energy
 double ubond, uangle, udih, uimp;
 double uewald; ///< total ewald energy, refer to Frenkel and Smit, eq. 12.1.25
@@ -207,6 +216,7 @@ double ukin_old, tinst_old, uinter_old, uintra_old, uvdw_old, ubond_old,
 double gUtotSession, gUpotSession, gUkinSession, gUinterSession, gUintraSession;
 double gUvdwSession, gUvdwNbpSession, gUbondSession, gUangleSession,
 		gUdihSession;
+double gUsgSession; ///< Silvera-goldman potential
 double gUimpSession, gUewaldSession, gUrealSession, gUfourierSession;
 double gUselfSession, gUexclSession, gUvacuumSession, gUGz0Session,
 		gUsfljSession;
@@ -220,6 +230,11 @@ int nfree; ///< freedom
 double tinst; ///< instantaneous temperature
 
 int nframe; ///< number of frames in the trajectory file
+
+/// Variables for Silvera-Goldman potential
+double sg_alpha, sg_beta, sg_gama, sg_c6,
+       sg_c8, sg_c9, sg_c10, sg_rc;
+double spring; ///< spring constant for polymer bead ring
 
 double TWOPI_LX, TWOPI_LY, TWOPI_LZ; ///< ewald
 double Bfactor_ewald, Vfactor_ewald;

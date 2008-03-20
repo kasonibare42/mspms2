@@ -8,6 +8,7 @@
 1.0 5                  delt (fs), number of inner steps (cant be zero, 1 is the minimum)
 0.0                    1,4 LJ modifier (0.0 for no 14 TraPPE, 0.5 for OPLS)
 1 0                    simulation type, 0-MD, 1-HMC; ensemble type, 0-nve, 1-nvt, 2-npt;
+0					   Inter-molecular potentials other than LJ. 0-LJ (no use). 1-SG
 1 0                    isLJlrcOn, isLJswitchOn
 3                      Electrostatic interaction type: 0-no elec intreaction, 1-ewald, 2-wolf, 3-simple coulomb
 3                      number of constraint
@@ -62,3 +63,9 @@ C    14.381768410313    10.229858825919     2.459512146748
   SimAn
 10  1						How many steps before move to next temperature; How many MD steps before use acceptance rule
 1000.0 300.0 1.01			Initial temperature; Minimal temperature; cooling parameter
+
+  SG
+ 1.713 1.5671 0.00993     		alpha, beta, gama
+ 12.14 215.2 143.1 4813.9		C6, C8, C9, C10
+ 8.321								rc = 1.28 rmin
+ 

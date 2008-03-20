@@ -101,6 +101,9 @@ int loop_ij(int iStartMole, int iEndMole)
 	double rxij, ryij, rzij;
 	double rijsq, rij, r_rijsq;
 	double r_r6, r_r12, r_r12_minus_r_r6;
+	double r_rij, r_r8, r_r9, r_r10;
+	double uij, uij1, uij2, uij3, uij4, uij5, uij6;
+	double uij_sg;
 	double epsiloni, sigmai, chargei;
 	double epsilonij, sigmaij;
 	int isNotexcl[NATOM_MAX];
@@ -120,18 +123,19 @@ int loop_ij(int iStartMole, int iEndMole)
 	FF.params = 0;
 
 	uij_vdw = 0.0;
+	uij_sg = 0.0;
 	uij_real = 0.0;
 	uij_Gz0 = 0.0;
 
 	// Assign the ii, jj lower and upper limits
-	if (iStartMole==-1 && iEndMole==-1)
+	if (iStartMole==ENTIRE_SYSTEM && iEndMole==ENTIRE_SYSTEM)
 	{
 		iiStart = 0;
 		iiEnd = natom - 1;
 		jjStart = -1; // -1 for jjStart==-1?ii+1:jjStart, dynamically assign the jjStart
 		jjEnd = natom;
 	}
-	else if (iStartMole>=0 && iEndMole==-1)
+	else if (iStartMole>=0 && iEndMole==ENTIRE_SYSTEM)
 	{
 		iiStart = mole_first_atom_idx[iStartMole];
 		iiEnd = mole_last_atom_idx[iStartMole];
@@ -306,6 +310,58 @@ int loop_ij(int iStartMole, int iEndMole)
 					fzl[jj] -= fzij;
 				}
 
+				// Inter-molecular potential of Silvera-Goldman (SG) 
+				if (iInterMolePotType == INTER_MOLE_SG)
+				{
+					if (rijsq < rcutoffsq)
+					{
+						r_rijsq = 1.0/rijsq;
+						r_rij = 1.0/rij;
+						r_r6 = r_rijsq*r_rijsq*r_rijsq;
+						r_r8 = r_r6*r_rijsq;
+						r_r9 = r_r8*r_rij;
+						r_r10 = r_r8*r_rijsq;
+
+						uij1=exp(sg_alpha-sg_beta*rij-sg_gama*rijsq);
+						uij2=sg_beta+2.0*sg_gama*rij;
+						uij3=sg_c6*r_r6+sg_c8*r_r8+sg_c10*r_r10-sg_c9*r_r9;
+						uij4=6.0*sg_c6*r_r6+8.0*sg_c8*r_r8+ 10.0*sg_c10*r_r10
+								-9.0*sg_c9*r_r9;
+
+						if (rij >= sg_rc)
+						{
+							uij=uij1-uij3;
+							fij=uij1*uij2-uij4*r_rij;
+						}
+						else
+						{
+							temp1 = (sg_rc*r_rij)-1.0;
+							uij5=exp(-temp1*temp1);
+							uij6=(sg_rc*r_rij-1.0)*2.0*sg_rc*r_rijsq;
+							uij=uij1-uij3*uij5;
+							fij=uij1*uij2-uij4*uij5*r_rij+uij3*uij5*uij6;
+						}
+
+						uij_sg += uij; // still need constant
+						gVirialInterSession += rij*fij*HARTREE_TO_J_PER_MOL;
+						
+						fij=fij*r_rij*HARTREE_TO_J_PER_MOL;
+						
+						fxij=fij*rxij;
+						fyij=fij*ryij;
+						fzij=fij*rzij;
+
+						// force on atom ii
+						fxi += fxij;
+						fyi += fyij;
+						fzi += fzij;
+						// force on atom jj
+						fxl[jj] -= fxij;
+						fyl[jj] -= fyij;
+						fzl[jj] -= fzij;
+					}
+				}
+
 				// electrostatic part
 				if (isEwaldOn && rijsq<rcutoffelecsq)
 				{
@@ -361,6 +417,7 @@ int loop_ij(int iStartMole, int iEndMole)
 	} // end of atom ii
 
 	gUvdwSession += uij_vdw; // still need 4.0
+	gUsgSession += uij_sg*HARTREE_TO_J_PER_MOL; // constant here
 	gUrealSession += uij_real; // still neeed constant
 	gUGz0Session += uij_Gz0/(2.0*boxlz); // still need constant
 
@@ -1819,6 +1876,7 @@ int fnErfrcSession(int iStartMole, int iEndMole)
 	// zero energies
 	gUvdwSession = 0.0;
 	gUvdwNbpSession = 0.0;
+	gUsgSession = 0.0;
 	gUewaldSession = 0.0;
 	gUrealSession = 0.0;
 	gUexclSession = 0.0;
@@ -1853,6 +1911,9 @@ int fnErfrcSession(int iStartMole, int iEndMole)
 	gUvdwNbpSession *= 4.0;
 	// Add into total Inter Energy
 	gUinterSession += gUvdwSession;
+	
+	// add silver-goldman to the total energy
+	gUinterSession += gUsgSession;
 
 	// if ewald is on, calculate the fourier and self correction parts
 	if (isEwaldOn)
@@ -1909,7 +1970,7 @@ int fnErfrcSession(int iStartMole, int iEndMole)
 		// Add into total Inter Energy
 		gUinterSession += gUsfljSession;
 	}
-	
+
 	// calculate metal cluster energy if necessary
 	if (fOtherFF == DFT_METAL_CLUSTER_FF)
 	{
@@ -1928,6 +1989,7 @@ int erfrc()
 
 	// set the energies for the whole system
 	uvdw = gUvdwSession;
+	usg = gUsgSession;
 	unbp_vdw = gUvdwNbpSession;
 	ureal = gUrealSession;
 	uexcl = gUexclSession;
