@@ -147,20 +147,45 @@ int GetNextVacancy(int iSpecie)
 			: specie_first_vacancy_idx[iSpecie];
 }
 
-int SetNextVacancy(int iSpecie, int index)
+int SetNextVacancyAfterDeletion(int iSpecie, int index)
 {
-	int ii;
-
-	if (specie_first_vacancy_idx[ii] != -1 && index
+	// For deletion case
+	if (specie_first_vacancy_idx[iSpecie] != -1 && index
 			> specie_first_vacancy_idx[iSpecie])
 	{
 		return 0;
 	}
 	else
 	{
-		specie_first_vacancy_idx[ii] = index;
+		specie_first_vacancy_idx[iSpecie] = index;
 	}
 
+	return 0;
+}
+
+int SetNextVacancyAfterCreation(int iSpecie, int index)
+{
+	int ii;
+	
+	for (ii=index;ii<NMOLE_MAX;ii++)
+	{
+		if (mole_status[ii] == MOLE_STATUS_UNINIT)
+		{
+			specie_first_vacancy_idx[iSpecie] = ii;
+			break;
+		}
+		
+		if (mole_status[ii] == MOLE_STATUS_VACANCY)
+		{
+			if (mole2specie[ii] == iSpecie)
+			{
+				specie_first_vacancy_idx[iSpecie] = ii;
+				break;
+			}
+		}
+		
+	}
+	
 	return 0;
 }
 
@@ -218,7 +243,6 @@ int InitInsertedMole(int iSpecieSelected, int iMoleSelected)
 
 	mole2specie[iMole] = iSpecieSelected;
 	mole_status[iMole] = MOLE_STATUS_NORMAL;
-	iPhysicalMoleIDFromMetaID[iMole] = iMole;
 	iPhysicalMoleIDFromMetaIDinSpecie[iSpecieSelected][idMoleInSpecie] = iMole;
 
 	// atom
@@ -349,9 +373,9 @@ int fnInsDelMole()
 {
 	int ii, jj;
 	int iSpecieSelected;
-	int iMoleSelected;
+	int iMoleSelected_MetaID, iMoleSelected;
 	double del_u;
-	double pcreate, pkill;
+	double pcreate, pdelete;
 
 	ranmar(rndnum, 2);
 
@@ -376,6 +400,8 @@ int fnInsDelMole()
 
 		// get the vacancy where the molecule can be inserted into
 		iMoleSelected = GetNextVacancy(iSpecieSelected);
+		// convert it to the meta ID within the specie
+		iMoleSelected_MetaID = nmole_per_specie[iSpecieSelected];
 
 		// use the Sample of this specie to build up the insert molecule
 		BulidInsertedMole(iSpecieSelected, iMoleSelected);
@@ -396,81 +422,142 @@ int fnInsDelMole()
 		// Calculate the intra-molecular potential energy of the inserted molecule
 		fnRafrcSession(iMoleSelected);
 		del_u += gUintraSession;
-		// del_plj = 0.0;
+		// del_plj = ?
+		// del_ucs = ?
 
 		// long range correction part
-		// del_upoter = del_upoter + del_uljlrc;
 
 		// Accept probability
-		// pcreate = exp(-del_upoter*_R_RGAS/tset)*zact*pBox->volume/(pSpecieSelect->nmole+1.0);
+		pcreate = exp(-del_u*rRgas/treq)*zact[iSpecieSelected]*boxv/(nmole_per_specie[iSpecieSelected]+1);
 
 		// acceptance?
 		ranmar(rndnum, 1);
 		if (rndnum[0] < pcreate) // accept
 		{
 			// number of molecules should be smaller than the NMOLE_MAX
+			assert(nmole_per_specie[iSpecieSelected]+1<=NMOLE_MAX);
+			
+			// update number of molecule, atoms
+			nmole += 1; 
+			natom += sample_natom_per_mole[iSpecieSelected];
+			
+			// number of molecule, atom for the selected specie
+			nmole_per_specie[iSpecieSelected] += 1;
+			natom_per_specie[iSpecieSelected] += sample_natom_per_mole[iSpecieSelected];
+
+			// update the meta ID to physical ID for the newly created molecule
+			iPhysicalMoleIDFromMetaIDinSpecie[iSpecieSelected][iMoleSelected_MetaID] = iMoleSelected;
+
+			// densities
+			// ideal pressure
+			// sanity check for empty box: pBox->uljlrc = 0.0;
+			// LJ lrc changes
+			
+			// degree of freedom
+			nfree = 3*natom - nconstraint;
+			
+			// energie changes !!!!!
+			
+			
+			
+			// set the new vacancy
+			SetNextVacancyAfterCreation(iSpecieSelected, iMoleSelected);
 
 			// accepted insertions
+			icounter[27]++;
 			// accepted insertions for the specie
 
-			// update number of molecule
-			// number of molecule in the specie
-			// density
-			// ideal pressure
-			// degree of freedom
-			// energies and others
 		}
 		else // reject
 		{
+			// set the molecule back to vacancy
+			mole_status[iMoleSelected] = MOLE_STATUS_VACANCY;
 		}
 	}
 	else // delete
 	{
 		// counter of reject
+		icounter[28]++;
 		// count of reject for this specie
 
 		// cannot be empty specie
-		if (nmole == 0) // empty
+		if (nmole == 1) // last one
 		{
+			fprintf(fpouts, "Cannot delete anymore molecule, continuing anyways ...");
 		}
 		else
 		{
 			ranmar(rndnum, 1);
 			// which molecule to delete
+			// the number is the index of the molecule within the specie
+			iMoleSelected_MetaID = (int)rndnum[0]*nmole_per_specie[iSpecieSelected];
+			// now convert it to the real index of the physical data array
+			iMoleSelected = iPhysicalMoleIDFromMetaIDinSpecie[iSpecieSelected][iMoleSelected_MetaID];
+
+			// old density and new density
 
 			// calculate the energy for the deleted molecule
-			// del_upoter = 0.0;
-			// del_ulj = 0.0;
-			// del_ucs = 0.0;
-			// del_plj = 0.0;
+			// Inter-molecular
+			fnErfrcSession(iMoleSelected, ENTIRE_SYSTEM);
+			del_u = gUinterSession;
+			// Intra-molecular
+			fnRafrcSession(iMoleSelected);
+			del_u += gUintraSession;
 
+			// del_ucs = ?
+			// del_plj = ?
+
+			del_u = -del_u; // the change of the energy is old - new = - one_energy
 			// long range correction part
-			// del_upoter = -del_upoter + del_uljlrc;
 
 			// acceptance probability
-			// pkill = exp(-del_upoter*_R_RGAS/tset)*pSpecieSelect->nmole/zact/pBox->volume;
+			pdelete = exp(-del_u*rRgas/treq)*nmole_per_specie[iSpecieSelected]/zact[iSpecieSelected]/boxv;
 
 			ranmar(rndnum, 1);
-			if (rndnum[0] < pkill) // accept
+			if (rndnum[0] < pdelete) // accept
 
 			{
-				// accepted deletions
-				// accepted deletions for the specie
-
 				// turn the molecule status of the deleted molecule to vacancy
+				mole_status[iMoleSelected] = MOLE_STATUS_VACANCY;
 
 				// update number of molecule, atoms
-				// number of molecule, atom for this specie
+				nmole -= 1; 
+				natom -= sample_natom_per_mole[iSpecieSelected];
+				
+				// number of molecule, atom for the selected specie
+				nmole_per_specie[iSpecieSelected] -= 1;
+				natom_per_specie[iSpecieSelected] -= sample_natom_per_mole[iSpecieSelected];
+	
+				// update the meta ID to physical ID
+				for (ii=iMoleSelected_MetaID;ii<nmole_per_specie[iSpecieSelected];ii++)
+				{
+					iPhysicalMoleIDFromMetaIDinSpecie[iSpecieSelected][ii] = iPhysicalMoleIDFromMetaIDinSpecie[iSpecieSelected][ii+1];
+				}
+
 				// densities
 				// ideal pressure
 				// sanity check for empty box: pBox->uljlrc = 0.0;
 				// LJ lrc changes
+				
 				// degree of freedom
+				nfree = 3*natom - nconstraint;
+				
+				// energy changes!!!!
+				
+				
+				
+				// set the new vacancy
+				SetNextVacancyAfterDeletion(iSpecieSelected, iMoleSelected);
+				
+				// count accepted deletions
+				icounter[29]++;
+				// count accepted deletions for the specie
+
 			}
 			else // reject
 			{
 			}
-		} // if not empty
+		} // if NOT last molecule
 
 	} // if (rndnum[1] < prob_insert)
 

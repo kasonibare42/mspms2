@@ -47,7 +47,6 @@ double fxs[NATOM_MAX], fys[NATOM_MAX], fzs[NATOM_MAX]; ///< intra force
 
 // molecule
 int nmole; ///< total number of molecules in the system
-int iPhysicalMoleIDFromMetaID[NMOLE_MAX]; ///< get the physical ID of a molecule using its meta ID
 int iPhysicalMoleIDFromMetaIDinSpecie[NSPECIE_MAX][NMOLE_MAX]; ///< get the physical ID of a molecule using its meta ID within its specie
 int mole2specie[NMOLE_MAX]; ///< which specie this molecule belongs to
 double mw[NMOLE_MAX]; ///< molecule weight
@@ -74,6 +73,7 @@ double fOrientG_x, fOrientG_y, fOrientG_z;
 int nspecie; ///< total number of species in the system
 char szSpecieName[NSPECIE_MAX][200]; ///< the name of each specie
 int nmole_per_specie[NSPECIE_MAX]; ///< number of molecules in a certain specie
+int natom_per_specie[NSPECIE_MAX];
 int specie_first_atom_idx[NSPECIE_MAX];
 int specie_last_atom_idx[NSPECIE_MAX];
 int specie_first_mole_idx[NSPECIE_MAX];
@@ -82,6 +82,7 @@ int specie_first_vacancy_idx[NSPECIE_MAX]; ///< the index of first vancant molec
 
 // System
 char sysname[200]; ///< name of the object system
+double system_mass; ///< mass of the system, unit is kg/mol
 
 // bond, angle, dihedral, improper, non-bonded pair				
 int nbond, nangle, ndih, nimp, nnbp; ///< bond

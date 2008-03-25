@@ -123,7 +123,15 @@ int fnInitSG()
 			 * K = m * P * (kB T)^2 / hbar^2
 			 * the dimensions are mass/time^2 = energy/length^2
 			 */
-			// spring  = mass*natom*(R*T)^2/hbar^2
+			/* To use the unit of J/mol/m^2 for the spring constant
+			 * the formula should be revised as follows
+			 *  spring  = mass*natom*(R*T)^2/(hbar*avogadro)^2
+			 * So the units are (kg/mol)*((J/mol/K)*K)^2/(J*s/mol)^2 = J/mol/m^2
+			 * 
+			 * The mass of the system (system_mass) is calculated in init_vars()
+			 */
+			
+			spring = system_mass*(Rgas*treq)*(Rgas*treq)/HBAR_AVOGADRO_2;
 
 			fclose(fpins);
 			return 0;
@@ -274,7 +282,6 @@ int InitReplicateSamples()
 		{
 			mole2specie[iMole] = ii;
 			mole_status[iMole] = MOLE_STATUS_NORMAL;
-			iPhysicalMoleIDFromMetaID[iMole] = iMole;
 			iPhysicalMoleIDFromMetaIDinSpecie[ii][jj] = iMole;
 
 			// atom
@@ -701,6 +708,7 @@ int init_vars()
 	fptrj = fopen(MOVIE,"wb");
 
 	/// Calculate molecule weight for the real list.
+	system_mass = 0.0;
 	for (ii=0; ii<nmole; ii++)
 	{
 		mw[ii] = 0.0;
@@ -708,6 +716,7 @@ int init_vars()
 		{
 			mw[ii] += aw[jj];
 		}
+		system_mass += mw[ii];
 	}
 	/// Zero the number of frames in trajectory file.
 	nframe = 0;

@@ -55,7 +55,7 @@ int fnMDmove(int nStepMD, void(*pfnRezero)(), int (*pfnAlgorithm)())
 	}
 
 	// calculate the energy difference
-	fDeltaU = (uinter - uinter_old) + (uintra - uintra_old); // + (ukin - ukin_old);  kinetic energy should NOT be included
+	fDeltaU = (uinter - uinter_old) + (uintra - uintra_old) + (ukin - ukin_old);  // kinetic energy should be included??
 
 	// Hamotonial difference
 	dH = fDeltaU*rRgas/treq;

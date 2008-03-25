@@ -92,9 +92,12 @@
 
 #define STEP_SIZE	1.0e-8
 
+#define PLANCK_CONSTANT		6.6260693e-34		///< J*s or (kg*m^2/s)
+#define HBAR		1.05457168e-34		///< J*s or (kg*m^2/s)
 #define Rgas		8.314472 ///< J/mol/K 
 #define rRgas		0.120272219 ///< reciprocal of Rgas
 #define Avogadro	6.0221415e23    ///< mol^-1
+#define HBAR_AVOGADRO_2		4.03324050696405689198634513984e-21			///< (hbar*avogadro)^2
 #define const_columb	1389355.1051  ///< unit is J/mol. Na*(1.602177e-19)^2/4/PI/epsilon0/(1.0e-10)
 #define kb_1e30		1.3806505e7   ///< kb/1e-30  
 #define virial_to_pressure	553512.954376   ///< 1.0/(3.0*6.0221415e-7)

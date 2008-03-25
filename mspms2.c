@@ -405,6 +405,7 @@ int readins()
 		sscanf(fgets(buffer, datalen, fpcfg), "%d", &nmole_per_specie[ii]);
 		// readin atom information
 		sscanf(fgets(buffer, datalen, fpcfg), "%d", &sample_natom_per_mole[ii]);
+		natom_per_specie[ii] = sample_natom_per_mole[ii]*nmole_per_specie[ii];
 		sample_mole_first_atom_idx[ii] = iAtom;
 		natom += sample_natom_per_mole[ii]*nmole_per_specie[ii];
 		assert(natom <= NATOM_MAX);
