@@ -267,6 +267,7 @@ int InitInsertedMole(int iSpecieSelected, int iMoleSelected)
 	for (kk=sample_mole_first_bond_idx[iSpecieSelected]; kk
 			<sample_mole_last_bond_idx[iSpecieSelected]; kk++)
 	{
+		bnd2mole[iBond] = iMole;
 		bond_idx[iBond][0] = sample_bond_idx[kk][0] + idMoleInSpecie
 			*sample_natom_per_mole[iSpecieSelected];
 		bond_idx[iBond][1] = sample_bond_idx[kk][1] + idMoleInSpecie
@@ -284,6 +285,7 @@ int InitInsertedMole(int iSpecieSelected, int iMoleSelected)
 	for (kk=sample_mole_first_angle_idx[iSpecieSelected]; kk
 			<sample_mole_last_angle_idx[iSpecieSelected]; kk++)
 	{
+		agl2mole[iAngle] = iMole;
 		angle_idx[iAngle][0] = sample_angle_idx[kk][0] + idMoleInSpecie
 			*sample_natom_per_mole[iSpecieSelected];
 		angle_idx[iAngle][1] = sample_angle_idx[kk][1] + idMoleInSpecie
@@ -305,6 +307,7 @@ int InitInsertedMole(int iSpecieSelected, int iMoleSelected)
 	for (kk=sample_mole_first_dih_idx[iSpecieSelected]; kk
 			<sample_mole_last_dih_idx[iSpecieSelected]; kk++)
 	{
+		dih2mole[iDih] = iMole;
 		dih_idx[iDih][0] = sample_dih_idx[kk][0] + idMoleInSpecie
 			*sample_natom_per_mole[iSpecieSelected];
 		dih_idx[iDih][1] = sample_dih_idx[kk][1] + idMoleInSpecie
@@ -327,6 +330,7 @@ int InitInsertedMole(int iSpecieSelected, int iMoleSelected)
 	for (kk=sample_mole_first_imp_idx[iSpecieSelected]; kk
 			<sample_mole_last_imp_idx[iSpecieSelected]; kk++)
 	{
+		imp2mole[iImp] = iMole;
 		imp_idx[iImp][0] = sample_imp_idx[kk][0] + idMoleInSpecie
 			*sample_natom_per_mole[iSpecieSelected];
 		imp_idx[iImp][1] = sample_imp_idx[kk][1] + idMoleInSpecie
@@ -347,6 +351,7 @@ int InitInsertedMole(int iSpecieSelected, int iMoleSelected)
 	for (kk=sample_mole_first_nbp_idx[iSpecieSelected]; kk
 			<sample_mole_last_nbp_idx[iSpecieSelected]; kk++)
 	{
+		nbp2mole[iNbp] = iMole;
 		nbp_idx[iNbp][0] = sample_nbp_idx[kk][0] + idMoleInSpecie
 			*sample_natom_per_mole[iSpecieSelected];
 		nbp_idx[iNbp][1] = sample_nbp_idx[kk][1] + idMoleInSpecie
@@ -401,14 +406,13 @@ int fnInsDelMole()
 		// get the vacancy where the molecule can be inserted into
 		iMoleSelected = GetNextVacancy(iSpecieSelected);
 		// convert it to the meta ID within the specie
+		// always add the new molecule to the end of the Meta molecule ID list
 		iMoleSelected_MetaID = nmole_per_specie[iSpecieSelected];
-
-		// use the Sample of this specie to build up the insert molecule
-		BulidInsertedMole(iSpecieSelected, iMoleSelected);
 
 		// Initialize bond, angle, dih, imp, nbp if the molecule status is un-initialized
 		if (mole_status[iMoleSelected] == MOLE_STATUS_UNINIT)
 		{
+			// This means all initialized molecules are occupied for this specie
 			InitInsertedMole(iSpecieSelected, iMoleSelected);
 		}
 		else // set the status of the molecule to normal 
@@ -416,13 +420,15 @@ int fnInsDelMole()
 			mole_status[iMoleSelected] = MOLE_STATUS_NORMAL;
 		}
 
+		// use the Sample of this specie to build up the insert molecule
+		BulidInsertedMole(iSpecieSelected, iMoleSelected);
+
 		// Calculate the inter-molecular potential energy of the inserted molecule
 		fnErfrcSession(iMoleSelected, ENTIRE_SYSTEM);
 		del_u = gUinterSession;
 		// Calculate the intra-molecular potential energy of the inserted molecule
 		fnRafrcSession(iMoleSelected);
 		del_u += gUintraSession;
-		// del_plj = ?
 		// del_ucs = ?
 
 		// long range correction part
@@ -440,6 +446,22 @@ int fnInsDelMole()
 			// update number of molecule, atoms
 			nmole += 1; 
 			natom += sample_natom_per_mole[iSpecieSelected];
+			// update number of bond, angle, dih, imp, nbp
+			nbond += sample_nbond_per_mole[iSpecieSelected];
+			nangle += sample_nangle_per_mole[iSpecieSelected];
+			ndih += sample_ndih_per_mole[iSpecieSelected];
+			nimp += sample_nimp_per_mole[iSpecieSelected];
+			nnbp += sample_nnbp_per_mole[iSpecieSelected];
+			
+			// check and validate hist_max variables
+			natom_hist_max = (natom>natom_hist_max)?natom:natom_hist_max;
+			nbond_hist_max = (nbond>nbond_hist_max)?nbond:nbond_hist_max;
+			nangle_hist_max = (nangle>nangle_hist_max)?nangle:nangle_hist_max;
+			ndih_hist_max = (ndih>ndih_hist_max)?ndih:ndih_hist_max;
+			nimp_hist_max = (nimp>nimp_hist_max)?nimp:nimp_hist_max;
+			nnbp_hist_max = (nnbp>nnbp_hist_max)?nnbp:nnbp_hist_max;
+			
+			nmole_hist_max = (nmole>nmole_hist_max)?nmole:nmole_hist_max;
 			
 			// number of molecule, atom for the selected specie
 			nmole_per_specie[iSpecieSelected] += 1;
@@ -448,17 +470,40 @@ int fnInsDelMole()
 			// update the meta ID to physical ID for the newly created molecule
 			iPhysicalMoleIDFromMetaIDinSpecie[iSpecieSelected][iMoleSelected_MetaID] = iMoleSelected;
 
-			// densities
-			// ideal pressure
-			// sanity check for empty box: pBox->uljlrc = 0.0;
-			// LJ lrc changes
 			
 			// degree of freedom
 			nfree = 3*natom - nconstraint;
 			
 			// energie changes !!!!!
+			uvdw += gUvdwSession;
+			usg += gUsgSession;
+			unbp_vdw += gUvdwNbpSession;
+			ureal += gUrealSession;
+			uexcl += gUexclSession;
+			ufourier += gUfourierSession;
+			uself += gUselfSession;
+			uwolf += gUwolfSession;
+			uwolf_real += gUwolfrealSession;
+			uwolf_con += gUwolfconSession;
+			usflj += gUsfljSession;
+			uvacuum += gUvacuumSession;
+			uGz0 += gUGz0Session;
+			ucoulomb += gUcoulombSession;
+			udftmcff += gUMetalClusterSession;
+			uewald += gUewaldSession;
+			uinter += gUinterSession;
+						
+			uintra += gUintraSession;
+			ubond += gUbondSession;
+			uangle += gUangleSession;
+			udih += gUdihSession;
+			uimp += gUimpSession;
+
+			// pressure related, virial
+			virial_inter += gVirialInterSession;
+			virial_intra += gVirialIntraSession;
 			
-			
+			// LJ lrc changes???
 			
 			// set the new vacancy
 			SetNextVacancyAfterCreation(iSpecieSelected, iMoleSelected);
@@ -505,7 +550,6 @@ int fnInsDelMole()
 			del_u += gUintraSession;
 
 			// del_ucs = ?
-			// del_plj = ?
 
 			del_u = -del_u; // the change of the energy is old - new = - one_energy
 			// long range correction part
@@ -523,6 +567,12 @@ int fnInsDelMole()
 				// update number of molecule, atoms
 				nmole -= 1; 
 				natom -= sample_natom_per_mole[iSpecieSelected];
+				// update number of bond, angle, dih, imp, nbp
+				nbond -= sample_nbond_per_mole[iSpecieSelected];
+				nangle -= sample_nangle_per_mole[iSpecieSelected];
+				ndih -= sample_ndih_per_mole[iSpecieSelected];
+				nimp -= sample_nimp_per_mole[iSpecieSelected];
+				nnbp -= sample_nnbp_per_mole[iSpecieSelected];
 				
 				// number of molecule, atom for the selected specie
 				nmole_per_specie[iSpecieSelected] -= 1;
@@ -543,8 +593,35 @@ int fnInsDelMole()
 				nfree = 3*natom - nconstraint;
 				
 				// energy changes!!!!
+				uvdw -= gUvdwSession;
+				usg -= gUsgSession;
+				unbp_vdw -= gUvdwNbpSession;
+				ureal -= gUrealSession;
+				uexcl -= gUexclSession;
+				ufourier -= gUfourierSession;
+				uself -= gUselfSession;
+				uwolf -= gUwolfSession;
+				uwolf_real -= gUwolfrealSession;
+				uwolf_con -= gUwolfconSession;
+				usflj -= gUsfljSession;
+				uvacuum -= gUvacuumSession;
+				uGz0 -= gUGz0Session;
+				ucoulomb -= gUcoulombSession;
+				udftmcff -= gUMetalClusterSession;
+				uewald -= gUewaldSession;
+				uinter -= gUinterSession;
+							
+				uintra -= gUintraSession;
+				ubond -= gUbondSession;
+				uangle -= gUangleSession;
+				udih -= gUdihSession;
+				uimp -= gUimpSession;
+
+				// pressure related, virial
+				virial_inter -= gVirialInterSession;
+				virial_intra -= gVirialIntraSession;
 				
-				
+				// LJ lrc changes???
 				
 				// set the new vacancy
 				SetNextVacancyAfterDeletion(iSpecieSelected, iMoleSelected);

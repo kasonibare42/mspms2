@@ -199,6 +199,17 @@ double virial_intra;
 double pideal;
 double pinst; ///< instantaneous pressure
 
+double ushift; ///< shift energy for cut and shift
+
+/// the constant terms for shift energies
+/// They are related to rcutoff
+/// shift1 = (1/rcutoff)^6
+/// shift4 = 4*shift;
+double shift4, shift1; 
+double sgshift; ///< shift energy for SG potential
+
+int ncut;
+
 /**
  * Variables used to save the old states
  */
@@ -210,6 +221,7 @@ double ukin_old, tinst_old, uinter_old, uintra_old, uvdw_old, ubond_old,
 		uangle_old, udih_old, uimp_old, uewald_old, uwolf_old, ucoulomb_old, usflj_old, 
 		unhts_old, unhtss_old, virial_inter_old, virial_intra_old,
 		utsbs_old, pinst_old, boxlx_old, boxly_old, boxlz_old, boxv_old;
+double ushift_old;
 
 /** 
  * The Session variables are used to store the results from one calculation session.
@@ -228,6 +240,8 @@ double gUcoulombSession, gVirialSession, gVirialInterSession,
 double gPidealSession, gPinstSession;
 double gUwolfSession, gUwolfrealSession, gUwolfconSession;
 double gUMetalClusterSession;
+double gUShiftSession;
+int gNcut;
 
 int nfree; ///< freedom
 double tinst; ///< instantaneous temperature

@@ -46,6 +46,7 @@ int fnMDmove(int nStepMD, void(*pfnRezero)(), int (*pfnAlgorithm)())
 	usflj_old = usflj;
 	virial_inter_old = virial_inter;
 	virial_intra_old = virial_intra;
+	ushift_old = ushift;
 
 	// MD moves
 	// callback
@@ -55,7 +56,7 @@ int fnMDmove(int nStepMD, void(*pfnRezero)(), int (*pfnAlgorithm)())
 	}
 
 	// calculate the energy difference
-	fDeltaU = (uinter - uinter_old) + (uintra - uintra_old) + (ukin - ukin_old);  // kinetic energy should be included??
+	fDeltaU = (uinter - uinter_old) + (uintra - uintra_old) + (ukin - ukin_old) + (ushift - ushift_old);  // kinetic energy should be included??
 
 	// Hamotonial difference
 	dH = fDeltaU*rRgas/treq;
@@ -105,6 +106,7 @@ int fnMDmove(int nStepMD, void(*pfnRezero)(), int (*pfnAlgorithm)())
 		usflj = usflj_old;
 		virial_inter = virial_inter_old;
 		virial_intra = virial_intra_old;
+		ushift = ushift_old;
 	}
 
 	return isAccept;

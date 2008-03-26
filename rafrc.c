@@ -21,12 +21,13 @@ int bndfrc(int iMole)
 	double exp_term, one_minus_exp_term;
 	double rmax2;
 	int iiStart, iiEnd;
+	int iPhysMoleID;
 
 	// Assign the lower and upper limits for ii loop
 	if (iMole == -1)
 	{
 		iiStart = 0;
-		iiEnd = nbond;
+		iiEnd = nbond_hist_max;
 	}
 	else if (iMole >= 0)
 	{
@@ -43,6 +44,12 @@ int bndfrc(int iMole)
 	// bond stretching calculations
 	for (ii=iiStart; ii<iiEnd; ii++)
 	{
+		iPhysMoleID = bnd2mole[ii];
+		if (mole_status[iPhysMoleID] == MOLE_STATUS_VACANCY)
+		{
+			continue;
+		}
+		
 		ii1 = bond_idx[ii][0];
 		ii2 = bond_idx[ii][1];
 		rxij = xx[ii1] - xx[ii2];
@@ -168,12 +175,13 @@ int aglfrc(int iMole)
 	double frc_term_3, frc_term_3_1, frc_term_3_2;
 
 	int iiStart, iiEnd;
+	int iPhysMoleID;
 
 	// Assign the lower and upper limits for ii loop
 	if (iMole == -1)
 	{
 		iiStart = 0;
-		iiEnd = nangle;
+		iiEnd = nangle_hist_max;
 	}
 	else if (iMole >= 0)
 	{
@@ -190,6 +198,12 @@ int aglfrc(int iMole)
 	// angle bending calculations
 	for (ii=iiStart; ii<iiEnd; ii++)
 	{
+		iPhysMoleID = agl2mole[ii];
+		if (mole_status[iPhysMoleID] == MOLE_STATUS_VACANCY)
+		{
+			continue;
+		}
+		
 		// The atom list of the angle must be list as 0-1-2
 		// otherwise, the calculations are not right
 		iia = angle_idx[ii][0];
@@ -372,12 +386,13 @@ int dihfrc(int iMole)
 	double fij;
 
 	int iiStart, iiEnd;
+	int iPhysMoleID;
 
 	// Assign the lower and upper limits for ii loop
 	if (iMole == -1)
 	{
 		iiStart = 0;
-		iiEnd = ndih;
+		iiEnd = ndih_hist_max;
 	}
 	else if (iMole >= 0)
 	{
@@ -395,6 +410,12 @@ int dihfrc(int iMole)
 	// dihedral has no contribution to virial
 	for (ii=iiStart; ii<iiEnd; ii++)
 	{
+		iPhysMoleID = dih2mole[ii];
+		if (mole_status[iPhysMoleID] == MOLE_STATUS_VACANCY)
+		{
+			continue;
+		}
+		
 		// The atom list of dihedrals must be ordered as 0-1-2-3
 		// Otherwise, the results wont be correct
 		iia = dih_idx[ii][0];
@@ -650,6 +671,7 @@ int impfrc(int iMole) // improper energy/force calculations
 	double fij;
 
 	int iiStart, iiEnd;
+	int iPhysMoleID;
 
 	// Assign the lower and upper limits for ii loop
 	if (iMole == -1)
@@ -673,6 +695,12 @@ int impfrc(int iMole) // improper energy/force calculations
 	// to virial according to DL_POLY manual
 	for (ii=iiStart; ii<iiEnd; ii++)
 	{
+		iPhysMoleID = imp2mole[ii];
+		if (mole_status[iPhysMoleID] == MOLE_STATUS_VACANCY)
+		{
+			continue;
+		}
+		
 		switch (imp_type[ii])
 		{
 		case imp_none:
@@ -845,7 +873,7 @@ int fnRafrcSession(int iMole)
 	// pressure related
 	gVirialIntraSession = 0.0;
 
-	for (ii=0; ii<natom; ii++)
+	for (ii=0; ii<natom_hist_max; ii++)
 	{
 		fxs[ii] = fys[ii] = fzs[ii] = 0.0;
 	}

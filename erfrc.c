@@ -24,7 +24,7 @@ int cal_com_and_inner_coords()
 {
 	int ii, jj;
 
-	for (ii=0; ii<nmole; ii++)
+	for (ii=0; ii<nmole_hist_max; ii++)
 	{
 		mole_xx[ii] = 0.0;
 		mole_yy[ii] = 0.0;
@@ -55,7 +55,7 @@ int reconstruct_coords_from_com()
 {
 	int ii, jj;
 
-	for (ii=0; ii<nmole; ii++)
+	for (ii=0; ii<nmole_hist_max; ii++)
 	{
 		for (jj=mole_first_atom_idx[ii]; jj<mole_last_atom_idx[ii]; jj++)
 		{
@@ -71,8 +71,15 @@ int reconstruct_coords_from_com()
 int cal_coords_PBC()
 {
 	int ii;
-	for (ii=0; ii<natom; ii++)
+	int iMole;
+
+	for (ii=0; ii<natom_hist_max; ii++)
 	{
+		iMole = atom2mole[ii];
+		if (mole_status[iMole] == MOLE_STATUS_VACANCY)
+		{
+			continue;
+		}
 		ex[ii] = xx[ii] - boxlx*rint(xx[ii]/boxlx);
 		fy[ii] = yy[ii] - boxlx*rint(yy[ii]/boxlx);
 		gz[ii] = zz[ii] - boxlx*rint(zz[ii]/boxlx);
@@ -106,6 +113,7 @@ int loop_ij(int iStartMole, int iEndMole)
 	double uij_sg;
 	double epsiloni, sigmai, chargei;
 	double epsilonij, sigmaij;
+	double sigmaij6; // used for shift energy calculation
 	int isNotexcl[NATOM_MAX];
 	double uij_vdw, uij_vdw_temp, uij_real, uij_real_temp;
 	double uij_wolf_temp;
@@ -116,6 +124,7 @@ int loop_ij(int iStartMole, int iEndMole)
 	gsl_function FF;
 	int iMole, iSpecie;
 	int iAtomPosInMole; // the relative atom index within a molecule
+	int jMole;
 	int iiStart, iiEnd;
 	int jjStart, jjEnd;
 
@@ -131,16 +140,16 @@ int loop_ij(int iStartMole, int iEndMole)
 	if (iStartMole==ENTIRE_SYSTEM && iEndMole==ENTIRE_SYSTEM)
 	{
 		iiStart = 0;
-		iiEnd = natom - 1;
+		iiEnd = natom_hist_max - 1;
 		jjStart = -1; // -1 for jjStart==-1?ii+1:jjStart, dynamically assign the jjStart
-		jjEnd = natom;
+		jjEnd = natom_hist_max;
 	}
 	else if (iStartMole>=0 && iEndMole==ENTIRE_SYSTEM)
 	{
 		iiStart = mole_first_atom_idx[iStartMole];
 		iiEnd = mole_last_atom_idx[iStartMole];
 		jjStart = 0;
-		jjEnd = natom;
+		jjEnd = natom_hist_max;
 	}
 	else if (iStartMole>=0 && iEndMole>=0)
 	{
@@ -164,6 +173,13 @@ int loop_ij(int iStartMole, int iEndMole)
 		{
 			continue;
 		}
+		iMole = atom2mole[ii]; // which atom this atom belongs to, physical mole ID
+		// skip this atom if it belongs to a vacant molecule
+		if (mole_status[iMole] == MOLE_STATUS_VACANCY)
+		{
+			continue;
+		}
+
 		xxi = xx[ii];
 		yyi = yy[ii];
 		zzi = zz[ii];
@@ -174,11 +190,10 @@ int loop_ij(int iStartMole, int iEndMole)
 		sigmai = sigma[ii];
 		chargei = charge[ii];
 		// set the exclude list for atom ii
-		for (kk=0; kk<natom; kk++)
+		for (kk=0; kk<natom_hist_max; kk++)
 		{
 			isNotexcl[kk] = true;
 		}
-		iMole = atom2mole[ii]; // which atom this atom belongs to
 		iSpecie = mole2specie[iMole]; // which specie this molecule belongs to
 		iAtomPosInMole = ii - mole_first_atom_idx[iMole];
 		for (kk=pointexcl_atom[iSpecie][iAtomPosInMole]; kk
@@ -193,6 +208,13 @@ int loop_ij(int iStartMole, int iEndMole)
 			{
 				continue;
 			}
+			jMole = atom2mole[jj]; // which atom this atom belongs to, physical mole ID
+			// skip this atom if it belongs to a vacant molecule
+			if (mole_status[jMole] == MOLE_STATUS_VACANCY)
+			{
+				continue;
+			}
+
 			if (isNotexcl[jj]) // calculate interactions if it is not exclusion pair
 			{
 				rxij = xxi - xx[jj];
@@ -293,6 +315,14 @@ int loop_ij(int iStartMole, int iEndMole)
 					else
 					{
 						fij = 24.0*epsilonij*(r_r12_minus_r_r6+r_r12)/rijsq;
+
+						// only when LJ swith is not used, we calculate shift energies
+						// shift energies
+						gNcut++;
+						sigmaij6 = sigmaij*sigmaij*sigmaij*sigmaij*sigmaij
+								*sigmaij;
+						gUShiftSession += epsilonij*sigmaij6*(sigmaij6*shift1
+								-1.0); // still need constant
 					}
 					fxij = fij*rxij;
 					fyij = fij*ryij;
@@ -308,6 +338,7 @@ int loop_ij(int iStartMole, int iEndMole)
 					fxl[jj] -= fxij;
 					fyl[jj] -= fyij;
 					fzl[jj] -= fzij;
+
 				}
 
 				// Inter-molecular potential of Silvera-Goldman (SG) 
@@ -344,9 +375,9 @@ int loop_ij(int iStartMole, int iEndMole)
 
 						uij_sg += uij; // still need constant
 						gVirialInterSession += rij*fij*HARTREE_TO_J_PER_MOL;
-						
+
 						fij=fij*r_rij*HARTREE_TO_J_PER_MOL;
-						
+
 						fxij=fij*rxij;
 						fyij=fij*ryij;
 						fzij=fij*rzij;
@@ -359,6 +390,8 @@ int loop_ij(int iStartMole, int iEndMole)
 						fxl[jj] -= fxij;
 						fyl[jj] -= fyij;
 						fzl[jj] -= fzij;
+
+						gNcut++;
 					}
 				}
 
@@ -448,6 +481,9 @@ int loop_14(int iMole)
 	double uij_coulomb14_temp;
 	gsl_function FF;
 	int iiStart, iiEnd;
+	int iPhysMoleID;
+	int iSpecie;
+	int iDihPosInMole;
 
 	FF.function = &deriv_inc_gamma;
 	FF.params = 0;
@@ -457,10 +493,10 @@ int loop_14(int iMole)
 	uij_Gz0 = 0.0;
 
 	// Assign the lower and upper limits for ii loop
-	if (iMole == -1)
+	if (iMole == ENTIRE_SYSTEM)
 	{
 		iiStart = 0;
-		iiEnd = ndih;
+		iiEnd = ndih_hist_max;
 	}
 	else if (iMole >= 0)
 	{
@@ -476,7 +512,15 @@ int loop_14(int iMole)
 
 	for (ii=iiStart; ii<iiEnd; ii++)
 	{
-		if (isDih_unique[ii]) // only calculate interactions for unique 1,4 pairs
+		iPhysMoleID = dih2mole[ii]; // which molecule it belongs to
+		if (mole_status[iPhysMoleID] == MOLE_STATUS_VACANCY)
+		{
+			continue;
+		}
+		iSpecie = mole2specie[iPhysMoleID]; // which specie this molecule belongs to
+		iDihPosInMole = ii - mole_first_dih_idx[iPhysMoleID];
+		// Use the sample molecule to check unique instead 
+		if (sample_isDih_unique[iDihPosInMole]) // only calculate interactions for unique 1,4 pairs
 		{
 			ii1 = dih_idx[ii][0];
 			ii2 = dih_idx[ii][3];
@@ -733,6 +777,9 @@ int loop_13(int iMole)
 	double uij_Gz0; // 1D ewald
 	gsl_function FF;
 	int iiStart, iiEnd;
+	int iPhysMoleID;
+	int iSpecie;
+	int iAglPosInMole;
 
 	FF.function = &deriv_inc_gamma;
 	FF.params = 0;
@@ -746,7 +793,7 @@ int loop_13(int iMole)
 	if (iMole == -1)
 	{
 		iiStart = 0;
-		iiEnd = nangle;
+		iiEnd = nangle_hist_max;
 	}
 	else if (iMole >= 0)
 	{
@@ -762,7 +809,15 @@ int loop_13(int iMole)
 
 	for (ii=iiStart; ii<iiEnd; ii++)
 	{
-		if (isAngle_unique) // only calculate interactions for unique 1,3 pairs
+		iPhysMoleID = agl2mole[ii]; // which molecule it belongs to
+		if (mole_status[iPhysMoleID] == MOLE_STATUS_VACANCY)
+		{
+			continue;
+		}
+		iSpecie = mole2specie[iPhysMoleID]; // which specie this molecule belongs to
+		iAglPosInMole = ii - mole_first_angle_idx[iPhysMoleID];
+		// use the sample molecule to check unique instead
+		if (sample_isAngle_unique[iAglPosInMole]) // only calculate interactions for unique 1,3 pairs
 		{
 			ii1 = angle_idx[ii][0];
 			ii2 = angle_idx[ii][2];
@@ -970,7 +1025,7 @@ int loop_13(int iMole)
 				} // rcutoffsq
 			} // if 13 > 13'
 		} // unique 1,3 pair check
-	} // nangle loop
+	} // nangle_hist_max loop
 
 	// add into total energy
 	gUexclSession += uij_excl_13; // still need constant
@@ -1003,6 +1058,7 @@ int loop_12(int iMole)
 	double uij_Gz0; // 1D ewald
 	gsl_function FF;
 	int iiStart, iiEnd;
+	int iPhysMoleID;
 
 	FF.function = &deriv_inc_gamma;
 	FF.params = 0;
@@ -1016,7 +1072,7 @@ int loop_12(int iMole)
 	if (iMole == -1)
 	{
 		iiStart = 0;
-		iiEnd = nbond;
+		iiEnd = nbond_hist_max;
 	}
 	else if (iMole >= 0)
 	{
@@ -1032,6 +1088,12 @@ int loop_12(int iMole)
 
 	for (ii=iiStart; ii<iiEnd; ii++)
 	{
+		iPhysMoleID = bnd2mole[ii]; // which molecule it belongs to
+		if (mole_status[iPhysMoleID] == MOLE_STATUS_VACANCY)
+		{
+			continue;
+		}
+
 		ii1 = bond_idx[ii][0];
 		ii2 = bond_idx[ii][1];
 		rxij = xx[ii1] - xx[ii2];
@@ -1234,7 +1296,7 @@ int loop_12(int iMole)
 				fzl[ii2] -= fzij;
 			} // rcutoffsq
 		} // if 12 > 12'
-	} // nbond loop
+	} // nbond_hist_max loop
 
 	// add into total energy
 	gUexclSession += uij_excl_12; // still need constant
@@ -1269,6 +1331,7 @@ int loop_nbp(int iMole)
 	double uij_coulombnbp_temp;
 	gsl_function FF;
 	int iiStart, iiEnd;
+	int iPhysMoleID;
 
 	FF.function = &deriv_inc_gamma;
 	FF.params = 0;
@@ -1281,7 +1344,7 @@ int loop_nbp(int iMole)
 	if (iMole == -1)
 	{
 		iiStart = 0;
-		iiEnd = nnbp;
+		iiEnd = nnbp_hist_max;
 	}
 	else if (iMole >= 0)
 	{
@@ -1298,6 +1361,12 @@ int loop_nbp(int iMole)
 	// loop through all nonbonded pairs
 	for (ii=iiStart; ii<iiEnd; ii++)
 	{
+		iPhysMoleID = nbp2mole[ii]; // which molecule it belongs to
+		if (mole_status[iPhysMoleID] == MOLE_STATUS_VACANCY)
+		{
+			continue;
+		}
+
 		ii1 = nbp_idx[ii][0];
 		ii2 = nbp_idx[ii][1];
 		// save old rxij, ryij for possible 1D ewald
@@ -1560,6 +1629,7 @@ int ewald_fourier_and_self()
 	double sr, si;
 	double t;
 	double fij;
+	int iMole;
 
 	for (kx=-KMAXX; kx<=KMAXX; kx++) // NOTE: <=
 	{
@@ -1585,8 +1655,13 @@ int ewald_fourier_and_self()
 					sr = 0.0;
 					si = 0.0;
 					// energy
-					for (ii=0; ii<natom; ii++)
+					for (ii=0; ii<natom_hist_max; ii++)
 					{
+						iMole = atom2mole[ii];
+						if (mole_status[iMole] == MOLE_STATUS_VACANCY)
+						{
+							continue;
+						}
 						// the x,y,z coordinates dont have to be PBC'd
 						// before doing the calculation since the existence of the TWOPI_L
 						// factor will make the cos, sin functions have the same results
@@ -1597,8 +1672,13 @@ int ewald_fourier_and_self()
 					}
 					gUfourierSession += kvec*(sr*sr+si*si);
 					// forces
-					for (ii=0; ii<natom; ii++)
+					for (ii=0; ii<natom_hist_max; ii++)
 					{
+						iMole = atom2mole[ii];
+						if (mole_status[iMole] == MOLE_STATUS_VACANCY)
+						{
+							continue;
+						}
 						t = rkx*xx[ii] + rky*yy[ii] + rkz*zz[ii];
 						fij = 2.0*charge[ii]*(sr*sin(t)-si*cos(t))
 								*Vfactor_ewald*kvec*const_columb;
@@ -1616,8 +1696,13 @@ int ewald_fourier_and_self()
 	gUfourierSession = gUfourierSession*Vfactor_ewald*const_columb;
 
 	// self interaction corrections, constant, so no forces
-	for (ii=0; ii<natom; ii++)
+	for (ii=0; ii<natom_hist_max; ii++)
 	{
+		iMole = atom2mole[ii];
+		if (mole_status[iMole] == MOLE_STATUS_VACANCY)
+		{
+			continue;
+		}
 		gUselfSession += charge[ii]*charge[ii];
 	}
 	gUselfSession = gUselfSession*const_columb*sqrt(kappa*kappa/pi);
@@ -1637,6 +1722,7 @@ int ewald_vacuum()
 	double qrx, qry, qrz;
 	double chargei;
 	double fij;
+	int iMole;
 
 	// the atoms have to be grouped adjacent to their respective molecular
 	// centers of mass before performing this sum
@@ -1646,7 +1732,7 @@ int ewald_vacuum()
 	// calculate the center of mass and relative positions
 	cal_com_and_inner_coords();
 	// calcuate the new molecular center of mass using PBC
-	for (ii=0; ii<nmole; ii++)
+	for (ii=0; ii<nmole_hist_max; ii++)
 	{
 		mole_xx[ii] = mole_xx[ii] - boxlx*rint(mole_xx[ii]/boxlx);
 		mole_yy[ii] = mole_yy[ii] - boxly*rint(mole_yy[ii]/boxly);
@@ -1656,8 +1742,13 @@ int ewald_vacuum()
 	reconstruct_coords_from_com();
 
 	qrx = qry = qrz = 0.0;
-	for (ii=0; ii<natom; ii++)
+	for (ii=0; ii<natom_hist_max; ii++)
 	{
+		iMole = atom2mole[ii];
+		if (mole_status[iMole] == MOLE_STATUS_VACANCY)
+		{
+			continue;
+		}
 		// use the reconstructed coordinates for this calculations
 		// the reconstructed coordinates make sure that the
 		// molecular center of mass are in the primal simulation
@@ -1676,8 +1767,13 @@ int ewald_vacuum()
 	gUvacuumSession = gUvacuumSession*twopi_over_3v*const_columb;
 
 	// forces
-	for (ii=0; ii<natom; ii++)
+	for (ii=0; ii<natom_hist_max; ii++)
 	{
+		iMole = atom2mole[ii];
+		if (mole_status[iMole] == MOLE_STATUS_VACANCY)
+		{
+			continue;
+		}
 		fij = -2.0*twopi_over_3v*const_columb*charge[ii];
 		fxl[ii] += fij*qrx;
 		fyl[ii] += fij*qry;
@@ -1698,8 +1794,15 @@ int ewald_vacuum()
 int wolf_con()
 {
 	int ii;
-	for (ii=0; ii<natom; ii++)
+	int iMole;
+
+	for (ii=0; ii<natom_hist_max; ii++)
 	{
+		iMole = atom2mole[ii];
+		if (mole_status[iMole] == MOLE_STATUS_VACANCY)
+		{
+			continue;
+		}
 		gUwolfconSession = gUwolfconSession + charge[ii]*charge[ii];
 	}
 	gUwolfconSession = gUwolfconSession*const_columb*(kappa/sqrt(pi)+erfc(kappa
@@ -1730,16 +1833,16 @@ int simple_coulomb_inter_mole(int iStartMole, int iEndMole)
 	if (iStartMole==-1 && iEndMole==-1)
 	{
 		mmStart = 0;
-		mmEnd = nmole - 1;
+		mmEnd = nmole_hist_max - 1;
 		nnStart = -1; // -1 for nnStart==-1?mm+1:nnStart, dynamically assign the nnStart
-		nnEnd = nmole;
+		nnEnd = nmole_hist_max;
 	}
 	else if (iStartMole>=0 && iEndMole==-1)
 	{
 		mmStart = iStartMole;
 		mmEnd = iStartMole+1;
 		nnStart = 0;
-		nnEnd = nmole;
+		nnEnd = nmole_hist_max;
 	}
 	else if (iStartMole>=0 && iEndMole>=0)
 	{
@@ -1765,8 +1868,18 @@ int simple_coulomb_inter_mole(int iStartMole, int iEndMole)
 	// for cross molecules
 	for (mm=mmStart; mm<mmEnd; mm++)
 	{
+		if (mole_status[mm] == MOLE_STATUS_VACANCY)
+		{
+			continue;
+		}
+
 		for (nn=(nnStart==-1 ? mm+1 : nnStart); nn<nnEnd; nn++)
 		{
+			if (mole_status[nn] == MOLE_STATUS_VACANCY)
+			{
+				continue;
+			}
+
 			// calculate the distance between molecular center of mass
 			rxmn = mole_xx[mm] - mole_xx[nn];
 			rymn = mole_yy[mm] - mole_yy[nn];
@@ -1872,6 +1985,7 @@ int simple_coulomb_inter_mole(int iStartMole, int iEndMole)
 int fnErfrcSession(int iStartMole, int iEndMole)
 {
 	int ii;
+	int iMole;
 
 	// zero energies
 	gUvdwSession = 0.0;
@@ -1890,12 +2004,20 @@ int fnErfrcSession(int iStartMole, int iEndMole)
 	gUcoulombSession = 0.0;
 	gUinterSession = 0.0;
 
+	gUShiftSession = 0.0;
+	gNcut = 0;
+
 	// pressure related
 	gVirialInterSession = 0.0;
 
 	// zero forces
-	for (ii=0; ii<natom; ii++)
+	for (ii=0; ii<natom_hist_max; ii++)
 	{
+		iMole = atom2mole[ii];
+		if (mole_status[iMole] == MOLE_STATUS_VACANCY)
+		{
+			// continue;
+		}
 		fxl[ii] = fyl[ii] = fzl[ii] = 0.0;
 	}
 
@@ -1909,11 +2031,23 @@ int fnErfrcSession(int iStartMole, int iEndMole)
 	// 4.0 factor for LJ energies
 	gUvdwSession *= 4.0;
 	gUvdwNbpSession *= 4.0;
+
 	// Add into total Inter Energy
 	gUinterSession += gUvdwSession;
-	
-	// add silver-goldman to the total energy
-	gUinterSession += gUsgSession;
+
+	if (iInterMolePotType == INTER_MOLE_SG)
+	{
+		// add silver-goldman to the total energy
+		gUinterSession += gUsgSession;
+
+		// shift energy for SG
+		gUShiftSession = gNcut*sgshift;
+	}
+	else // LJ
+	{
+		// constant for shift energy for LJ
+		gUShiftSession *= shift4; // NOT added into total energy yet
+	}
 
 	// if ewald is on, calculate the fourier and self correction parts
 	if (isEwaldOn)
@@ -2007,6 +2141,9 @@ int erfrc()
 	virial_inter = gVirialInterSession;
 	uewald = gUewaldSession;
 	uinter = gUinterSession;
+	
+	ushift = gUShiftSession;
+	ncut = gNcut;
 
 	return 0;
 }

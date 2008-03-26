@@ -132,6 +132,17 @@ int fnInitSG()
 			 */
 			
 			spring = system_mass*(Rgas*treq)*(Rgas*treq)/HBAR_AVOGADRO_2;
+			
+			double rc1, rc2, rc3, rc5, rc9, rc10;
+			rc1 = 1.0/rcutoff;
+			rc2 = rc1*rc1;
+			rc3 = rc2*rc1;
+			rc5 = rc2*rc2;
+			rc9 = rc3*rc3*rc3;
+			rc10 = rc5*rc5;
+			
+		    sgshift=(HARTREE_TO_J_PER_MOL*exp(sg_alpha-sg_beta*rcutoff-sg_gama*rcutoffsq)
+		    	-(sg_c6*rc3*rc3+sg_c8*rc5*rc3+sg_c10*rc10-sg_c9*rc9));
 
 			fclose(fpins);
 			return 0;
@@ -306,6 +317,7 @@ int InitReplicateSamples()
 			for (kk=sample_mole_first_bond_idx[ii]; kk
 					<sample_mole_last_bond_idx[ii]; kk++)
 			{
+				bnd2mole[iBond] = iMole;
 				bond_idx[iBond][0] = sample_bond_idx[kk][0] + jj
 						*sample_natom_per_mole[ii];
 				bond_idx[iBond][1] = sample_bond_idx[kk][1] + jj
@@ -323,6 +335,7 @@ int InitReplicateSamples()
 			for (kk=sample_mole_first_angle_idx[ii]; kk
 					<sample_mole_last_angle_idx[ii]; kk++)
 			{
+				agl2mole[iAngle] = iMole;
 				angle_idx[iAngle][0] = sample_angle_idx[kk][0] + jj
 						*sample_natom_per_mole[ii];
 				angle_idx[iAngle][1] = sample_angle_idx[kk][1] + jj
@@ -344,6 +357,7 @@ int InitReplicateSamples()
 			for (kk=sample_mole_first_dih_idx[ii]; kk
 					<sample_mole_last_dih_idx[ii]; kk++)
 			{
+				dih2mole[iDih] = iMole;
 				dih_idx[iDih][0] = sample_dih_idx[kk][0] + jj
 						*sample_natom_per_mole[ii];
 				dih_idx[iDih][1] = sample_dih_idx[kk][1] + jj
@@ -366,6 +380,7 @@ int InitReplicateSamples()
 			for (kk=sample_mole_first_imp_idx[ii]; kk
 					<sample_mole_last_imp_idx[ii]; kk++)
 			{
+				imp2mole[iImp] = iMole;
 				imp_idx[iImp][0] = sample_imp_idx[kk][0] + jj
 						*sample_natom_per_mole[ii];
 				imp_idx[iImp][1] = sample_imp_idx[kk][1] + jj
@@ -386,6 +401,7 @@ int InitReplicateSamples()
 			for (kk=sample_mole_first_nbp_idx[ii]; kk
 					<sample_mole_last_nbp_idx[ii]; kk++)
 			{
+				nbp2mole[iNbp] = iMole;
 				nbp_idx[iNbp][0] = sample_nbp_idx[kk][0] + jj
 						*sample_natom_per_mole[ii];
 				nbp_idx[iNbp][1] = sample_nbp_idx[kk][1] + jj
@@ -698,6 +714,16 @@ int init_vars()
 	idDihUninit = ndih;
 	idImpUninit = nimp;
 	idNbpUninit = nnbp;
+	
+	/// Set the history maximum records
+	natom_hist_max = natom;
+	nbond_hist_max = nbond;
+	nangle_hist_max = nangle;
+	ndih_hist_max = ndih;
+	nimp_hist_max = nimp;
+	nnbp_hist_max = nnbp;
+	
+	nmole_hist_max = nmole;
 
 	/// Initialize the real atom, bond, angle, dihedral, improper, nbp lists using Samples
 	InitReplicateSamples();
@@ -751,7 +777,11 @@ int init_vars()
 	rcutonsq = rcuton*rcuton;
 	roff2_minus_ron2_cube = (rcutoffsq-rcutonsq)*(rcutoffsq-rcutonsq)
 			*(rcutoffsq-rcutonsq);
-
+	
+	// shift energies, use rcutoff
+	shift1 = pow((1/rcutoff),6.0);
+	shift4 = 4*shift1;
+	
 	// volume calculation
 	boxv = boxlx*boxly*boxlz;
 

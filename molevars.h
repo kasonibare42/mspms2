@@ -34,8 +34,28 @@ int idBondUninit, idAngleUninit, idDihUninit, idImpUninit, idNbpUninit;
 
 // atoms
 int natom; ///< total number of atoms in the system
+/** max total number of atoms ever achieved in the system
+ * it is used to loop through the atom list, since vacant molecules could be in the middle
+ * of the molecule list. Hence their atoms could be in the middle of the atom list too.
+ * To loop through the entire atom list, we can not just use natom.
+ * OOOOOO..OOOO..OOOO     (O is valid atom, . is vacancy)
+ * so natom = 14, natom_hist_max = 18
+ * To loop through the entire atom list, we have to use 18 and skip the vacant atoms.
+ * Skipping the vacant atoms, this is done by using mole_status variable. Find out which
+ * molecule the atom belongs to and then check the molecule's status. Same for bond, angle,
+ * dihedral, improper, non-bonded pair.
+ */
+int natom_hist_max;
+int nbond_hist_max, 
+	nangle_hist_max, 
+	ndih_hist_max, 
+	nimp_hist_max, 
+	nnbp_hist_max;
+int nmole_hist_max;
+
 char atomname[NATOM_MAX][5];
-int atom2mole[NATOM_MAX]; ///< which molecule this atom belongs to
+int atom2mole[NATOM_MAX]; ///< which molecule (the physical ID) this atom belongs to
+int bnd2mole[NBOND_MAX], agl2mole[NANGLE_MAX], dih2mole[NDIH_MAX], imp2mole[NIMP_MAX], nbp2mole[NNBP_MAX];
 int isghost[NATOM_MAX]; ///< flag of ghost atom, including ghost LJ or ghost electrostatic
 int tasostype[NATOM_MAX]; ///< atom type for tasos interpolation 
 double aw[NATOM_MAX], epsilon[NATOM_MAX], sigma[NATOM_MAX], charge[NATOM_MAX]; ///< atom weight etc. 
