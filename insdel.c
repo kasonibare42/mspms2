@@ -172,7 +172,7 @@ int SetNextVacancyAfterCreation(int iSpecie, int index)
 		if (mole_status[ii] == MOLE_STATUS_UNINIT)
 		{
 			specie_first_vacancy_idx[iSpecie] = ii;
-			break;
+			return 0;
 		}
 		
 		if (mole_status[ii] == MOLE_STATUS_VACANCY)
@@ -180,13 +180,14 @@ int SetNextVacancyAfterCreation(int iSpecie, int index)
 			if (mole2specie[ii] == iSpecie)
 			{
 				specie_first_vacancy_idx[iSpecie] = ii;
-				break;
+				return 0;
 			}
 		}
-		
 	}
 	
-	return 0;
+	fprintf(stderr, "Error: There is no more vacant position for specie %d\n to insert more molecules. STOP!\n", iSpecie);
+	fprintf(fpouts, "Error: There is no more vacant position for specie %d\n to insert more molecules. STOP!\n", iSpecie);
+	exit(1);
 }
 
 /// Build the inserted molecule using Sample template
@@ -441,7 +442,7 @@ int fnInsDelMole()
 		if (rndnum[0] < pcreate) // accept
 		{
 			// number of molecules should be smaller than the NMOLE_MAX
-			assert(nmole_per_specie[iSpecieSelected]+1<=NMOLE_MAX);
+			// assert(nmole_per_specie[iSpecieSelected]+1<=NMOLE_MAX);
 			
 			// update number of molecule, atoms
 			nmole += 1; 
@@ -467,10 +468,6 @@ int fnInsDelMole()
 			nmole_per_specie[iSpecieSelected] += 1;
 			natom_per_specie[iSpecieSelected] += sample_natom_per_mole[iSpecieSelected];
 
-			// update the meta ID to physical ID for the newly created molecule
-			iPhysicalMoleIDFromMetaIDinSpecie[iSpecieSelected][iMoleSelected_MetaID] = iMoleSelected;
-
-			
 			// degree of freedom
 			nfree = 3*natom - nconstraint;
 			
@@ -528,7 +525,8 @@ int fnInsDelMole()
 		// cannot be empty specie
 		if (nmole == 1) // last one
 		{
-			fprintf(fpouts, "Cannot delete anymore molecule, continuing anyways ...");
+			fprintf(stderr, "Warning: Cannot delete anymore molecule, continuing anyways ...\n");
+			fprintf(fpouts, "Warning: Cannot delete anymore molecule, continuing anyways ...\n");
 		}
 		else
 		{
