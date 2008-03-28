@@ -861,6 +861,14 @@ int init_vars()
 	{
 		fnInitSG();
 	}
+	// initilize spring constant no matter what, since S.G. potential is not
+	// necessarily part of the ring polymer approach, even L.J can be used
+	// as inter-polymer bead interactions. But spring constant is always needed.
+	for (ii=0; ii<nspecie; ii++)
+	{
+		spring[ii] = sample_mw[ii]*(Rgas*treq)*(Rgas*treq)/HBAR_AVOGADRO_2;
+	}
+
 
 	// Check if any bond, angle, dihedral share the same ending pairs
 	CheckUniques();
