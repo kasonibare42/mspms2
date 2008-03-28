@@ -22,6 +22,7 @@ int bndfrc(int iMole)
 	double rmax2;
 	int iiStart, iiEnd;
 	int iPhysMoleID;
+	int iSpecieID;
 
 	// Assign the lower and upper limits for ii loop
 	if (iMole == -1)
@@ -123,12 +124,13 @@ int bndfrc(int iMole)
 			fzs[ii2] -= fzij;
 			break;
 		case BOND_SPRING_PATH_INTEGRAL: //4
-            ubond_temp = 0.5*spring*rijsq;
+			iSpecieID = mole2specie[iPhysMoleID];
+            ubond_temp = 0.5*spring[iSpecieID]*rijsq;
             gUbondSession += ubond_temp;
-			virij = -spring*rijsq;
+			virij = -spring[iSpecieID]*rijsq;
 			gVirialIntraSession += virij;
 			// virbond
-			fij = -spring;
+			fij = -spring[iSpecieID];
             fxij = fij*rxij;
             fyij = fij*ryij;
             fzij = fij*rzij;

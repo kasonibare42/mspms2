@@ -251,7 +251,7 @@ int nframe; ///< number of frames in the trajectory file
 /// Variables for Silvera-Goldman potential
 double sg_alpha, sg_beta, sg_gama, sg_c6,
        sg_c8, sg_c9, sg_c10, sg_rc;
-double spring; ///< spring constant for polymer bead ring
+double spring[NSPECIE_MAX]; ///< spring constant for polymer bead ring
 
 double TWOPI_LX, TWOPI_LY, TWOPI_LZ; ///< ewald
 double Bfactor_ewald, Vfactor_ewald;
