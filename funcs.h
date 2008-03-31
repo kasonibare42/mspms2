@@ -36,6 +36,7 @@ int fnMDmove(int nStepMD, void (*pfnRezero)(), int (*pfnAlgorithm)());
 int fnVolumeChange();
 int do_accumu();
 int fnMetalClusterFF();
+int fnInsDelMole();
 
 
 #endif /*FUNCS_H_*/

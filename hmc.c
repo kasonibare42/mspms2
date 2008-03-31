@@ -48,6 +48,9 @@ int init_hmc()
 			sscanf(fgets(buffer, datalen, fpins), "%d %d",
 					&nstep_delt_adj_cycle, &nstep_delv_adj_cycle);
 			sscanf(fgets(buffer, datalen, fpins), "%lf", &delv);
+			
+			printf("prob_id = %lf\n",prob_id);
+			printf("delv = %lf\n",delv);
 
 			// readin insertion/deletion input data if required
 			if (prob_id > 0.0)
@@ -60,11 +63,13 @@ int init_hmc()
 							&probability_to_be_selected[ii],
 							&probability_to_insert[ii], &fugacity_required[ii],
 							&position_counter);
+					// initialize zact
+					zact[ii] = fugacity_required[ii]/kb_1e30/treq;
+					printf("fugacity[%d] = %lf\n",ii, fugacity_required[ii]);
+					printf("zact[%d] = %lf\n",ii,zact[ii]);
+					// initialize vacancy
+					specie_first_vacancy_idx[ii] = -1;
 				}
-				// initialize zact
-				zact[ii] = fugacity_required[ii]/kb_1e30/treq;
-				// initialize vacancy
-				specie_first_vacancy_idx[ii] = -1;
 			}
 
 			// allocate memory for saving positions
@@ -158,7 +163,7 @@ int hmc()
 		}
 		else // insertions or deletions
 		{
-			// insdel(pBox);
+			fnInsDelMole();
 		}
 
 		// print out, snapshot, trajectory, save
