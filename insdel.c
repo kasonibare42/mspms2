@@ -185,8 +185,8 @@ int SetNextVacancyAfterCreation(int iSpecie, int index)
 		}
 	}
 	
-	fprintf(stderr, "Error: There is no more vacant position for specie %d\n to insert more molecules. STOP!\n", iSpecie);
-	fprintf(fpouts, "Error: There is no more vacant position for specie %d\n to insert more molecules. STOP!\n", iSpecie);
+	fprintf(stderr, "Error: There is no more vacant position for specie %d to insert more molecules. STOP!\n", iSpecie);
+	fprintf(fpouts, "Error: There is no more vacant position for specie %d to insert more molecules. STOP!\n", iSpecie);
 	exit(1);
 }
 
@@ -201,6 +201,10 @@ int BulidInsertedMole(int iSpecieSelected, int iMoleSelected)
 	xxnew = boxlx*(rndnum[0]-0.5);
 	yynew = boxly*(rndnum[1]-0.5);
 	zznew = boxlz*(rndnum[2]-0.5);
+	
+	xxnew = 0.0;
+	yynew = 2.0;
+	zznew = 0.0;
 
 	// copy efg coordinates for atoms
 
@@ -372,6 +376,14 @@ int InitInsertedMole(int iSpecieSelected, int iMoleSelected)
 	idImpUninit = iImp;
 	idNbpUninit = iNbp;
 
+	natom_hist_max = iAtom;
+	nbond_hist_max = iBond;
+	nangle_hist_max = iAngle;
+	ndih_hist_max = iDih;
+	nimp_hist_max = iImp;
+	nnbp_hist_max = iNbp;
+	
+	
 	return 0;
 }
 
@@ -398,6 +410,8 @@ int fnInsDelMole()
 			rndnum[0] = rndnum[0] - probability_to_be_selected[ii];
 		}
 	}
+	
+	rndnum[1] = 0.1; // set insert
 
 	// insert or delete
 	if (rndnum[1] < probability_to_insert[iSpecieSelected]) // insert
@@ -406,20 +420,27 @@ int fnInsDelMole()
 
 		// get the vacancy where the molecule can be inserted into
 		iMoleSelected = GetNextVacancy(iSpecieSelected);
+		printf("iMoleSelected = %d\n",iMoleSelected);
 		// convert it to the meta ID within the specie
 		// always add the new molecule to the end of the Meta molecule ID list
 		iMoleSelected_MetaID = nmole_per_specie[iSpecieSelected];
+		printf("iMoleSelected_MetaID = %d\n",iMoleSelected_MetaID);
 
 		// Initialize bond, angle, dih, imp, nbp if the molecule status is un-initialized
 		if (mole_status[iMoleSelected] == MOLE_STATUS_UNINIT)
 		{
 			// This means all initialized molecules are occupied for this specie
 			InitInsertedMole(iSpecieSelected, iMoleSelected);
+			printf("Uninitialized!\n");
 		}
 		else // set the status of the molecule to normal 
 		{ 		
 			mole_status[iMoleSelected] = MOLE_STATUS_NORMAL;
+			printf("Already initialized!\n");
 		}
+		
+		// hist_max records should be updated here
+		
 
 		// use the Sample of this specie to build up the insert molecule
 		BulidInsertedMole(iSpecieSelected, iMoleSelected);
@@ -427,8 +448,10 @@ int fnInsDelMole()
 		// Calculate the inter-molecular potential energy of the inserted molecule
 		fnErfrcSession(iMoleSelected, ENTIRE_SYSTEM);
 		del_u = gUinterSession;
+		printf("gUinterSession = %lf\n",gUinterSession);
 		// Calculate the intra-molecular potential energy of the inserted molecule
 		fnRafrcSession(iMoleSelected);
+		printf("gUintraSession = %lf\n",gUintraSession);
 		del_u += gUintraSession;
 		// del_ucs = ?
 
@@ -436,6 +459,10 @@ int fnInsDelMole()
 
 		// Accept probability
 		pcreate = exp(-del_u*rRgas/treq)*zact[iSpecieSelected]*boxv/(nmole_per_specie[iSpecieSelected]+1);
+		
+		printf("pcreate = %lf\n",pcreate);
+		
+		exit(1);
 
 		// acceptance?
 		ranmar(rndnum, 1);
@@ -453,6 +480,9 @@ int fnInsDelMole()
 			ndih += sample_ndih_per_mole[iSpecieSelected];
 			nimp += sample_nimp_per_mole[iSpecieSelected];
 			nnbp += sample_nnbp_per_mole[iSpecieSelected];
+			// number of molecule, atom for the selected specie
+			nmole_per_specie[iSpecieSelected] += 1;
+			natom_per_specie[iSpecieSelected] += sample_natom_per_mole[iSpecieSelected];
 			
 			// check and validate hist_max variables
 			natom_hist_max = (natom>natom_hist_max)?natom:natom_hist_max;
@@ -464,9 +494,7 @@ int fnInsDelMole()
 			
 			nmole_hist_max = (nmole>nmole_hist_max)?nmole:nmole_hist_max;
 			
-			// number of molecule, atom for the selected specie
-			nmole_per_specie[iSpecieSelected] += 1;
-			natom_per_specie[iSpecieSelected] += sample_natom_per_mole[iSpecieSelected];
+
 
 			// degree of freedom
 			nfree = 3*natom - nconstraint;
