@@ -49,8 +49,8 @@ int init_hmc()
 					&nstep_delt_adj_cycle, &nstep_delv_adj_cycle);
 			sscanf(fgets(buffer, datalen, fpins), "%lf", &delv);
 			
-			printf("prob_id = %lf\n",prob_id);
-			printf("delv = %lf\n",delv);
+			// printf("prob_id = %lf\n",prob_id);
+			// printf("delv = %lf\n",delv);
 
 			// readin insertion/deletion input data if required
 			if (prob_id > 0.0)
@@ -65,8 +65,8 @@ int init_hmc()
 							&position_counter);
 					// initialize zact
 					zact[ii] = fugacity_required[ii]/kb_1e30/treq;
-					printf("fugacity[%d] = %lf\n",ii, fugacity_required[ii]);
-					printf("zact[%d] = %lf\n",ii,zact[ii]);
+					// printf("fugacity[%d] = %lf\n",ii, fugacity_required[ii]);
+					// printf("zact[%d] = %lf\n",ii,zact[ii]);
 					// initialize vacancy
 					specie_first_vacancy_idx[ii] = -1;
 				}

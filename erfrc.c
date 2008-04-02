@@ -166,8 +166,8 @@ int loop_ij(int iStartMole, int iEndMole)
 		exit(1);
 	}
 	
-	printf("iiStart = %d,  iiEnd = %d\n",iiStart,iiEnd);
-	printf("jjStart = %d,  jjEnd = %d\n",jjStart,jjEnd);
+	// printf("iiStart = %d,  iiEnd = %d\n",iiStart,iiEnd);
+	// printf("jjStart = %d,  jjEnd = %d\n",jjStart,jjEnd);
 
 	// atom ii
 	for (ii=iiStart; ii<iiEnd; ii++)
@@ -193,9 +193,9 @@ int loop_ij(int iStartMole, int iEndMole)
 		sigmai = sigma[ii];
 		chargei = charge[ii];
 		
-		printf("ii=%d\n", ii);
-		printf("xx=%lf, yy=%lf, zz=%lf, fxl=%lf, fyl=%lf, fzl=%lf\n",xx[ii],yy[ii],zz[ii],fxl[ii],fyl[ii],fzl[ii]);
-		printf("epsilon=%lf, sigma=%lf, charge=%lf\n",epsiloni, sigmai, chargei);
+		// printf("ii=%d\n", ii);
+		// printf("xx=%lf, yy=%lf, zz=%lf, fxl=%lf, fyl=%lf, fzl=%lf\n",xx[ii],yy[ii],zz[ii],fxl[ii],fyl[ii],fzl[ii]);
+		// printf("epsilon=%lf, sigma=%lf, charge=%lf\n",epsiloni, sigmai, chargei);
 		
 		// set the exclude list for atom ii
 		for (kk=0; kk<natom_hist_max; kk++)

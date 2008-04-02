@@ -420,23 +420,23 @@ int fnInsDelMole()
 
 		// get the vacancy where the molecule can be inserted into
 		iMoleSelected = GetNextVacancy(iSpecieSelected);
-		printf("iMoleSelected = %d\n",iMoleSelected);
+		// printf("iMoleSelected = %d\n",iMoleSelected);
 		// convert it to the meta ID within the specie
 		// always add the new molecule to the end of the Meta molecule ID list
 		iMoleSelected_MetaID = nmole_per_specie[iSpecieSelected];
-		printf("iMoleSelected_MetaID = %d\n",iMoleSelected_MetaID);
+		// printf("iMoleSelected_MetaID = %d\n",iMoleSelected_MetaID);
 
 		// Initialize bond, angle, dih, imp, nbp if the molecule status is un-initialized
 		if (mole_status[iMoleSelected] == MOLE_STATUS_UNINIT)
 		{
 			// This means all initialized molecules are occupied for this specie
 			InitInsertedMole(iSpecieSelected, iMoleSelected);
-			printf("Uninitialized!\n");
+			// printf("Uninitialized!\n");
 		}
 		else // set the status of the molecule to normal 
 		{ 		
 			mole_status[iMoleSelected] = MOLE_STATUS_NORMAL;
-			printf("Already initialized!\n");
+			// printf("Already initialized!\n");
 		}
 		
 		// hist_max records should be updated here
@@ -448,10 +448,10 @@ int fnInsDelMole()
 		// Calculate the inter-molecular potential energy of the inserted molecule
 		fnErfrcSession(iMoleSelected, ENTIRE_SYSTEM);
 		del_u = gUinterSession;
-		printf("gUinterSession = %lf\n",gUinterSession);
+		// printf("gUinterSession = %lf\n",gUinterSession);
 		// Calculate the intra-molecular potential energy of the inserted molecule
 		fnRafrcSession(iMoleSelected);
-		printf("gUintraSession = %lf\n",gUintraSession);
+		// printf("gUintraSession = %lf\n",gUintraSession);
 		del_u += gUintraSession;
 		// del_ucs = ?
 
@@ -460,9 +460,9 @@ int fnInsDelMole()
 		// Accept probability
 		pcreate = exp(-del_u*rRgas/treq)*zact[iSpecieSelected]*boxv/(nmole_per_specie[iSpecieSelected]+1);
 		
-		printf("pcreate = %lf\n",pcreate);
+		// printf("pcreate = %lf\n",pcreate);
 		
-		exit(1);
+		// exit(1);
 
 		// acceptance?
 		ranmar(rndnum, 1);
