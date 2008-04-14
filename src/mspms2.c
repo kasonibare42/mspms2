@@ -21,9 +21,8 @@
 #include <assert.h>
 #include <ctype.h>
 #include <time.h>
-#include "random.h"
-#include "vars.h"
-#include "funcs.h"
+#include <stdbool.h>
+#include "mspms2.h"
 
 int calculate_ljlrc()
 {
