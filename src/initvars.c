@@ -5,9 +5,8 @@
 #include <assert.h>
 #include <ctype.h>
 #include <time.h>
-#include "vars.h"
-#include "random.h"
-#include "funcs.h"
+#include <stdbool.h>
+#include "mspms2.h"
 
 /// Read in electrostatic parametes and initialize related variables
 int fnInitCharge()
@@ -38,7 +37,7 @@ int fnInitCharge()
 			// preset all electrostatic methods to false
 			// then turn on them according to the input
 			isEwaldOn = isWolfOn = isSimpleCoulomb = 0;
-			if (iChargeType == elec_ewald)
+			if (iChargeType == ELECTROSTATIC_EWALD)
 			{
 				isEwaldOn = 1;
 				sscanf(fgets(buffer, datalen, fpins), "%lf", &kappa);
@@ -58,7 +57,7 @@ int fnInitCharge()
 				// 1D ewald constant
 				twopi_over_3v = 2.0*pi/3.0/boxlx/boxly/boxlz;
 			}
-			else if (iChargeType == elec_wolf)
+			else if (iChargeType == ELECTROSTATIC_WOLF)
 			{
 				isWolfOn = 1;
 				sscanf(fgets(buffer, datalen, fpins), "%lf", &kappa);
@@ -71,7 +70,7 @@ int fnInitCharge()
 				wolffcon1 = 2.0*kappa/sqrt(pi);
 				wolffcon2 = -wolfvcon2;
 			}
-			else if (iChargeType == elec_simple_coulomb)
+			else if (iChargeType == ELECTROSTATIC_SIMPLE_COULOMB)
 			{
 				isSimpleCoulomb = 1;
 			}
@@ -136,7 +135,7 @@ int fnInitSG()
 
 			for (ii=0; ii<nspecie; ii++)
 			{
-				spring[ii] = sample_mw[ii]*(Rgas*treq)*(Rgas*treq)/HBAR_AVOGADRO_2;
+				spring[ii] = sample_mw[ii]*(RGAS*treq)*(RGAS*treq)/HBAR_AVOGADRO_SQ;
 			}
 
 			double rc1, rc2, rc3, rc5, rc9, rc10;
@@ -299,7 +298,7 @@ int InitReplicateSamples()
 		{
 			mole2specie[iMole] = ii;
 			mole_status[iMole] = MOLE_STATUS_NORMAL;
-			iPhysicalMoleIDFromMetaIDinSpecie[ii][jj] = iMole;
+			iMIDS_to_PMID[ii][jj] = iMole;
 
 			// atom
 			mole_first_atom_idx[iMole] = iAtom;
@@ -312,7 +311,7 @@ int InitReplicateSamples()
 				epsilon[iAtom] = sample_epsilon[kk];
 				sigma[iAtom] = sample_sigma[kk];
 				charge[iAtom] = sample_charge[kk];
-				isghost[iAtom] = sample_isghost[kk];
+				ghost_type[iAtom] = sample_ghost_type[kk];
 				tasostype[iAtom] = sample_tasostype[kk];
 				iAtom++;
 			}
@@ -615,7 +614,7 @@ int CheckUniques()
 	for (ii=0; ii<nspecie; ii++)
 	{
 		// Get ID of the first molecule for this specie
-		FirstMoleIDofSpecieii = iPhysicalMoleIDFromMetaIDinSpecie[ii][0]; // molecule's physical id of the first molecule of specie ii
+		FirstMoleIDofSpecieii = iMIDS_to_PMID[ii][0]; // molecule's physical id of the first molecule of specie ii
 
 		// unique angles
 		// Get the first and last Angle ID for this molecule
@@ -734,10 +733,10 @@ int init_vars()
 	/// Initialize the real atom, bond, angle, dihedral, improper, nbp lists using Samples
 	InitReplicateSamples();
 
-	/// Initiate file variables, LOGFILE, MOVIE\n
+	/// Initiate file variables, LOG, TRAJECTORY\n
 	/// Output file is initialized already at the very beginning of the run.
-	fplog = fopen(LOGFILE,"w");
-	fptrj = fopen(MOVIE,"wb");
+	fplog = fopen(LOG,"w");
+	fptrj = fopen(TRAJECTORY,"wb");
 
 	/// Calculate molecule weight for the real list.
 	system_mass = 0.0;
@@ -759,7 +758,7 @@ int init_vars()
 	nstep_start = 1;
 
 	/// initiate counters and accumulators
-	for (ii=0; ii<num_counter_max; ii++)
+	for (ii=0; ii<NCOUNTS_MAX; ii++)
 	{
 		icounter[ii] = 0;
 		for (jj=0; jj<5; jj++)
@@ -800,10 +799,10 @@ int init_vars()
 	dt_outer4 = delt/4.0;
 	dt_outer8 = delt/8.0;
 
-	if (what_simulation == md_run)
+	if (what_simulation == MOLECULAR_DYNAMICS)
 	{
 	}
-	else if (what_simulation == hmc_run) // initialize HMC input data
+	else if (what_simulation == HYBRID_MONTE_CARLO) // initialize HMC input data
 	{
 		init_hmc();
 	}
@@ -813,17 +812,17 @@ int init_vars()
 	}
 
 	// initialize thermostat/baron stat input data
-	if (what_ensemble == npt_run)
+	if (what_ensemble == NPT)
 	{
 		init_npt_respa();
 	}
-	else if (what_ensemble == nvt_run)
+	else if (what_ensemble == NVT)
 	{
 		init_nvt();
 	}
 
 	// initialize velocities for needed simulations
-	if (what_simulation==md_run || what_simulation==hmc_run || what_simulation
+	if (what_simulation==MOLECULAR_DYNAMICS || what_simulation==HYBRID_MONTE_CARLO || what_simulation
 			==SIMULATED_ANNEALING)
 	{
 		fprintf(stderr, "initializing velocities...\n");
@@ -833,25 +832,25 @@ int init_vars()
 
 	// If Solid-fluid interaction is required,
 	// initiliaze the related variables
-	if (sf_type==nanotube_hypergeo)
+	if (sf_type==SF_NANOTUBE_HYPERGEO)
 	{
 		init_sf_hypergeo();
 	}
-	else if (sf_type==nanotube_atom_explicit)
+	else if (sf_type==SF_NANOTUBE_ATOM_EXPLICIT)
 	{
 		init_sf_atom_explicit();
 	}
-	else if (sf_type==nanotube_tasos)
+	else if (sf_type==SF_NANOTUBE_TASOS)
 	{
 		init_tasos_grid();
 	}
-	else if (sf_type==nanotube_my_interp)
+	else if (sf_type==SF_NANOTUBE_MY_INTERP)
 	{
 		init_my_interp();
 	}
 
 	// Read in electrostatic parametes and initialize if needed
-	if (iChargeType != _NO_ELECTROSTATIC_INTERACTION)
+	if (iChargeType != ELECTROSTATIC_NONE)
 	{
 		fnInitCharge();
 	}
@@ -866,7 +865,7 @@ int init_vars()
 	// as inter-polymer bead interactions. But spring constant is always needed.
 	for (ii=0; ii<nspecie; ii++)
 	{
-		spring[ii] = sample_mw[ii]*(Rgas*treq)*(Rgas*treq)/HBAR_AVOGADRO_2;
+		spring[ii] = sample_mw[ii]*(RGAS*treq)*(RGAS*treq)/HBAR_AVOGADRO_SQ;
 	}
 
 

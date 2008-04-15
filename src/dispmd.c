@@ -4,9 +4,7 @@
 #include <math.h>
 #include <assert.h>
 #include <ctype.h>
-#include "random.h"
-#include "vars.h"
-#include "funcs.h"
+#include "mspms2.h"
 
 /**
  * \brief MD moves for HMC etc.
@@ -59,7 +57,7 @@ int fnMDmove(int nStepMD, void(*pfnRezero)(), int (*pfnAlgorithm)())
 	fDeltaU = (uinter - uinter_old) + (uintra - uintra_old) + (ukin - ukin_old) + (ushift - ushift_old);  // kinetic energy should be included??
 
 	// Hamotonial difference
-	dH = fDeltaU*rRgas/treq;
+	dH = fDeltaU*R_RGAS/treq;
 
 	icounter[20]++; // canonical moves
 

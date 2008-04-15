@@ -10,9 +10,7 @@
 #include <math.h>
 #include <assert.h>
 #include <ctype.h>
-#include "random.h"
-#include "vars.h"
-#include "funcs.h"
+#include "mspms2.h"
 
 int init_hmc()
 {
@@ -64,7 +62,7 @@ int init_hmc()
 							&probability_to_insert[ii], &fugacity_required[ii],
 							&position_counter);
 					// initialize zact
-					zact[ii] = fugacity_required[ii]/kb_1e30/treq;
+					zact[ii] = fugacity_required[ii]/KB_OVER_1E30/treq;
 					// printf("fugacity[%d] = %lf\n",ii, fugacity_required[ii]);
 					// printf("zact[%d] = %lf\n",ii,zact[ii]);
 					// initialize vacancy
@@ -102,24 +100,24 @@ int hmc()
 	void (*pfnRezero)();
 	int (*pfnMDtype)();
 	
-	if (what_ensemble == nvt_run)
+	if (what_ensemble == NVT)
 	{ 
 		pfnRezero = &rezero_nvt_ts;
 		pfnMDtype = &vver_nh_3;
 	}
-	else if (what_ensemble == nve_run)
+	else if (what_ensemble == NVE)
 	{
 		pfnRezero = NULL;
 		pfnMDtype = &vver;
 	}
-	else if (what_ensemble == npt_run)
+	else if (what_ensemble == NPT)
 	{
 		pfnRezero = &rezero_npt_ts;
 		pfnMDtype = &npt_respa;
 	}
 	
 	// if not new run, load from old file
-	if (fStart_option!=new_run)
+	if (fStart_option!=NEW)
 	{
 		loadit();
 	}

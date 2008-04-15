@@ -41,7 +41,7 @@ int calculate_ljlrc()
 					*nmole_per_specie[nn]/boxv/boxv);
 		}
 	}
-	pljlrc = pljlrc*J_mol_A3_to_Pascal; // convert J/mol/A^3 to Pascal
+	pljlrc = pljlrc*J_PER_MOL_A3_TO_PA; // convert J/mol/A^3 to Pascal
 
 	return 0;
 }
@@ -140,7 +140,7 @@ int ending()
 	fprintf(fpouts, "   std. dev.                %15.4lf\n", accumulator[20][6]);
 	fprintf(fpouts, "   fluctuation              %15.4lf\n", accumulator[20][7]);
 
-	if (what_simulation == hmc_run)
+	if (what_simulation == HYBRID_MONTE_CARLO)
 	{
 		fprintf(fpouts, "Total canonical moves       %15d\n", icounter[20]);
 		fprintf(fpouts, "accepted canonical moves    %15d\n", icounter[21]);
@@ -162,20 +162,20 @@ int ending()
 			"=========================================================\n");
 
 	// release the dynamically allocated memory for saving old positions for HMC simulation
-	if (what_simulation == hmc_run || what_simulation==SIMULATED_ANNEALING)
+	if (what_simulation == HYBRID_MONTE_CARLO || what_simulation==SIMULATED_ANNEALING)
 	{
 		free(xx_old);
 		free(yy_old);
 		free(zz_old);
 	}
 
-	if (sf_type==nanotube_hypergeo)
+	if (sf_type==SF_NANOTUBE_HYPERGEO)
 	{
 		free(hgntc_xx);
 		free(hgntc_yy);
 		free(hgnt_radius);
 	}
-	else if (sf_type==nanotube_atom_explicit)
+	else if (sf_type==SF_NANOTUBE_ATOM_EXPLICIT)
 	{
 		free(solid_sigma);
 		free(solid_epsilon);
@@ -184,11 +184,11 @@ int ending()
 		free(solid_yy);
 		free(solid_zz);
 	}
-	else if (sf_type==nanotube_my_interp)
+	else if (sf_type==SF_NANOTUBE_MY_INTERP)
 	{
 		// free memories
 		free(interp_vector);
-		for (ii=0; ii<nunique_atom_max; ii++)
+		for (ii=0; ii<NUNIQUE_ATOM_MAX; ii++)
 		{
 			free(ene0[ii]);
 			free(ene1[ii]);
@@ -423,7 +423,7 @@ int readins()
 					&sample_yy[jj], &sample_zz[jj], &sample_ee[jj],
 					&sample_ff[jj], &sample_gg[jj], &sample_aw[jj],
 					&sample_epsilon[jj], &sample_sigma[jj], &sample_charge[jj],
-					&sample_isghost[jj], &sample_tasostype[jj]);
+					&sample_ghost_type[jj], &sample_tasostype[jj]);
 			sample_mw[ii] += sample_aw[jj];
 		}
 
@@ -550,7 +550,7 @@ int velinit()
 	px = py = pz = 0.0;
 	// mv^2=kT, when m is kg/mol, the equation becomes to mv^2=RT
 	// p = sqrt(RTm), v = sqrt(RT/m)
-	stdvtmp = sqrt(Rgas*treq);
+	stdvtmp = sqrt(RGAS*treq);
 
 	// Temperature is K. R is J/K/mol. m is kg/mol. v is m/s
 	for (ii=0; ii<natom; ii++)
@@ -581,7 +581,7 @@ int velinit()
 		ukin += aw[ii]*(vx[ii]*vx[ii]+vy[ii]*vy[ii]+vz[ii]*vz[ii]);
 	}
 	ukin = 0.5*ukin;
-	tinst = 2.0*ukin/(Rgas*nfree);
+	tinst = 2.0*ukin/(RGAS*nfree);
 	scaling = sqrt(treq/tinst);
 	for (ii=0; ii<natom; ii++)
 	{
@@ -597,7 +597,7 @@ int velinit()
 		ukin += aw[ii]*(vx[ii]*vx[ii]+vy[ii]*vy[ii]+vz[ii]*vz[ii]);
 	}
 	ukin = 0.5*ukin;
-	tinst = 2.0*ukin/(Rgas*nfree);
+	tinst = 2.0*ukin/(RGAS*nfree);
 
 	return 0;
 }
@@ -610,10 +610,10 @@ int printit()
 	// add energy of thermostat, if nose hoover is not used, they will just be zero
 	utot = utot + unhts + unhtss + utsbs;
 	// calculate ideal pressure part
-	pideal=natom/(boxlx*boxly*boxlz)*tinst*kb_1e30;
+	pideal=natom/(boxlx*boxly*boxlz)*tinst*KB_OVER_1E30;
 	// do not need to recalculate lrc here, it should be calculated
 	// elsewhere when variables changed
-	pinst = pideal + (virial_inter+virial_intra)*virial_to_pressure/(boxlx
+	pinst = pideal + (virial_inter+virial_intra)*VIRIAL_TO_PRESSURE/(boxlx
 			*boxly*boxlz);
 	// add long range corrections into total energy and pressure if needed
 	if (isLJlrcOn)
@@ -690,7 +690,7 @@ int trajectory()
 
 int saveit()
 {
-	fpsave = fopen(SAVEFILE,"wb");
+	fpsave = fopen(SAVE,"wb");
 
 	fwrite(xx, sizeof(double), natom, fpsave);
 	fwrite(yy, sizeof(double), natom, fpsave);
@@ -718,8 +718,8 @@ int saveit()
 	fwrite(&boxv, sizeof(double), 1, fpsave);
 
 	fwrite(&istep, sizeof(int), 1, fpsave);
-	fwrite(icounter, sizeof(int), num_counter_max, fpsave);
-	fwrite(accumulator, sizeof(double), num_counter_max, fpsave);
+	fwrite(icounter, sizeof(int), NCOUNTS_MAX, fpsave);
+	fwrite(accumulator, sizeof(double), NCOUNTS_MAX, fpsave);
 
 	fclose(fpsave);
 
@@ -733,7 +733,7 @@ int loadit()
 	fprintf(stderr,"loading from saved file...\n");
 	fprintf(fpouts, "loading from saved file...\n");
 
-	fpload = fopen(LOADFILE,"rb");
+	fpload = fopen(LOAD,"rb");
 
 	fread(xx, sizeof(double), natom, fpload);
 	fread(yy, sizeof(double), natom, fpload);
@@ -749,7 +749,7 @@ int loadit()
 		ukin += aw[ii]*(vx[ii]*vx[ii]+vy[ii]*vy[ii]+vz[ii]*vz[ii]);
 	}
 	ukin = 0.5*ukin;
-	tinst = 2.0*ukin/(Rgas*nfree);
+	tinst = 2.0*ukin/(RGAS*nfree);
 
 	// calculate instant temperature
 	fread(&qq, sizeof(double), 1, fpload);
@@ -771,8 +771,8 @@ int loadit()
 	fread(&boxv, sizeof(double), 1, fpload);
 
 	// recalculate the thermostat energy
-	utsbs = 0.5*Qbs*vbs*vbs + 0.5*Qts*vts*vts + (nfree+1)*Rgas*treq*rts + preq
-			*boxv*PascalA3_to_J_mol;
+	utsbs = 0.5*Qbs*vbs*vbs + 0.5*Qts*vts*vts + (nfree+1)*RGAS*treq*rts + preq
+			*boxv*PA_A3_TO_J_PER_MOL;
 	if (isLJlrcOn)
 	{
 		// recalculate the long range corrections since the box size may be changed
@@ -780,12 +780,12 @@ int loadit()
 	}
 
 	// read counters and accumulators only if its a continue run
-	if (fStart_option==continue_run)
+	if (fStart_option==CONTINUE)
 	{
 		fread(&istep, sizeof(int), 1, fpload);
 		nstep_start = istep + 1;
-		fread(icounter, sizeof(int), num_counter_max, fpload);
-		fread(accumulator, sizeof(double), num_counter_max, fpload);
+		fread(icounter, sizeof(int), NCOUNTS_MAX, fpload);
+		fread(accumulator, sizeof(double), NCOUNTS_MAX, fpload);
 	}
 
 	fclose(fpload);
@@ -798,7 +798,7 @@ int averages()
 	int ii;
 	double temp1;
 
-	for (ii=0; ii<num_counter_max; ii++)
+	for (ii=0; ii<NCOUNTS_MAX; ii++)
 	{
 		temp1 = accumulator[ii][0]/nstep_ave;
 		accumulator[ii][2] += temp1;
@@ -818,7 +818,7 @@ int calres()
 	int ii;
 	double ave_of_square, ave_of_ave_square;
 	double ave, err, fluc;
-	for (ii=0; ii<num_counter_max; ii++)
+	for (ii=0; ii<NCOUNTS_MAX; ii++)
 	{
 		ave = accumulator[ii][5] = accumulator[ii][2]/icounter[10]; // ave
 		ave_of_square = accumulator[ii][3]/icounter[10];
@@ -870,12 +870,12 @@ int main(int argc, char *argv[])
 	fnValidateInit();
 
 	/// Decide what type of simulation to run. 
-	if (what_simulation == md_run)
+	if (what_simulation == MOLECULAR_DYNAMICS)
 	{
 		// MD simulation
 		md();
 	}
-	else if (what_simulation == hmc_run)
+	else if (what_simulation == HYBRID_MONTE_CARLO)
 	{
 		// HMC simulation
 		hmc();

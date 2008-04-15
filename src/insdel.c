@@ -4,9 +4,8 @@
 #include <assert.h>
 #include <string.h>
 #include <ctype.h>
-#include "random.h"
-#include "vars.h"
-#include "funcs.h"
+#include <stdbool.h>
+#include "mspms2.h"
 
 int normvec()
 {
@@ -248,7 +247,7 @@ int InitInsertedMole(int iSpecieSelected, int iMoleSelected)
 
 	mole2specie[iMole] = iSpecieSelected;
 	mole_status[iMole] = MOLE_STATUS_NORMAL;
-	iPhysicalMoleIDFromMetaIDinSpecie[iSpecieSelected][idMoleInSpecie] = iMole;
+	iMIDS_to_PMID[iSpecieSelected][idMoleInSpecie] = iMole;
 
 	// atom
 	mole_first_atom_idx[iMole] = iAtom;
@@ -261,7 +260,7 @@ int InitInsertedMole(int iSpecieSelected, int iMoleSelected)
 		epsilon[iAtom] = sample_epsilon[kk];
 		sigma[iAtom] = sample_sigma[kk];
 		charge[iAtom] = sample_charge[kk];
-		isghost[iAtom] = sample_isghost[kk];
+		ghost_type[iAtom] = sample_ghost_type[kk];
 		tasostype[iAtom] = sample_tasostype[kk];
 		iAtom++;
 	}
@@ -458,7 +457,7 @@ int fnInsDelMole()
 		// long range correction part
 
 		// Accept probability
-		pcreate = exp(-del_u*rRgas/treq)*zact[iSpecieSelected]*boxv/(nmole_per_specie[iSpecieSelected]+1);
+		pcreate = exp(-del_u*R_RGAS/treq)*zact[iSpecieSelected]*boxv/(nmole_per_specie[iSpecieSelected]+1);
 		
 		// printf("pcreate = %lf\n",pcreate);
 		
@@ -563,7 +562,7 @@ int fnInsDelMole()
 			// the number is the index of the molecule within the specie
 			iMoleSelected_MetaID = (int)rndnum[0]*nmole_per_specie[iSpecieSelected];
 			// now convert it to the real index of the physical data array
-			iMoleSelected = iPhysicalMoleIDFromMetaIDinSpecie[iSpecieSelected][iMoleSelected_MetaID];
+			iMoleSelected = iMIDS_to_PMID[iSpecieSelected][iMoleSelected_MetaID];
 
 			// old density and new density
 
@@ -581,7 +580,7 @@ int fnInsDelMole()
 			// long range correction part
 
 			// acceptance probability
-			pdelete = exp(-del_u*rRgas/treq)*nmole_per_specie[iSpecieSelected]/zact[iSpecieSelected]/boxv;
+			pdelete = exp(-del_u*R_RGAS/treq)*nmole_per_specie[iSpecieSelected]/zact[iSpecieSelected]/boxv;
 
 			ranmar(rndnum, 1);
 			if (rndnum[0] < pdelete) // accept
@@ -607,7 +606,7 @@ int fnInsDelMole()
 				// update the meta ID to physical ID
 				for (ii=iMoleSelected_MetaID;ii<nmole_per_specie[iSpecieSelected];ii++)
 				{
-					iPhysicalMoleIDFromMetaIDinSpecie[iSpecieSelected][ii] = iPhysicalMoleIDFromMetaIDinSpecie[iSpecieSelected][ii+1];
+					iMIDS_to_PMID[iSpecieSelected][ii] = iMIDS_to_PMID[iSpecieSelected][ii+1];
 				}
 
 				// densities

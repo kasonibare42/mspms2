@@ -4,7 +4,7 @@
 #include <math.h>
 #include <assert.h>
 #include <ctype.h>
-#include "vars.h"
+#include "mspms2.h"
 
 /**
  * \brief Validate the input data.
@@ -34,7 +34,7 @@ int fnValidateInput()
 		isError = 1;
 	}
 	
-	if (what_simulation<md_run || what_simulation>SIMULATED_ANNEALING)
+	if (what_simulation<MOLECULAR_DYNAMICS || what_simulation>SIMULATED_ANNEALING)
 	{
 		fprintf(stderr,"Error: unknown simulation type.\n");
 		fprintf(fpouts, "Error: unknown simulation type.\n");
@@ -74,7 +74,7 @@ int fnValidateInput()
 		isError = 1;
 	}
 
-	if (sf_type < _NO_SF_POTENTIAL || sf_type > nanotube_my_interp)
+	if (sf_type < SF_NONE || sf_type > SF_NANOTUBE_MY_INTERP)
 	{
 		fprintf(stderr,"Error: Invalid solid-fluid interaction type. sf_type = %d\n",sf_type);
 		fprintf(fpouts,
@@ -83,8 +83,8 @@ int fnValidateInput()
 		isError = 1;
 	}
 
-	if (iChargeType < _NO_ELECTROSTATIC_INTERACTION || iChargeType
-			> elec_simple_coulomb)
+	if (iChargeType < ELECTROSTATIC_NONE || iChargeType
+			> ELECTROSTATIC_SIMPLE_COULOMB)
 	{
 		fprintf(stderr,"Error: Invalid electrostatic interaction type. iChargeType = %d\n", iChargeType);
 		fprintf(

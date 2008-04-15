@@ -3,8 +3,8 @@
 #include <math.h>
 #include <string.h>
 #include <ctype.h>
-#include "vars.h"
-#include "funcs.h"
+#include <stdbool.h>
+#include "mspms2.h"
 
 /// Read parameters from the input file for MDNVT and initialize the variables needed for NVT simulation
 int init_nvt()
@@ -37,7 +37,7 @@ int init_nvt()
 			// vts = 0.0;
 			// rts = 0.0;
 			/*
-			 * Qts = Rgas*treq*nfree/Omega
+			 * Qts = RGAS*treq*nfree/Omega
 			 * where Omega is a parameter related to the mass of the thermostat
 			 * for this program, we read in the Qts directly.
 			 */
@@ -130,8 +130,8 @@ int vver_nh_2()
 	// ps has unit of  1/(femto second) =  1/fs
 	// qq has unit of kg*m^2/mol*1.0*e-30
 	// ss has no unit
-	ss = ss + ps*delt + (sumv2-gg*treq*Rgas)*delt_sqby2/qq;
-	ps = ps + (sumv2-gg*treq*Rgas)*deltby2/qq;
+	ss = ss + ps*delt + (sumv2-gg*treq*RGAS)*delt_sqby2/qq;
+	ps = ps + (sumv2-gg*treq*RGAS)*deltby2/qq;
 
 	// inter forces, long ranged
 	erfrc();
@@ -175,7 +175,7 @@ int vver_nh_2()
 			delps = delps + ri*bz[ii];
 		}
 		di = -(pso*deltby2 + 1.0);
-		delps = delps - di*((-sumv2+gg*treq*Rgas)*deltby2/qq - (ps-pso));
+		delps = delps - di*((-sumv2+gg*treq*RGAS)*deltby2/qq - (ps-pso));
 		delps = delps/(-delt*deltby2*sumv2/qq + di);
 
 		sumv2 = 0.0;
@@ -216,13 +216,13 @@ int vver_nh_2()
 	}
 	ps = psn;
 	ukin = sumv2/2.0;
-	// H = ukin + upot + (ps*ps*qq)/2 + gg*treq*Rgas*ss;
+	// H = ukin + upot + (ps*ps*qq)/2 + gg*treq*RGAS*ss;
 
 	// energy of thermostat
-	unhts = (ps*ps*qq)/2.0 + gg*treq*Rgas*ss;
+	unhts = (ps*ps*qq)/2.0 + gg*treq*RGAS*ss;
 
 	// calculate instant temperature
-	tinst = 2.0*ukin*rRgas/nfree;
+	tinst = 2.0*ukin*R_RGAS/nfree;
 
 	return 0;
 }
@@ -269,8 +269,8 @@ int vver_nh_1()
 			zz[ii] = zz[ii] + delts*vz[ii]*1.0e-5;
 
 		}
-		ss = ss + ps*delts + (sumv2-gg*treq*Rgas)*delts_sqby2/qq;
-		ps = ps + (sumv2-gg*treq*Rgas)*deltsby2/qq;
+		ss = ss + ps*delts + (sumv2-gg*treq*RGAS)*delts_sqby2/qq;
+		ps = ps + (sumv2-gg*treq*RGAS)*deltsby2/qq;
 
 		// intra forces, short ranged
 		rafrc();
@@ -315,7 +315,7 @@ int vver_nh_1()
 				delps = delps + ri*bz[ii];
 			}
 			di = -(pso*deltsby2 + 1.0);
-			delps = delps - di*((-sumv2+gg*treq*Rgas)*deltsby2/qq - (ps-pso));
+			delps = delps - di*((-sumv2+gg*treq*RGAS)*deltsby2/qq - (ps-pso));
 			delps = delps/(-delts*deltsby2*sumv2/qq + di);
 
 			sumv2 = 0.0;
@@ -402,7 +402,7 @@ int vver_nh_1()
 			delps = delps + ri*bz[ii];
 		}
 		di = -(pso*deltby2 + 1.0);
-		delps = delps - di*((-sumv2+gg*treq*Rgas)*deltby2/qq - (ps-pso));
+		delps = delps - di*((-sumv2+gg*treq*RGAS)*deltby2/qq - (ps-pso));
 		delps = delps/(-delt*deltby2*sumv2/qq + di);
 
 		sumv2 = 0.0;
@@ -443,13 +443,13 @@ int vver_nh_1()
 	}
 	ps = psn;
 	ukin = sumv2/2.0;
-	// H = ukin + upot + (ps*ps*qq)/2 + gg*treq*Rgas*ss;
+	// H = ukin + upot + (ps*ps*qq)/2 + gg*treq*RGAS*ss;
 
 	// energy of thermostat
-	unhts = (ps*ps*qq)/2.0 + gg*treq*Rgas*ss;
+	unhts = (ps*ps*qq)/2.0 + gg*treq*RGAS*ss;
 
 	// calculate instant temperature
-	tinst = 2.0*ukin*rRgas/nfree;
+	tinst = 2.0*ukin*R_RGAS/nfree;
 
 	return 0;
 }
@@ -497,8 +497,8 @@ int vver_nh_3()
 			yy[ii] = yy[ii] + delts*vy[ii]*1.0e-5;
 			zz[ii] = zz[ii] + delts*vz[ii]*1.0e-5;
 		}
-		sss = sss + pss*delts + (sumv2-ggs*treq*Rgas)*delts_sqby2/qqs;
-		pss = pss + (sumv2-ggs*treq*Rgas)*deltsby2/qqs;
+		sss = sss + pss*delts + (sumv2-ggs*treq*RGAS)*delts_sqby2/qqs;
+		pss = pss + (sumv2-ggs*treq*RGAS)*deltsby2/qqs;
 
 		// intra forces, short ranged
 		rafrc();
@@ -543,7 +543,7 @@ int vver_nh_3()
 				delpss = delpss + ri*bz[ii];
 			}
 			di = -(psso*deltsby2 + 1.0);
-			delpss = delpss - di*((-sumv2+ggs*treq*Rgas)*deltsby2/qqs - (pss
+			delpss = delpss - di*((-sumv2+ggs*treq*RGAS)*deltsby2/qqs - (pss
 					-psso));
 			delpss = delpss/(-delts*deltsby2*sumv2/qqs + di);
 
@@ -586,13 +586,13 @@ int vver_nh_3()
 		pss = pssn;
 
 		// energy of inner thermostat
-		unhtss = (pss*pss*qqs)/2.0 + ggs*treq*Rgas*sss;
+		unhtss = (pss*pss*qqs)/2.0 + ggs*treq*RGAS*sss;
 	}
 	// ps has unit of  1/(femto second) =  1/fs
 	// qq has unit of kg*m^2/mol*1.0*e-30
 	// ss has no unit
-	ss = ss + ps*delt + (sumv2-gg*treq*Rgas)*delt_sqby2/qq;
-	ps = ps + (sumv2-gg*treq*Rgas)*deltby2/qq;
+	ss = ss + ps*delt + (sumv2-gg*treq*RGAS)*delt_sqby2/qq;
+	ps = ps + (sumv2-gg*treq*RGAS)*deltby2/qq;
 
 	// inter forces, long ranged
 	erfrc();
@@ -636,7 +636,7 @@ int vver_nh_3()
 			delps = delps + ri*bz[ii];
 		}
 		di = -(pso*deltby2 + 1.0);
-		delps = delps - di*((-sumv2+gg*treq*Rgas)*deltby2/qq - (ps-pso));
+		delps = delps - di*((-sumv2+gg*treq*RGAS)*deltby2/qq - (ps-pso));
 		delps = delps/(-delt*deltby2*sumv2/qq + di);
 
 		sumv2 = 0.0;
@@ -677,13 +677,13 @@ int vver_nh_3()
 	}
 	ps = psn;
 	ukin = sumv2/2.0;
-	// H = ukin + upot + (ps*ps*qq)/2 + gg*treq*Rgas*ss;
+	// H = ukin + upot + (ps*ps*qq)/2 + gg*treq*RGAS*ss;
 
 	// energy of thermostat
-	unhts = (ps*ps*qq)/2.0 + gg*treq*Rgas*ss;
+	unhts = (ps*ps*qq)/2.0 + gg*treq*RGAS*ss;
 
 	// calculate instant temperature
-	tinst = 2.0*ukin*rRgas/nfree;
+	tinst = 2.0*ukin*R_RGAS/nfree;
 
 	return 0;
 }
@@ -700,7 +700,7 @@ int nvt_nh_operator()
 		mvsq += aw[ii]*(vx[ii]*vx[ii]+vy[ii]*vy[ii]+vz[ii]*vz[ii]);
 
 	// compute the driving force for the thermostat
-	Gts = (mvsq - nfree*Rgas*treq)/Qts;
+	Gts = (mvsq - nfree*RGAS*treq)/Qts;
 
 	// advance the thermostat velocity 1/4 time step
 	vts = vts + dt_outer4*Gts;
@@ -721,16 +721,16 @@ int nvt_nh_operator()
 	// compute new driving force for the thermostat and advance velocities @ 1/4 time step
 	mvsq = mvsq*AA*AA;
 
-	Gts = (mvsq - nfree*Rgas*treq)/Qts;
+	Gts = (mvsq - nfree*RGAS*treq)/Qts;
 
 	vts = vts + dt_outer4*Gts;
 
 	// extra energy for the thermostat for conserving energy
-	unhts = 0.5*Gts*vts*vts + treq*Rgas*rts*nfree;
+	unhts = 0.5*Gts*vts*vts + treq*RGAS*rts*nfree;
 
 	// calculate kinetic energy and temperature
 	ukin = 0.5*mvsq;
-	tinst = 2.0*ukin*rRgas/nfree;
+	tinst = 2.0*ukin*R_RGAS/nfree;
 
 	return 0;
 }

@@ -4,7 +4,7 @@
 #include <assert.h>
 #include <string.h>
 #include <ctype.h>
-#include "vars.h"
+#include "mspms2.h"
 
 int fnVolumeChange()
 {
@@ -83,7 +83,7 @@ int fnVolumeChange()
 	fDeltaU += (uinter - uinter_old);
 
 	// calculate Hamotonial difference
-	dH = fDeltaU*rRgas/treq + preq*delv/kb_1e30/treq;
+	dH = fDeltaU*R_RGAS/treq + preq*delv/KB_OVER_1E30/treq;
 	dH = dH - nmole*log(fRatioNewV2OldV);
 
 	// attempted vc moves
@@ -109,7 +109,7 @@ int fnVolumeChange()
 		icounter[24]++;
 
 		// re-calculate box size related variables for ewald summation
-		if (iChargeType == elec_ewald)
+		if (iChargeType == ELECTROSTATIC_EWALD)
 		{
 			Vfactor_ewald = 2.0*pi/(boxlx*boxly*boxlz);
 			TWOPI_LX = 2.0*pi/boxlx;

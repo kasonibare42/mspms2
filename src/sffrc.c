@@ -4,7 +4,7 @@
 #include <assert.h>
 #include <string.h>
 #include <ctype.h>
-#include "vars.h"
+#include "mspms2.h"
 
 extern void cforce_atom_(int*, double*, double*, double*, double*, double*);
 extern void initpotentialgrid_(int*, double*, double*, double*, int*, int*,
@@ -1046,7 +1046,7 @@ int cal_sf_hypergeo()
 
 	for (ii=0; ii<natom; ii++)
 	{
-		if (isghost[ii] == all_ghost) // ghost atom check
+		if (ghost_type[ii] == GHOST_FULL) // ghost atom check
 			continue;
 		xxi = xx[ii];
 		yyi = yy[ii];
@@ -1068,7 +1068,7 @@ int cal_sf_hypergeo()
 
 			if (rij<tubeR) // if inside the tube
 			{
-				ljc = c3_pisq_theta*epsilonij*sigmaij*sigmaij;
+				ljc = C3_PI_SQ_THETA*epsilonij*sigmaij*sigmaij;
 				kfac = sigmaij*tubeR/(tubeRsq-rijsq);
 				zfac = rijsq/tubeRsq;
 				hypergeo(afac1, bfac1, cfac, zfac, rij, &hgrep, &hgfrep); // hypergeo series
@@ -1087,7 +1087,7 @@ int cal_sf_hypergeo()
 			}
 			else // outside the tube
 			{
-				ljc = c3_pisq_theta*epsilonij*sigmaij*sigmaij*tubeR;
+				ljc = C3_PI_SQ_THETA*epsilonij*sigmaij*sigmaij*tubeR;
 				kfac = sigmaij*rij/(rijsq-tubeRsq);
 				zfac = tubeRsq/rijsq;
 				hypergeo(afac1, bfac1, cfac, zfac, rij, &hgrep, &hgfrep); // calculate the hypergeo series
@@ -1143,7 +1143,7 @@ int init_sf_atom_explicit()
 			sscanf(fgets(buffer, datalen, fpins), "%d", &solid_natom);
 			sscanf(fgets(buffer, datalen, fpins), "%d", &fSolid_type);
 			// fSolid_type not yet in used
-			// if (fSolid_type==solid_uniform)
+			// if (fSolid_type==SOLID_UNIFORM)
 			{
 				solid_sigma = malloc(sizeof(double));
 				solid_epsilon = malloc(sizeof(double));
@@ -1191,7 +1191,7 @@ int cal_sf_atom_explicit()
 	usf_vdw = 0.0;
 	for (ii=0; ii<natom; ii++)
 	{
-		if (isghost[ii] == all_ghost) // do not calculate ghost atoms
+		if (ghost_type[ii] == GHOST_FULL) // do not calculate ghost atoms
 			continue;
 		xxi = xx[ii];
 		yyi = yy[ii];
@@ -1282,15 +1282,15 @@ int fnSffrcSession()
 	// virial for solid-fluid with solid fixed
 	// is not well defined
 
-	if (sf_type==nanotube_hypergeo)
+	if (sf_type==SF_NANOTUBE_HYPERGEO)
 	{
 		cal_sf_hypergeo();
 	}
-	else if (sf_type==nanotube_atom_explicit)
+	else if (sf_type==SF_NANOTUBE_ATOM_EXPLICIT)
 	{
 		cal_sf_atom_explicit();
 	}
-	else if (sf_type==nanotube_tasos)
+	else if (sf_type==SF_NANOTUBE_TASOS)
 	{
 		for (ii=0; ii<natom; ii++)
 		{
@@ -1300,10 +1300,10 @@ int fnSffrcSession()
 
 			// the tasos energy has unit of K and the force has unit of K/Angstrom
 			// change them to J/mol and J/mol/Angstrom
-			usflj_tasos *= Rgas;
-			tasos_force[0] *= Rgas;
-			tasos_force[1] *= Rgas;
-			tasos_force[2] *= Rgas;
+			usflj_tasos *= RGAS;
+			tasos_force[0] *= RGAS;
+			tasos_force[1] *= RGAS;
+			tasos_force[2] *= RGAS;
 
 			gUsfljSession += usflj_tasos;
 			fxl[ii] += tasos_force[0];
@@ -1311,7 +1311,7 @@ int fnSffrcSession()
 			fzl[ii] += tasos_force[2];
 		} // natom loop
 	}
-	else if (sf_type==nanotube_my_interp)
+	else if (sf_type==SF_NANOTUBE_MY_INTERP)
 	{
 		for (ii=0; ii<natom; ii++)
 		{

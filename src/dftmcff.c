@@ -9,7 +9,7 @@
 #include <assert.h>
 #include <gsl/gsl_math.h>
 #include <gsl/gsl_deriv.h>
-#include "vars.h"
+#include "mspms2.h"
 
 extern void ffield_(int* nm, double* x, double* y, double* z, double* ff);
 

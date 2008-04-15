@@ -5,7 +5,7 @@
 #include <stdlib.h>
 #include <math.h>
 #include <assert.h>
-#include "vars.h"
+#include "mspms2.h"
 
 int bndfrc(int iMole)
 {
@@ -61,9 +61,9 @@ int bndfrc(int iMole)
 
 		switch (bond_type[ii])
 		{
-		case bond_none: // 0
+		case BOND_NONE: // 0
 			break;
-		case bond_harmonic: // 1
+		case BOND_HARMONIC: // 1
 			delta_r = rij - Req[ii];
 			ubond_temp = 0.5*Kb[ii]*delta_r*delta_r;
 			gUbondSession += ubond_temp;
@@ -82,7 +82,7 @@ int bndfrc(int iMole)
 			fys[ii2] -= fyij;
 			fzs[ii2] -= fzij;
 			break;
-		case bond_morse: // 2
+		case BOND_MORSE: // 2
 			delta_r = rij - Req[ii];
 			De = Kb[ii];
 			exp_term = exp(-alpha[ii]*delta_r);
@@ -104,7 +104,7 @@ int bndfrc(int iMole)
 			fys[ii2] -= fyij;
 			fzs[ii2] -= fzij;
 			break;
-		case bond_fene: // 3
+		case BOND_FENE: // 3
 			rmax2 = Req[ii]*Req[ii];
 			ubond_temp = Kb[ii]*rmax2*log(1.0-rijsq/rmax2);
 			gUbondSession += ubond_temp;
@@ -213,9 +213,9 @@ int aglfrc(int iMole)
 		iic = angle_idx[ii][2];
 		switch (angle_type[ii])
 		{
-		case angle_none:
+		case ANGLE_NONE:
 			break;
-		case angle_harmonic:
+		case ANGLE_HARMONIC:
 			// first bond vector
 			xdab = xx[iia] - xx[iib];
 			ydab = yy[iia] - yy[iib];
@@ -267,7 +267,7 @@ int aglfrc(int iMole)
 			fys[iic] += fyc;
 			fzs[iic] += fzc;
 			break;
-		case angle_TRwater: // Toukan & Rhaman water potential
+		case ANGLE_TR_WATER: // Toukan & Rhaman water potential
 			// H-H
 			vec_13_x = xx[iia] - xx[iic];
 			vec_13_y = yy[iia] - yy[iic];
@@ -427,9 +427,9 @@ int dihfrc(int iMole)
 		switch (dih_type[ii])
 		// switch for different dihedral type
 		{
-		case dih_none:
+		case DIH_NONE:
 			break;
-		case dih_opls_cosin:
+		case DIH_OPLS_COSIN:
 			xdab = xx[iia] - xx[iib];
 			ydab = yy[iia] - yy[iib];
 			zdab = zz[iia] - zz[iib];
@@ -534,7 +534,7 @@ int dihfrc(int iMole)
 			fys[iid] += fd1y;
 			fzs[iid] += fd1z;
 			break;
-		case dih_charmm: // future implementation 
+		case DIH_CHARMM: // future implementation 
 			// modified from Shi Wei's code
 			// NOT tested.
 			// calculate the dihedral angle energy 
@@ -705,9 +705,9 @@ int impfrc(int iMole) // improper energy/force calculations
 		
 		switch (imp_type[ii])
 		{
-		case imp_none:
+		case IMP_NONE:
 			break;
-		case imp_charmm:
+		case IMP_CHARMM:
 			// following code is modified from shi wei's program
 			// NOT tested.
 			if (fabs(komega[ii]) >= 1e-5)
@@ -855,7 +855,7 @@ int impfrc(int iMole) // improper energy/force calculations
 		} // switch for improper types
 	} // loop through all impropers
 
-	if (imp_type[ii]==imp_charmm)
+	if (imp_type[ii]==IMP_CHARMM)
 		gUimpSession *= (pi/180)*(pi/180);
 
 	return 0;

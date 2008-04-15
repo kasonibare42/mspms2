@@ -2,7 +2,6 @@
 #include <stdlib.h>
 #include <math.h>
 #include <string.h>
-#include "random.h"
 
 #define boolean         int
 #define RIGHT           -1

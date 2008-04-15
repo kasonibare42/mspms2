@@ -3,7 +3,7 @@
 #include <string.h>
 #include <assert.h>
 #include <ctype.h>
-#include "vars.h"
+#include "mspms2.h"
 
 /// Echo the input data and initialized variables
 int echo()
@@ -28,10 +28,10 @@ int echo()
 
 	switch (what_simulation)
 	{
-	case md_run:
+	case MOLECULAR_DYNAMICS:
 		strcpy(szSimulation, "MD");
 		break;
-	case hmc_run:
+	case HYBRID_MONTE_CARLO:
 		strcpy(szSimulation, "HMC");
 		break;
 	default:
@@ -40,13 +40,13 @@ int echo()
 	}
 	switch (what_ensemble)
 	{
-	case nve_run:
+	case NVE:
 		strcpy(szEnsemble, "NVE");
 		break;
-	case nvt_run:
+	case NVT:
 		strcpy(szEnsemble, "NVT");
 		break;
-	case npt_run:
+	case NPT:
 		strcpy(szEnsemble, "NPT");
 		break;
 	default:
@@ -81,13 +81,13 @@ int echo()
 	}
 	switch (fStart_option)
 	{
-	case new_run:
+	case NEW:
 		strcpy(szOutput, "New Run");
 		break;
-	case continue_run:
+	case CONTINUE:
 		strcpy(szOutput, "Continue Run");
 		break;
-	case new_from_old:
+	case CONFIG_ONLY:
 		strcpy(szOutput, "New Run From Old Configuration");
 		break;
 	default:
@@ -149,7 +149,7 @@ int echo()
 	{
 		fprintf(fpouts, "Switch potential is disabled (%d).\n", isLJswitchOn);
 	}
-	if (iChargeType != _NO_ELECTROSTATIC_INTERACTION)
+	if (iChargeType != ELECTROSTATIC_NONE)
 	{
 		fprintf(fpouts,
 				"Electrostatic interaction calculations are enabled (%d).\n",
@@ -162,10 +162,10 @@ int echo()
 					fEwald_Dim);
 			switch (fEwald_BC)
 			{
-			case ewald_bc_tinfoil:
+			case EWALD_BC_TINFOIL:
 				strcpy(szOutput, "Tinfoil");
 				break;
-			case ewald_bc_vacuum:
+			case EWALD_BC_VACUUM:
 				strcpy(szOutput, "Vacuum");
 				break;
 			default:
@@ -197,9 +197,9 @@ int echo()
 				"Electrostatic interaction calculations are disabled (%d).\n",
 				iChargeType);
 	}
-	if (what_simulation == md_run)
+	if (what_simulation == MOLECULAR_DYNAMICS)
 	{
-		if (what_ensemble == npt_run)
+		if (what_ensemble == NPT)
 		{
 			fprintf(fpouts, "MDNPT data section is required:\n");
 			fprintf(
@@ -211,7 +211,7 @@ int echo()
 					"    Initialized variables: vts=%lf, vbs=%lf, rts=%lf, utsbs=%lf\n",
 					vts, vbs, rts, utsbs);
 		}
-		else if (what_ensemble == nvt_run)
+		else if (what_ensemble == NVT)
 		{
 			fprintf(fpouts, "MDNVT data section is required:\n");
 			fprintf(fpouts, "    Required Temperature is %lf.\n", treq);
@@ -227,7 +227,7 @@ int echo()
 					pss, unhtss);
 		}
 	}
-	else if (what_simulation == hmc_run)
+	else if (what_simulation == HYBRID_MONTE_CARLO)
 	{
 		fprintf(fpouts, "HMC data section is required:\n");
 		fprintf(fpouts, "    %d MD step(s) are needed for one HMC step.\n");
@@ -244,10 +244,10 @@ int echo()
 				prob_id);
 	}
 
-	if (sf_type != _NO_SF_POTENTIAL)
+	if (sf_type != SF_NONE)
 	{
 		fprintf(fpouts, "Solid-fluid interaction calculation is enabled.\n");
-		if (sf_type==nanotube_hypergeo)
+		if (sf_type==SF_NANOTUBE_HYPERGEO)
 		{
 			fprintf(
 					fpouts,
@@ -262,12 +262,12 @@ int echo()
 						hgntc_xx[ii], hgntc_yy[ii], hgnt_radius[ii]);
 			}
 		}
-		else if (sf_type==nanotube_atom_explicit)
+		else if (sf_type==SF_NANOTUBE_ATOM_EXPLICIT)
 		{
 			fprintf(fpouts,
 					"Atom explicit Nanotube (or other absorbent) is enabled.\n");
 			fprintf(fpouts, "There are totally %d atoms. ", solid_natom);
-			if (fSolid_type==solid_uniform)
+			if (fSolid_type==SOLID_UNIFORM)
 			{
 				fprintf(
 						fpouts,
@@ -279,7 +279,7 @@ int echo()
 							&solid_yy[ii], &solid_zz[ii]);
 				}
 			}
-			else if (fSolid_type==solid_hetero)
+			else if (fSolid_type==SOLID_HETERO)
 			{
 				fprintf(fpouts, "The atoms are heterogeneous.\n");
 				for (ii=0; ii<solid_natom; ii++)
@@ -293,12 +293,12 @@ int echo()
 				fprintf(fpouts, "Unknown solid atom type.\n");
 			}
 		}
-		else if (sf_type==nanotube_tasos)
+		else if (sf_type==SF_NANOTUBE_TASOS)
 		{
 			fprintf(fpouts,
 					"Tasos's interpolation of Nanotube potential is enabled.\n ");
 		}
-		else if (sf_type==nanotube_my_interp)
+		else if (sf_type==SF_NANOTUBE_MY_INTERP)
 		{
 			fprintf(fpouts,
 					"YWang's interpolation of Nanotube potential is enabled.\n");
@@ -432,9 +432,9 @@ int echo()
 	fprintf(fpouts, "virial_inter=%lf\n", virial_inter);
 	fprintf(fpouts, "virial_intra=%lf\n", virial_intra);
 	fprintf(fpouts, "pideal=%lf\n", pideal=natom/(boxlx*boxly*boxlz) *tinst
-			*kb_1e30);
+			*KB_OVER_1E30);
 	// pljlrc already calculated in initialization part
-	pinst = pideal + (virial_inter+virial_intra)*virial_to_pressure /(boxlx
+	pinst = pideal + (virial_inter+virial_intra)*VIRIAL_TO_PRESSURE /(boxlx
 			*boxly*boxlz) + pljlrc;
 	fprintf(fpouts, "pressure=%lf\n", pinst);
 

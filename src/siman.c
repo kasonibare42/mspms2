@@ -3,8 +3,7 @@
 #include <string.h>
 #include <math.h>
 #include <assert.h>
-#include "vars.h"
-#include "funcs.h"
+#include "mspms2.h"
 
 int init_siman()
 {
@@ -67,17 +66,17 @@ int siman()
 	void (*pfnRezero)();
 	int (*pfnMDtype)();
 	
-	if (what_ensemble == nvt_run)
+	if (what_ensemble == NVT)
 	{ 
 		pfnRezero = &rezero_nvt_ts;
 		pfnMDtype = &vver_nh_3;
 	}
-	else if (what_ensemble == nve_run)
+	else if (what_ensemble == NVE)
 	{
 		pfnRezero = NULL;
 		pfnMDtype = &vver;
 	}
-	else if (what_ensemble == npt_run)
+	else if (what_ensemble == NPT)
 	{
 		pfnRezero = &rezero_npt_ts;
 		pfnMDtype = &npt_respa;
@@ -85,7 +84,7 @@ int siman()
 
 	// if not new run, load from old file
 	// FIXME: NOT tested for simulated annealing
-	if (fStart_option!=new_run)
+	if (fStart_option!=NEW)
 	{
 		loadit();
 	}

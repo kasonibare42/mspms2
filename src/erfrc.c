@@ -8,11 +8,11 @@
 #include <stdlib.h>
 #include <math.h>
 #include <assert.h>
+#include <stdbool.h>
 #include <gsl/gsl_sf_gamma.h>
 #include <gsl/gsl_math.h>
 #include <gsl/gsl_deriv.h>
-#include "vars.h"
-#include "funcs.h"
+#include "mspms2.h"
 
 double deriv_inc_gamma(double x, void *params)
 {
@@ -172,7 +172,7 @@ int loop_ij(int iStartMole, int iEndMole)
 	// atom ii
 	for (ii=iiStart; ii<iiEnd; ii++)
 	{
-		if (isghost[ii] == all_ghost) // move to ii+1 if atom ii is full ghost atom
+		if (ghost_type[ii] == GHOST_FULL) // move to ii+1 if atom ii is full ghost atom
 		{
 			continue;
 		}
@@ -212,7 +212,7 @@ int loop_ij(int iStartMole, int iEndMole)
 		// atom jj
 		for (jj=(jjStart==-1 ? ii+1 : jjStart); jj<jjEnd; jj++) // dynamically assign the starting number of jj
 		{
-			if (isghost[jj] == all_ghost) // move to jj+1 if atom jj is full ghost atom
+			if (ghost_type[jj] == GHOST_FULL) // move to jj+1 if atom jj is full ghost atom
 			{
 				continue;
 			}
@@ -236,13 +236,13 @@ int loop_ij(int iStartMole, int iEndMole)
 				/// If the cutoff is larger than the size in x,y dimension,
 				/// this should not be a problem.
 				///
-				if (isEwaldOn && fEwald_Dim==ewald_1D)
+				if (isEwaldOn && fEwald_Dim==EWALD_1D)
 				{
 					rhoklsq = rxij*rxij + ryij*ryij;
-					if (rhoklsq>parallel_to_z_err)
+					if (rhoklsq>TOLERANCE)
 					{
 						kapparhokl_sq = kappasq*rhoklsq;
-						temp1 = Euler_const + gsl_sf_gamma_inc(0.0,kapparhokl_sq) + log(kapparhokl_sq);
+						temp1 = EULER_CONSTANT + gsl_sf_gamma_inc(0.0,kapparhokl_sq) + log(kapparhokl_sq);
 						uij_Gz0 = uij_Gz0 -chargei*charge[jj]*temp1;
 						// forces
 						// derivative of incomplete gamma function
@@ -252,7 +252,7 @@ int loop_ij(int iStartMole, int iEndMole)
 						gsl_deriv_central(&FF, kapparhokl_sq, 1.0e-8, &temp1,
 								&temp2);
 						temp2 = kappasq*temp1 + 1.0/rhoklsq;
-						fij = chargei*charge[jj]*temp2*const_columb/boxlz;
+						fij = chargei*charge[jj]*temp2*COULOMB_CONSTANT/boxlz;
 						fxij = fij*rxij;
 						fyij = fij*ryij;
 						// force on atom ii
@@ -272,7 +272,7 @@ int loop_ij(int iStartMole, int iEndMole)
 				rij = sqrt(rijsq);
 
 				// LJ part, also does ghost atom check
-				if (isghost[ii]!=lj_ghost && isghost[jj]!=lj_ghost && rijsq
+				if (ghost_type[ii]!=GHOST_LJ && ghost_type[jj]!=GHOST_LJ && rijsq
 						<rcutoffsq)
 				{
 					// if switch potential for LJ is on, then calculate the switch
@@ -412,7 +412,7 @@ int loop_ij(int iStartMole, int iEndMole)
 					temp2 = uij_real_temp*erfc(temp1);
 					// real part force calculation
 					fij = (temp2 + uij_real_temp*2.0*temp1*exp(-temp1*temp1)
-							/sqrt(pi))*const_columb/rijsq;
+							/sqrt(pi))*COULOMB_CONSTANT/rijsq;
 					fxij = fij*rxij;
 					fyij = fij*ryij;
 					fzij = fij*rzij;
@@ -433,7 +433,7 @@ int loop_ij(int iStartMole, int iEndMole)
 							*(erfc(kappa *rij)/rij + wolfvcon1 + wolfvcon2
 									*(rij -rcutoffelec));
 					uij_wolf_temp = chargei*charge[jj]/rij;
-					fij = const_columb*uij_wolf_temp
+					fij = COULOMB_CONSTANT*uij_wolf_temp
 					*(erfc(kappa*rij)/rijsq + wolffcon1*exp(-(kappa*rij)*(kappa*rij))/rij + wolffcon2);
 					fxij = fij*rxij;
 					fyij = fij*ryij;
@@ -539,13 +539,13 @@ int loop_14(int iMole)
 			rzij = zz[ii1] - zz[ii2];
 
 			// Gz=0 term for 1D ewald
-			if (isEwaldOn && fEwald_Dim==ewald_1D)
+			if (isEwaldOn && fEwald_Dim==EWALD_1D)
 			{
 				rhoklsq = rxij*rxij + ryij*ryij;
-				if (rhoklsq>parallel_to_z_err)
+				if (rhoklsq>TOLERANCE)
 				{
 					kapparhokl_sq = kappasq*rhoklsq;
-					temp1 = Euler_const + gsl_sf_gamma_inc(0.0,kapparhokl_sq) + log(kapparhokl_sq);
+					temp1 = EULER_CONSTANT + gsl_sf_gamma_inc(0.0,kapparhokl_sq) + log(kapparhokl_sq);
 					uij_Gz0 = uij_Gz0 -charge[ii1]*charge[ii2]*temp1;
 					// forces
 					// derivative of incomplete gamma function
@@ -555,7 +555,7 @@ int loop_14(int iMole)
 					gsl_deriv_central(&FF, kapparhokl_sq, 1.0e-8, &temp1,
 							&temp2);
 					temp2 = kappasq*temp1 + 1.0/rhoklsq;
-					fij = charge[ii1]*charge[ii2]*temp2*const_columb/boxlz;
+					fij = charge[ii1]*charge[ii2]*temp2*COULOMB_CONSTANT/boxlz;
 					fxij = fij*rxij;
 					fyij = fij*ryij;
 					// force on atom ii1
@@ -587,20 +587,20 @@ int loop_14(int iMole)
 			// if 1,4 distance is changed after minimum image convention
 			// which means 1,4' are used now and they are in two different molecules
 			// now ghost check should be applied
-			if (fabs(rijsq_old-rijsq)>tolerant_err) // 1,4' found, need check ghost before calculate LJ for them
+			if (fabs(rijsq_old-rijsq)>TOLERANCE) // 1,4' found, need check ghost before calculate LJ for them
 			{
 				fprintf(stderr,"Warning: long 1,4 non-bonded pair %d-%d found...\n",ii1,ii2);
 				fprintf(fpouts,
 						"Warning: long 1,4 non-bonded pair %d-%d found...\n",
 						ii1, ii2);
 				// ghost check for 1,4'
-				if (isghost[ii1]==all_ghost || isghost[ii2]==all_ghost)
+				if (ghost_type[ii1]==GHOST_FULL || ghost_type[ii2]==GHOST_FULL)
 				{
 					// full ghost
 					fCalculate14_LJ = false;
 					fCalculate14_elec = false;
 				}
-				else if (isghost[ii1]==lj_ghost || isghost[ii2]==lj_ghost)
+				else if (ghost_type[ii1]==GHOST_LJ || ghost_type[ii2]==GHOST_LJ)
 				{
 					// LJ ghost
 					fCalculate14_LJ = false;
@@ -688,7 +688,7 @@ int loop_14(int iMole)
 				temp2 = uij_real14_temp*erfc(temp1);
 				// real part force calculation
 				fij = (temp2 + uij_real14_temp*2.0*temp1*exp(-temp1*temp1)
-						/sqrt(pi))*const_columb/rijsq;
+						/sqrt(pi))*COULOMB_CONSTANT/rijsq;
 				fxij = fij*rxij;
 				fyij = fij*ryij;
 				fzij = fij*rzij;
@@ -710,7 +710,7 @@ int loop_14(int iMole)
 								-rcutoffelec));
 				// need + some scale factor here
 				uij_wolf14_temp = charge[ii1]*charge[ii2]/rij;
-				fij = const_columb*uij_wolf14_temp
+				fij = COULOMB_CONSTANT*uij_wolf14_temp
 				*(erfc(kappa*rij)/rijsq + wolffcon1*exp(-(kappa*rij)*(kappa*rij))/rij + wolffcon2);
 				// need + some scale factor here 
 				fxij = fij*rxij;
@@ -734,7 +734,7 @@ int loop_14(int iMole)
 			{
 				uij_coulomb14_temp = charge[ii1]*charge[ii2]/rij; // need constant
 				gUcoulombSession += uij_coulomb14_temp; // need constant
-				fij = const_columb*uij_coulomb14_temp/rijsq;
+				fij = COULOMB_CONSTANT*uij_coulomb14_temp/rijsq;
 				fxij = fij*rxij;
 				fyij = fij*ryij;
 				fzij = fij*rzij;
@@ -835,13 +835,13 @@ int loop_13(int iMole)
 			rzij = zz[ii1] - zz[ii2];
 
 			// Gz=0 term for 1D ewald
-			if (isEwaldOn && fEwald_Dim==ewald_1D)
+			if (isEwaldOn && fEwald_Dim==EWALD_1D)
 			{
 				rhoklsq = rxij*rxij + ryij*ryij;
-				if (rhoklsq>parallel_to_z_err)
+				if (rhoklsq>TOLERANCE)
 				{
 					kapparhokl_sq = kappasq*rhoklsq;
-					temp1 = Euler_const + gsl_sf_gamma_inc(0.0,kapparhokl_sq) + log(kapparhokl_sq);
+					temp1 = EULER_CONSTANT + gsl_sf_gamma_inc(0.0,kapparhokl_sq) + log(kapparhokl_sq);
 					uij_Gz0 = uij_Gz0 -charge[ii1]*charge[ii2]*temp1;
 					// forces
 					// derivative of incomplete gamma function
@@ -851,7 +851,7 @@ int loop_13(int iMole)
 					gsl_deriv_central(&FF, kapparhokl_sq, 1.0e-8, &temp1,
 							&temp2);
 					temp2 = kappasq*temp1 + 1.0/rhoklsq;
-					fij = charge[ii1]*charge[ii2]*temp2*const_columb/boxlz;
+					fij = charge[ii1]*charge[ii2]*temp2*COULOMB_CONSTANT/boxlz;
 					fxij = fij*rxij;
 					fyij = fij*ryij;
 					// force on atom ii1
@@ -878,7 +878,7 @@ int loop_13(int iMole)
 				temp2 = charge[ii1]*charge[ii2]/rij; // still need constant
 				uij_excl_13 += temp2; // still need constant
 				// forces
-				fij = -const_columb*temp2/rijsq; // NOTE: the negative sign here
+				fij = -COULOMB_CONSTANT*temp2/rijsq; // NOTE: the negative sign here
 				// The above negative sign is because these forces are meant to be
 				// substracted from the total forces. Not additive.
 				fxij = fij*rxij;
@@ -915,14 +915,14 @@ int loop_13(int iMole)
 						uij_real13 += temp3; // still need constant
 						// forces
 						fij = (temp3+temp2*2.0*temp1*exp(-temp1*temp1)
-								/sqrt(pi))*const_columb/rijsq;
+								/sqrt(pi))*COULOMB_CONSTANT/rijsq;
 					}
 					else if (isWolfOn)
 					{
 						gUwolfrealSession = gUwolfrealSession + charge[ii1]
 								*charge[ii2] *(erfc(temp1)/rij + wolfvcon1
 								+ wolfvcon2*(rij -rcutoffelec));
-						fij = const_columb*temp2*(erfc(temp1)/rijsq + wolffcon1*exp(-temp1*temp1)/rij + wolffcon2);
+						fij = COULOMB_CONSTANT*temp2*(erfc(temp1)/rijsq + wolffcon1*exp(-temp1*temp1)/rij + wolffcon2);
 
 					}
 					fxij = fij*rxij;
@@ -968,7 +968,7 @@ int loop_13(int iMole)
 				// LJ part, do not need check ghost atom since 1,3 are in the same molecule
 				// here we check ghost atom because in this case, 1,3 are actually 1 and 3'
 				// which are in two different molecule
-				if (isghost[ii1]!=lj_ghost && isghost[ii2]!=lj_ghost && rijsq
+				if (ghost_type[ii1]!=GHOST_LJ && ghost_type[ii2]!=GHOST_LJ && rijsq
 						<rcutoffsq) // LJ cutoff
 				{
 					rij = sqrt(rijsq);
@@ -1109,13 +1109,13 @@ int loop_12(int iMole)
 		rzij = zz[ii1] - zz[ii2];
 
 		// Gz=0 term for 1D ewald
-		if (isEwaldOn && fEwald_Dim==ewald_1D)
+		if (isEwaldOn && fEwald_Dim==EWALD_1D)
 		{
 			rhoklsq = rxij*rxij + ryij*ryij;
-			if (rhoklsq>parallel_to_z_err)
+			if (rhoklsq>TOLERANCE)
 			{
 				kapparhokl_sq = kappasq*rhoklsq;
-				temp1 = Euler_const + gsl_sf_gamma_inc(0.0,kapparhokl_sq) + log(kapparhokl_sq);
+				temp1 = EULER_CONSTANT + gsl_sf_gamma_inc(0.0,kapparhokl_sq) + log(kapparhokl_sq);
 				uij_Gz0 = uij_Gz0 -charge[ii1]*charge[ii2]*temp1;
 				// forces
 				// derivative of incomplete gamma function
@@ -1124,7 +1124,7 @@ int loop_12(int iMole)
 				// temp1 is the value, temp2 is the absolute std. err.
 				gsl_deriv_central(&FF, kapparhokl_sq, 1.0e-8, &temp1, &temp2);
 				temp2 = kappasq*temp1 + 1.0/rhoklsq;
-				fij = charge[ii1]*charge[ii2]*temp2*const_columb/boxlz;
+				fij = charge[ii1]*charge[ii2]*temp2*COULOMB_CONSTANT/boxlz;
 				fxij = fij*rxij;
 				fyij = fij*ryij;
 				// force on atom ii1
@@ -1150,7 +1150,7 @@ int loop_12(int iMole)
 			temp2 = charge[ii1]*charge[ii2]/rij; // still need constant
 			uij_excl_12 += temp2; // still need constant
 			// forces
-			fij = -const_columb*temp2/rijsq; // NOTE: the negative sign here, see comments for 1,3
+			fij = -COULOMB_CONSTANT*temp2/rijsq; // NOTE: the negative sign here, see comments for 1,3
 			fxij = fij*rxij;
 			fyij = fij*ryij;
 			fzij = fij*rzij;
@@ -1185,14 +1185,14 @@ int loop_12(int iMole)
 					uij_real12 += temp3; // still need constant
 					// forces
 					fij = (temp3+temp2*2.0*temp1*exp(-temp1*temp1)/sqrt(pi))
-							*const_columb/rijsq;
+							*COULOMB_CONSTANT/rijsq;
 				}
 				else if (isWolfOn)
 				{
 					gUwolfrealSession = gUwolfrealSession + charge[ii1]
 							*charge[ii2] *(erfc(temp1)/rij + wolfvcon1
 							+ wolfvcon2*(rij -rcutoffelec));
-					fij = const_columb*temp2*(erfc(temp1)/rijsq + wolffcon1*exp(-temp1*temp1)/rij + wolffcon2);
+					fij = COULOMB_CONSTANT*temp2*(erfc(temp1)/rijsq + wolffcon1*exp(-temp1*temp1)/rij + wolffcon2);
 				}
 				fxij = fij*rxij;
 				fyij = fij*ryij;
@@ -1236,7 +1236,7 @@ int loop_12(int iMole)
 			// LJ part, also check ghost atoms
 			// here we check ghost atom because in this case, 12 are actually 1 and 2'
 			// which are in two different molecule
-			if (isghost[ii1]!=lj_ghost && isghost[ii2]!=lj_ghost && rijsq
+			if (ghost_type[ii1]!=GHOST_LJ && ghost_type[ii2]!=GHOST_LJ && rijsq
 					<rcutoffsq) // LJ cutoff
 			{
 				rij = sqrt(rijsq);
@@ -1400,7 +1400,7 @@ int loop_nbp(int iMole)
 		rzij = rzij - boxlz*rint(rzij/boxlz);
 		rijsq = rxij*rxij + ryij*ryij + rzij*rzij;
 		// check if the position changed after the minimum image convention
-		if (fabs(rijsq-rijsq_old)>tolerant_err)
+		if (fabs(rijsq-rijsq_old)>TOLERANCE)
 		{
 			fprintf(stderr,"Warning: long nonbonded pair %d-%d found...\n",ii1,ii2);
 			fprintf(fpouts, "Warning: long nonbonded pair %d-%d found...\n",
@@ -1408,13 +1408,13 @@ int loop_nbp(int iMole)
 			// image found, check ghost
 			// only calculate if they are not ghost atoms
 			isSameMole = false;
-			if (isghost[ii1]==all_ghost || isghost[ii2]==all_ghost)
+			if (ghost_type[ii1]==GHOST_FULL || ghost_type[ii2]==GHOST_FULL)
 			{
 				// if they are full ghost, dont calculate them 
 				fCalculate_nbpLJ = false;
 				fCalculate_nbpelec = false;
 			}
-			else if (isghost[ii1]==lj_ghost || isghost[ii2]==lj_ghost)
+			else if (ghost_type[ii1]==GHOST_LJ || ghost_type[ii2]==GHOST_LJ)
 			{
 				// if they are lj ghost, dont calculate LJ, but calculate electric
 				fCalculate_nbpLJ = false;
@@ -1515,13 +1515,13 @@ int loop_nbp(int iMole)
 			// not sure if cutoff check should be applied
 			// If the cutoff is larger than the size in x,y dimension,
 			// this should not be a problem
-			if (isEwaldOn && fEwald_Dim==ewald_1D)
+			if (isEwaldOn && fEwald_Dim==EWALD_1D)
 			{
 				rhoklsq = rxij_old*rxij_old + ryij_old*ryij_old;
-				if (rhoklsq>parallel_to_z_err)
+				if (rhoklsq>TOLERANCE)
 				{
 					kapparhokl_sq = kappasq*rhoklsq;
-					temp1 = Euler_const + gsl_sf_gamma_inc(0.0,kapparhokl_sq) + log(kapparhokl_sq);
+					temp1 = EULER_CONSTANT + gsl_sf_gamma_inc(0.0,kapparhokl_sq) + log(kapparhokl_sq);
 					uij_Gz0nbp = uij_Gz0nbp -charge[ii1]*charge[ii2]*temp1;
 					// forces
 					// derivative of incomplete gamma function
@@ -1531,7 +1531,7 @@ int loop_nbp(int iMole)
 					gsl_deriv_central(&FF, kapparhokl_sq, 1.0e-8, &temp1,
 							&temp2);
 					temp2 = kappasq*temp1 + 1.0/rhoklsq;
-					fij = charge[ii1]*charge[ii2]*temp2*const_columb/boxlz;
+					fij = charge[ii1]*charge[ii2]*temp2*COULOMB_CONSTANT/boxlz;
 					fxij = fij*rxij_old;
 					fyij = fij*ryij_old;
 					// force on atom ii1
@@ -1552,7 +1552,7 @@ int loop_nbp(int iMole)
 				temp2 = uij_realnbp_temp*erfc(temp1);
 				// real part force calculation
 				fij = (temp2 + uij_realnbp_temp*2.0*temp1*exp(-temp1*temp1)
-						/sqrt(pi))*const_columb/rijsq;
+						/sqrt(pi))*COULOMB_CONSTANT/rijsq;
 				fxij = fij*rxij;
 				fyij = fij*ryij;
 				fzij = fij*rzij;
@@ -1573,7 +1573,7 @@ int loop_nbp(int iMole)
 						*(erfc(kappa *rij)/rij + wolfvcon1 + wolfvcon2*(rij
 								-rcutoffelec));
 				uij_wolfnbp_temp = charge[ii1]*charge[ii2]/rij;
-				fij = const_columb*uij_wolfnbp_temp
+				fij = COULOMB_CONSTANT*uij_wolfnbp_temp
 				*(erfc(kappa*rij)/rijsq + wolffcon1*exp(-(kappa*rij)*(kappa*rij))/rij + wolffcon2);
 				fxij = fij*rxij;
 				fyij = fij*ryij;
@@ -1596,7 +1596,7 @@ int loop_nbp(int iMole)
 			{
 				uij_coulombnbp_temp = charge[ii1]*charge[ii2]/rij; // need constant
 				gUcoulombSession += uij_coulombnbp_temp; // need constant
-				fij = const_columb*uij_coulombnbp_temp/rijsq;
+				fij = COULOMB_CONSTANT*uij_coulombnbp_temp/rijsq;
 				fxij = fij*rxij;
 				fyij = fij*ryij;
 				fzij = fij*rzij;
@@ -1647,7 +1647,7 @@ int ewald_fourier_and_self()
 			{
 				// check for 1D ewald summation
 				// skip all Gz=0 terms
-				if (fEwald_Dim==ewald_1D && kz==0)
+				if (fEwald_Dim==EWALD_1D && kz==0)
 				{
 					continue;
 				}
@@ -1689,7 +1689,7 @@ int ewald_fourier_and_self()
 						}
 						t = rkx*xx[ii] + rky*yy[ii] + rkz*zz[ii];
 						fij = 2.0*charge[ii]*(sr*sin(t)-si*cos(t))
-								*Vfactor_ewald*kvec*const_columb;
+								*Vfactor_ewald*kvec*COULOMB_CONSTANT;
 						fxl[ii] += fij*rkx;
 						fyl[ii] += fij*rky;
 						fzl[ii] += fij*rkz;
@@ -1701,7 +1701,7 @@ int ewald_fourier_and_self()
 
 
 	// total fourier energy part of ewald
-	gUfourierSession = gUfourierSession*Vfactor_ewald*const_columb;
+	gUfourierSession = gUfourierSession*Vfactor_ewald*COULOMB_CONSTANT;
 
 	// self interaction corrections, constant, so no forces
 	for (ii=0; ii<natom_hist_max; ii++)
@@ -1713,7 +1713,7 @@ int ewald_fourier_and_self()
 		}
 		gUselfSession += charge[ii]*charge[ii];
 	}
-	gUselfSession = gUselfSession*const_columb*sqrt(kappa*kappa/pi);
+	gUselfSession = gUselfSession*COULOMB_CONSTANT*sqrt(kappa*kappa/pi);
 
 	return 0;
 }
@@ -1772,7 +1772,7 @@ int ewald_vacuum()
 	}
 	// energy
 	gUvacuumSession = qrx*qrx + qry*qry + qrz*qrz; // still need constant
-	gUvacuumSession = gUvacuumSession*twopi_over_3v*const_columb;
+	gUvacuumSession = gUvacuumSession*twopi_over_3v*COULOMB_CONSTANT;
 
 	// forces
 	for (ii=0; ii<natom_hist_max; ii++)
@@ -1782,7 +1782,7 @@ int ewald_vacuum()
 		{
 			continue;
 		}
-		fij = -2.0*twopi_over_3v*const_columb*charge[ii];
+		fij = -2.0*twopi_over_3v*COULOMB_CONSTANT*charge[ii];
 		fxl[ii] += fij*qrx;
 		fyl[ii] += fij*qry;
 		fzl[ii] += fij*qrz;
@@ -1813,7 +1813,7 @@ int wolf_con()
 		}
 		gUwolfconSession = gUwolfconSession + charge[ii]*charge[ii];
 	}
-	gUwolfconSession = gUwolfconSession*const_columb*(kappa/sqrt(pi)+erfc(kappa
+	gUwolfconSession = gUwolfconSession*COULOMB_CONSTANT*(kappa/sqrt(pi)+erfc(kappa
 			*rcutoffelec) /(2.0*rcutoffelec));
 
 	return 0;
@@ -1918,7 +1918,7 @@ int simple_coulomb_inter_mole(int iStartMole, int iEndMole)
 						<first_atom_of_mole_mm_plus_one; ii++)
 				{
 					// ghost check
-					if (isghost[ii]==all_ghost)
+					if (ghost_type[ii]==GHOST_FULL)
 					{
 						continue;
 					}
@@ -1927,7 +1927,7 @@ int simple_coulomb_inter_mole(int iStartMole, int iEndMole)
 							<first_atom_of_mole_nn_plus_one; jj++)
 					{
 						// ghost check
-						if (isghost[jj]==all_ghost)
+						if (ghost_type[jj]==GHOST_FULL)
 						{
 							continue;
 						}
@@ -1948,7 +1948,7 @@ int simple_coulomb_inter_mole(int iStartMole, int iEndMole)
 						rij = sqrt(rijsq);
 						uij_coulomb_temp = charge[ii]*charge[jj]/rij; // need constant
 						gUcoulombSession += uij_coulomb_temp; // need constant
-						fij = const_columb*uij_coulomb_temp/rijsq;
+						fij = COULOMB_CONSTANT*uij_coulomb_temp/rijsq;
 						fxij = fij*rxij;
 						fyij = fij*ryij;
 						fzij = fij*rzij;
@@ -1975,7 +1975,7 @@ int simple_coulomb_inter_mole(int iStartMole, int iEndMole)
 	 */
 
 	// constant for coulomb energy
-	gUcoulombSession *= const_columb;
+	gUcoulombSession *= COULOMB_CONSTANT;
 
 	return 0;
 }
@@ -2061,8 +2061,8 @@ int fnErfrcSession(int iStartMole, int iEndMole)
 	if (isEwaldOn)
 	{
 		// constant for ewald energies
-		gUrealSession *= const_columb;
-		gUexclSession *= const_columb;
+		gUrealSession *= COULOMB_CONSTANT;
+		gUexclSession *= COULOMB_CONSTANT;
 		// calculate fourier space sum for ewald and self interaction corrections
 		ewald_fourier_and_self(); // already have the constant inside the function
 		// total 3D ewald energy with tinfoil boundary condition
@@ -2071,15 +2071,15 @@ int fnErfrcSession(int iStartMole, int iEndMole)
 
 		// calculate vacuum boundary condition
 		// energy/force term is needed
-		if (fEwald_BC == ewald_bc_vacuum)
+		if (fEwald_BC == EWALD_BC_VACUUM)
 		{
 			ewald_vacuum(); // already have the constant inside the function
 			gUewaldSession += gUvacuumSession; // add into total ewald energy
 		}
 		// if 1D ewald is used
-		if (fEwald_Dim==ewald_1D)
+		if (fEwald_Dim==EWALD_1D)
 		{
-			gUGz0Session *= const_columb; // constant
+			gUGz0Session *= COULOMB_CONSTANT; // constant
 			gUewaldSession += gUGz0Session; // add Gz=0 term into total ewald energy for 1D ewald
 		}
 		// Add into total Inter Energy
@@ -2090,8 +2090,8 @@ int fnErfrcSession(int iStartMole, int iEndMole)
 	else if (isWolfOn) // if wolf is on
 	{
 		// constant for wolf energies
-		gUwolfrealSession = gUwolfrealSession*const_columb;
-		gUexclSession *= const_columb;
+		gUwolfrealSession = gUwolfrealSession*COULOMB_CONSTANT;
+		gUexclSession *= COULOMB_CONSTANT;
 		wolf_con(); // calculate the self interaction energy for wolf
 		// total wolf
 		gUwolfSession = gUwolfrealSession - gUwolfconSession - gUexclSession;
@@ -2106,7 +2106,7 @@ int fnErfrcSession(int iStartMole, int iEndMole)
 	}
 
 	// calculate solid fluid energy if necessary
-	if (sf_type != _NO_SF_POTENTIAL)
+	if (sf_type != SF_NONE)
 	{
 		fnSffrcSession();
 		// Add into total Inter Energy
@@ -2114,7 +2114,7 @@ int fnErfrcSession(int iStartMole, int iEndMole)
 	}
 
 	// calculate metal cluster energy if necessary
-	if (fOtherFF == DFT_METAL_CLUSTER_FF)
+	if (fOtherFF == FF_DFT_METAL_CLUSTER)
 	{
 		fnMetalClusterFF();
 		// add into total inter energy

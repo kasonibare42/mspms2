@@ -10,8 +10,7 @@
 #include <math.h>
 #include <assert.h>
 #include <ctype.h>
-#include "vars.h"
-#include "funcs.h"
+#include "mspms2.h"
 
 /// Velocity verlet
 int vver()
@@ -66,7 +65,7 @@ int vver()
 	ukin = ukin/2.0;
 
 	// calculate instant temperature
-	tinst = 2.0*ukin*rRgas/nfree;
+	tinst = 2.0*ukin*R_RGAS/nfree;
 
 	return 0;
 }
@@ -123,7 +122,7 @@ int do_accumu()
 int md()
 {
 	// if not new run, load from old file
-	if (fStart_option!=new_run)
+	if (fStart_option!=NEW)
 	{
 		loadit();
 	}
@@ -144,7 +143,7 @@ int md()
 	// above counts as the first step
 	icounter[11]--;
 
-	if (what_ensemble == nvt_run) // velocity verlet with nose hoover for NVT MD
+	if (what_ensemble == NVT) // velocity verlet with nose hoover for NVT MD
 	{
 		for (istep=nstep_start; istep<=nstep; istep++) // NOTE: start from 1 and <=
 		{
@@ -184,7 +183,7 @@ int md()
 			}
 		}
 	}
-	else if (what_ensemble == npt_run) // baronstat for NPT MD
+	else if (what_ensemble == NPT) // baronstat for NPT MD
 	{
 		for (istep=nstep_start; istep<=nstep; istep++) // NOTE: start from 1 and <=
 		{

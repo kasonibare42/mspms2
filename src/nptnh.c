@@ -5,8 +5,7 @@
 #include <math.h>
 #include <string.h>
 #include <ctype.h>
-#include "vars.h"
-#include "funcs.h"
+#include "mspms2.h"
 
 
 int init_npt_respa()
@@ -38,15 +37,15 @@ int init_npt_respa()
 
 			// thermo/barostat
 			utsbs = 0.0;
-			vts = sqrt((nfree+1.0)*Rgas/Qts);
-			vbs = sqrt((nfree+1.0)*Rgas/Qbs);
+			vts = sqrt((nfree+1.0)*RGAS/Qts);
+			vbs = sqrt((nfree+1.0)*RGAS/Qbs);
 			rts = 0.0;
 
 			// extra enery from the thermo/barostat for conserve energy
-			// utsbs = 0.5*Qbs*vbs*vbs + 0.5*Qts*vts*vts + (nfree+1)*Rgas*treq*rts*1.0e-10 + preq*boxv*PascalA3_to_J_mol;
+			// utsbs = 0.5*Qbs*vbs*vbs + 0.5*Qts*vts*vts + (nfree+1)*RGAS*treq*rts*1.0e-10 + preq*boxv*PA_A3_TO_J_PER_MOL;
 
-			utsbs = 0.5*Qbs*vbs*vbs + 0.5*Qts*vts*vts + (nfree+1)*Rgas*treq*rts
-					+ preq*boxv*PascalA3_to_J_mol;
+			utsbs = 0.5*Qbs*vbs*vbs + 0.5*Qts*vts*vts + (nfree+1)*RGAS*treq*rts
+					+ preq*boxv*PA_A3_TO_J_PER_MOL;
 
 			// printf("initiate   vts=%lf  vbs=%lf  utsbs=%lf\n",vts,vbs,utsbs);
 
@@ -64,8 +63,8 @@ void rezero_npt_ts()
 {
 	// thermo/barostat
 	utsbs = 0.0;
-	vts = sqrt((nfree+1.0)*Rgas/Qts);
-	vbs = sqrt((nfree+1.0)*Rgas/Qbs);
+	vts = sqrt((nfree+1.0)*RGAS/Qts);
+	vbs = sqrt((nfree+1.0)*RGAS/Qbs);
 	rts = 0.0;
 }
 
@@ -73,7 +72,7 @@ int npt_nh_operator()
 {
 	int ii;
 	double mvsq, AA, BB, pdiff;
-	double N_plus1RT = (nfree+1)*Rgas*treq;
+	double N_plus1RT = (nfree+1)*RGAS*treq;
 	double one_3N = 1.0+3.0/nfree;
 	// G - force
 	// Q - Mass
@@ -91,8 +90,8 @@ int npt_nh_operator()
 	calculate_ljlrc();
 
 	// calculate the difference 3*V*(P_internal - P_external)
-	pdiff = virial_inter + virial_intra + pljlrc*boxv*3.0*PascalA3_to_J_mol // turn pascal to J/mol
-			- preq*boxv*3.0*PascalA3_to_J_mol; //6.0221415e-7 is Na*1e-30 turn preq*boxv to J/mol
+	pdiff = virial_inter + virial_intra + pljlrc*boxv*3.0*PA_A3_TO_J_PER_MOL // turn pascal to J/mol
+			- preq*boxv*3.0*PA_A3_TO_J_PER_MOL; //6.0221415e-7 is Na*1e-30 turn preq*boxv to J/mol
 
 	// printf("0   pdiff=%lf Gts=%lf vts=%lf vbs=%lf\n",pdiff,Gts,vts,vbs);
 
@@ -172,22 +171,22 @@ int npt_nh_operator()
 	vts = vts + dt_outer4*Gts;
 
 	// extra enery from the thermo/barostat for conserve energy
-	// utsbs = 0.5*Qbs*vbs*vbs + 0.5*Qts*vts*vts + (nfree+1)*Rgas*treq*rts*1.0e-10 + preq*boxv*PascalA3_to_J_mol;
+	// utsbs = 0.5*Qbs*vbs*vbs + 0.5*Qts*vts*vts + (nfree+1)*RGAS*treq*rts*1.0e-10 + preq*boxv*PA_A3_TO_J_PER_MOL;
 
-	utsbs = 0.5*Qbs*vbs*vbs + 0.5*Qts*vts*vts + (nfree+1)*Rgas*treq*rts + preq
-			*boxv*PascalA3_to_J_mol;
+	utsbs = 0.5*Qbs*vbs*vbs + 0.5*Qts*vts*vts + (nfree+1)*RGAS*treq*rts + preq
+			*boxv*PA_A3_TO_J_PER_MOL;
 
 	// printf("3   utsbs=%lf Gts=%lf Gbs=%lf vts=%lf BB=%lf vbs=%lf\n",utsbs,Gts,Gbs,vts,BB,vbs);
 
 	// calcualte kinetic energy and temperature
 	ukin = mvsq/2.0;
-	tinst = 2.0*ukin*rRgas/nfree;
+	tinst = 2.0*ukin*R_RGAS/nfree;
 
 	// calculate the total pressure
-	pideal=natom/boxv*tinst*kb_1e30;
+	pideal=natom/boxv*tinst*KB_OVER_1E30;
 	// pljlrc is calculated already at the beginning of this function
 	// and did not change during above calculations
-	pinst = pideal + (virial_inter+virial_intra)*virial_to_pressure/boxv
+	pinst = pideal + (virial_inter+virial_intra)*VIRIAL_TO_PRESSURE/boxv
 			+ pljlrc;
 
 	// printf("tinst=%lf  vts=%lf  vbs=%lf\n",tinst,vts,vbs);
@@ -245,7 +244,7 @@ int npt_respa()
 		boxv = boxlx*boxly*boxlz;
 
 		// re-calculate box size related variables for ewald summation
-		if (iChargeType == elec_ewald)
+		if (iChargeType == ELECTROSTATIC_EWALD)
 		{
 			Vfactor_ewald = 2.0*pi/(boxlx*boxly*boxlz);
 			TWOPI_LX = 2.0*pi/boxlx;
@@ -282,7 +281,7 @@ int npt_respa()
 	// ukin = ukin/2.0;
 
 	// calculate instant temperature
-	// tinst = 2.0*ukin*rRgas/nfree;
+	// tinst = 2.0*ukin*R_RGAS/nfree;
 
 	npt_nh_operator();
 
