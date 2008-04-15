@@ -4,7 +4,6 @@
 #include <assert.h>
 #include <string.h>
 #include <ctype.h>
-#include <stdbool.h>
 #include "mspms2.h"
 
 int normvec()
@@ -415,7 +414,7 @@ int fnInsDelMole()
 	// insert or delete
 	if (rndnum[1] < probability_to_insert[iSpecieSelected]) // insert
 	{
-		icounter[26]++; // counter of insertions
+		counts[26]++; // counter of insertions
 
 		// get the vacancy where the molecule can be inserted into
 		iMoleSelected = GetNextVacancy(iSpecieSelected);
@@ -533,7 +532,7 @@ int fnInsDelMole()
 			SetNextVacancyAfterCreation(iSpecieSelected, iMoleSelected);
 
 			// accepted insertions
-			icounter[27]++;
+			counts[27]++;
 			// accepted insertions for the specie
 
 		}
@@ -546,7 +545,7 @@ int fnInsDelMole()
 	else // delete
 	{
 		// counter of reject
-		icounter[28]++;
+		counts[28]++;
 		// count of reject for this specie
 
 		// cannot be empty specie
@@ -652,7 +651,7 @@ int fnInsDelMole()
 				SetNextVacancyAfterDeletion(iSpecieSelected, iMoleSelected);
 				
 				// count accepted deletions
-				icounter[29]++;
+				counts[29]++;
 				// count accepted deletions for the specie
 
 			}

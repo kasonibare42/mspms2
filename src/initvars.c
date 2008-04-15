@@ -5,8 +5,83 @@
 #include <assert.h>
 #include <ctype.h>
 #include <time.h>
-#include <stdbool.h>
 #include "mspms2.h"
+
+int velinit()
+{
+	int ii;
+	double px, py, pz;
+	double stdvtmp, stdv;
+	double totalmass;
+	double scaling;
+
+	// if at zero temperature, everything should be zero
+	if (treq == 0.0)
+	{
+		for (ii=0; ii<natom; ii++)
+		{
+			vx[ii] = vy[ii] = vz[ii] = 0.0;
+			ukin = tinst = 0.0;
+		}
+		return 0;
+	}
+
+	totalmass = 0.0;
+	px = py = pz = 0.0;
+	// mv^2=kT, when m is kg/mol, the equation becomes to mv^2=RT
+	// p = sqrt(RTm), v = sqrt(RT/m)
+	stdvtmp = sqrt(RGAS*treq);
+
+	// Temperature is K. R is J/K/mol. m is kg/mol. v is m/s
+	for (ii=0; ii<natom; ii++)
+	{
+		stdv = stdvtmp/sqrt(aw[ii]);
+		vx[ii] = stdv*gaussran();
+		vy[ii] = stdv*gaussran();
+		vz[ii] = stdv*gaussran();
+		px += vx[ii]*aw[ii];
+		py += vy[ii]*aw[ii];
+		pz += vz[ii]*aw[ii];
+		totalmass += aw[ii];
+	}
+	// zero the momentum
+	px /= totalmass;
+	py /= totalmass;
+	pz /= totalmass;
+	for (ii=0; ii<natom; ii++)
+	{
+		vx[ii] -= px;
+		vy[ii] -= py;
+		vz[ii] -= pz;
+	}
+	// rescale velocity for required temperature
+	ukin = 0.0;
+	for (ii=0; ii<natom; ii++)
+	{
+		ukin += aw[ii]*(vx[ii]*vx[ii]+vy[ii]*vy[ii]+vz[ii]*vz[ii]);
+	}
+	ukin = 0.5*ukin;
+	tinst = 2.0*ukin/(RGAS*nfree);
+	scaling = sqrt(treq/tinst);
+	for (ii=0; ii<natom; ii++)
+	{
+		vx[ii] *= scaling;
+		vy[ii] *= scaling;
+		vz[ii] *= scaling;
+	}
+	// recalculate the kinetic energy and instantaneous temperature
+	// should be exactly the set tempature
+	ukin = 0.0;
+	for (ii=0; ii<natom; ii++)
+	{
+		ukin += aw[ii]*(vx[ii]*vx[ii]+vy[ii]*vy[ii]+vz[ii]*vz[ii]);
+	}
+	ukin = 0.5*ukin;
+	tinst = 2.0*ukin/(RGAS*nfree);
+
+	return 0;
+}
+
 
 /// Read in electrostatic parametes and initialize related variables
 int fnInitCharge()
@@ -756,19 +831,14 @@ int init_vars()
 	/// istep is used for printit, the first print should be at step zero.
 	istep = 0;
 	nstep_start = 1;
+	nstep_end = (nstep_eq>0)?nstep_eq:nstep;
 
-	/// initiate counters and accumulators
-	for (ii=0; ii<NCOUNTS_MAX; ii++)
-	{
-		icounter[ii] = 0;
-		for (jj=0; jj<5; jj++)
-		{
-			accumulator[ii][jj] = 0.0;
-		}
-	}
+	// zero the counts and accums
+	rezero();
+	
 	/// set the counter for equilibrium
 	/// it will decrease during the run
-	icounter[11] = nstep_eq;
+	counts[11] = nstep_eq;
 
 	/// initialize random number generator
 	rmarin(ij, jk);
@@ -884,6 +954,12 @@ int init_vars()
 		InitLJlrcCommonTerms();
 		// calculate the total lj lrc
 		calculate_ljlrc();
+	}
+	
+	// if not new run, load from old file
+	if (fStart_option!=NEW)
+	{
+		loadit();
 	}
 
 	return 0;

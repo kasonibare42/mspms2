@@ -87,7 +87,7 @@ int fnVolumeChange()
 	dH = dH - nmole*log(fRatioNewV2OldV);
 
 	// attempted vc moves
-	icounter[23]++;
+	counts[23]++;
 
 	// check if the move is accepted
 	isAccept = 0;
@@ -106,7 +106,7 @@ int fnVolumeChange()
 	if (isAccept == 1)
 	{
 		// accepted vc moves
-		icounter[24]++;
+		counts[24]++;
 
 		// re-calculate box size related variables for ewald summation
 		if (iChargeType == ELECTROSTATIC_EWALD)

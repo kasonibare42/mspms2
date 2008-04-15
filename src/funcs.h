@@ -8,6 +8,7 @@ int vver();
 int erfrc();
 int rafrc();
 int averages();
+int calres();
 int loadit();
 int saveit();
 int printit();
@@ -24,7 +25,6 @@ int init_tasos_grid();
 int init_my_interp();
 int init_npt_respa();
 int init_nvt();
-int md();
 int init_hmc();
 int hmc();
 int calculate_ljlrc();
@@ -34,9 +34,14 @@ void rezero_nvt_ts();
 void rezero_npt_ts();
 int fnMDmove(int nStepMD, void (*pfnRezero)(), int (*pfnAlgorithm)());
 int fnVolumeChange();
-int do_accumu();
+int collect_aves();
 int fnMetalClusterFF();
 int fnInsDelMole();
+int opening();
+int ending();
+int readins();
+int siman();
+int rezero();
 
 
 #endif /*FUNCS_H_*/

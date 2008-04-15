@@ -157,16 +157,16 @@ int siman()
 			done = 1;
 		}
 
-		icounter[11]--;
+		counts[11]--;
 		// if still in equilibrium run
 		// do not do averages
-		if (icounter[11]>=0)
+		if (counts[11]>=0)
 		{
 			continue;
 		}
 
 		// accumulators
-		do_accumu();
+		collect_aves();
 
 		// do averages
 		if ((istep-nstep_eq)%nstep_ave==0)

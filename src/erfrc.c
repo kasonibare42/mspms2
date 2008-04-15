@@ -8,7 +8,6 @@
 #include <stdlib.h>
 #include <math.h>
 #include <assert.h>
-#include <stdbool.h>
 #include <gsl/gsl_sf_gamma.h>
 #include <gsl/gsl_math.h>
 #include <gsl/gsl_deriv.h>

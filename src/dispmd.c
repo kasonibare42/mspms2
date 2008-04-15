@@ -59,7 +59,7 @@ int fnMDmove(int nStepMD, void(*pfnRezero)(), int (*pfnAlgorithm)())
 	// Hamotonial difference
 	dH = fDeltaU*R_RGAS/treq;
 
-	icounter[20]++; // canonical moves
+	counts[20]++; // canonical moves
 
 	// check if the move is accepted
 	isAccept = 0;
@@ -78,7 +78,7 @@ int fnMDmove(int nStepMD, void(*pfnRezero)(), int (*pfnAlgorithm)())
 	}
 	if (isAccept == 1)
 	{
-		icounter[21]++; // accepted canonical moves
+		counts[21]++; // accepted canonical moves
 	}
 	else
 	{

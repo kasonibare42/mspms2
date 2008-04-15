@@ -137,7 +137,7 @@ int hmc()
 	}
 
 	// above counts as the first step
-	icounter[11]--;
+	counts[11]--;
 
 	// simulation loop
 	for (istep=nstep_start; istep<=nstep; istep++) // NOTE: start from 1 and <=
@@ -182,35 +182,35 @@ int hmc()
 			saveit();
 		}
 
-		icounter[11]--;
+		counts[11]--;
 		// if still in equilibrium run
 		// adjust the delt, deltv
 		// do not do averages
-		if (icounter[11]>=0)
+		if (counts[11]>=0)
 		{
-			if (icounter[20]==nstep_delt_adj_cycle) // delt adjustment
+			if (counts[20]==nstep_delt_adj_cycle) // delt adjustment
 			{
-				ratio = icounter[21]*1.0/nstep_delt_adj_cycle;
+				ratio = counts[21]*1.0/nstep_delt_adj_cycle;
 				delt = delt*(1.0 - ratio_cm_req + ratio);
-				icounter[20] = 0;
-				icounter[21] = 0;
+				counts[20] = 0;
+				counts[21] = 0;
 				// delt update
 				deltby2 = delt/2.0;
 				delts = delt/nstep_inner;
 				deltsby2 = delts/2.0;
 			}
-			if (icounter[23]==nstep_delv_adj_cycle) // delv adjustment
+			if (counts[23]==nstep_delv_adj_cycle) // delv adjustment
 			{
-				ratio = icounter[24]*1.0/nstep_delv_adj_cycle;
+				ratio = counts[24]*1.0/nstep_delv_adj_cycle;
 				delv = delv*(1.0 - ratio_vc_req + ratio);
-				icounter[23] = 0;
-				icounter[24] = 0;
+				counts[23] = 0;
+				counts[24] = 0;
 			}
 			continue;
 		}
 
 		// accumulators
-		do_accumu();
+		collect_aves();
 
 		// do averages
 		if ((istep-nstep_eq)%nstep_ave==0)

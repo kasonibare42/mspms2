@@ -3,7 +3,6 @@
 #include <math.h>
 #include <string.h>
 #include <ctype.h>
-#include <stdbool.h>
 #include "mspms2.h"
 
 /// Read parameters from the input file for MDNVT and initialize the variables needed for NVT simulation

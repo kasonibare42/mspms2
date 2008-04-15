@@ -1,6 +1,7 @@
 #ifndef MSPMS2_H_
 #define MSPMS2_H_
 
+#include <stdbool.h>
 #include "random.h"
 #include "defs.h"
 #include "macros.h"

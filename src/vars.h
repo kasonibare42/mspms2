@@ -6,8 +6,9 @@ FILE *fpins, *fpouts, *fpcfg, *fplog;
 FILE *fpss, *fptrj, *fpsave, *fpload;
 FILE *fpcoords;
 
-int nstep, nstep_eq, nstep_start; ///< nstep_start is the starting step for continue runs 
+int nstep, nstep_eq, nstep_start, nstep_end; ///< nstep_start is the starting step for continue runs 
 int fStart_option; ///< 1-new run, 2-continue run, 3-new from old
+bool bEquilibrium; ///< Are we still in equilibrium run?
 /// steps for averages, print out, save, snapshots, trajectory
 int nstep_ave, nstep_print, nstep_save, nstep_ss, nstep_trj;
 int nstep_inner; ///< inner step for multi time step
@@ -297,64 +298,64 @@ double uljlrc_term[NSPECIE_MAX][NSPECIE_MAX];
 double pljlrc_term[NSPECIE_MAX][NSPECIE_MAX];
 
 // counters and accumulators
-int icounter[NCOUNTS_MAX];
-double accumulator[NCOUNTS_MAX][8];
+int counts[NCOUNTS_MAX];
+double accum[NCOUNTS_MAX][8];
 // 0-4 for accumulator, 5-ave, 6-err, 7-fluc
 
-/*! \var accumulator[NCOUNTS_MAX][8]
+/*! \var accum[NCOUNTS_MAX][8]
  \brief Accumulators for various system states.
  
- accumulator[][0]	Raw accumulator for a variable within a block, e.g. utot	\n
- accumulator[][1]	Raw accumulator for the square of a variable within a block, e.g. utot*utot	\n
- accumulator[][2]	Block accumulator for variables average	\n
- accumulator[][3]	Block accumulator for averages for squared varaibles	\n
- accumulator[][4]	Block accumulator of (in block average)*(in block average)	\n
- accumulator[][5]	Final average	\n
- accumulator[][6]	Standard deviation	\n
- accumulator[][7]	Fluctuation	\n
+ accum[][0]	Raw accumulator for a variable within a block, e.g. utot	\n
+ accum[][1]	Raw accumulator for the square of a variable within a block, e.g. utot*utot	\n
+ accum[][2]	Block accumulator for variables average	\n
+ accum[][3]	Block accumulator for averages for squared varaibles	\n
+ accum[][4]	Block accumulator of (in block average)*(in block average)	\n
+ accum[][5]	Final average	\n
+ accum[][6]	Standard deviation	\n
+ accum[][7]	Fluctuation	\n
  
  
- accumulator[0][]   utot	\n
- accumulator[1][]   upot	\n
- accumulator[2][]   ukin	\n
- accumulator[3][]   uinter	\n
- accumulator[4][]   uintra	\n
- accumulator[5][]   uvdw	\n
- accumulator[6][]   ubond	\n
- accumulator[7][]   uangle	\n
- accumulator[8][]   udih	\n
- accumulator[9][]   uimp	\n
- accumulator[10][]   uewald	\n
- accumulator[11][]   ureal	\n
- accumulator[12][]   ufourier	\n
- accumulator[13][]   uself	\n
- accumulator[14][]   usflj	\n
- accumulator[15][]   tinst	\n
- accumulator[16][]   uvacuum	\n
- accumulator[17][]   uwolf	\n
- accumulator[18][]   pressure	\n
- accumulator[19][]   boxv	\n
- accumulator[20][]   pideal	\n
+ accum[0][]   utot	\n
+ accum[1][]   upot	\n
+ accum[2][]   ukin	\n
+ accum[3][]   uinter	\n
+ accum[4][]   uintra	\n
+ accum[5][]   uvdw	\n
+ accum[6][]   ubond	\n
+ accum[7][]   uangle	\n
+ accum[8][]   udih	\n
+ accum[9][]   uimp	\n
+ accum[10][]   uewald	\n
+ accum[11][]   ureal	\n
+ accum[12][]   ufourier	\n
+ accum[13][]   uself	\n
+ accum[14][]   usflj	\n
+ accum[15][]   tinst	\n
+ accum[16][]   uvacuum	\n
+ accum[17][]   uwolf	\n
+ accum[18][]   pressure	\n
+ accum[19][]   boxv	\n
+ accum[20][]   pideal	\n
  */
 
-/*! \var icounter[NCOUNTS_MAX]
+/*! \var counts[NCOUNTS_MAX]
  * \brief Counters.
  * 
- icounter[10]   number of average cycles	\n
- icounter[11]	decrease, for equilibrium	\n
+ counts[10]   number of average cycles	\n
+ counts[11]	decrease, for equilibrium	\n
  
  Following counters will be set to zero periodically during equilibrium run.
  After equilibrium, they will be used to calculate the final acceptance ratio.\n
- icounter[20]	number of canonical moves	\n
- icounter[21]   number of accepted canonical moves	\n
+ counts[20]	number of canonical moves	\n
+ counts[21]   number of accepted canonical moves	\n
  
- icounter[23]   number of volume change moves	\n
- icounter[24]	number of accepted volume change moves	\n
+ counts[23]   number of volume change moves	\n
+ counts[24]	number of accepted volume change moves	\n
  
- icounter[26]   number of insertion	\n
- icounter[27]   number of accepted insertion	\n
- icounter[28]   number of deletion	\n
- icounter[29]   number of accepted deletion	\n
+ counts[26]   number of insertion	\n
+ counts[27]   number of accepted insertion	\n
+ counts[28]   number of deletion	\n
+ counts[29]   number of accepted deletion	\n
  */
 
 #endif /* VARS_H */
