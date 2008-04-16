@@ -116,6 +116,11 @@ int main(int argc, char *argv[])
 	else if (what_simulation == SIMULATED_ANNEALING)
 	{
 		pfnSimulation = &siman;
+		pfnSimulation();
+		snapshot();
+		calres();
+		ending();
+		exit(1);
 	}
 	
 	if (pfnSimulation == NULL)

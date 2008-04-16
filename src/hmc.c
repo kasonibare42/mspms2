@@ -46,7 +46,7 @@ int init_hmc()
 			sscanf(fgets(buffer, datalen, fpins), "%d %d",
 					&nstep_delt_adj_cycle, &nstep_delv_adj_cycle);
 			sscanf(fgets(buffer, datalen, fpins), "%lf", &delv);
-			
+
 			// printf("prob_id = %lf\n",prob_id);
 			// printf("delv = %lf\n",delv);
 
@@ -96,12 +96,12 @@ int init_hmc()
  */
 int hmc()
 {
-	double ratio;
-	void (*pfnRezero)();
-	int (*pfnMDtype)();
-	
+	static double ratio;
+	static void (*pfnRezero)();
+	static int (*pfnMDtype)();
+
 	if (what_ensemble == NVT)
-	{ 
+	{
 		pfnRezero = &rezero_nvt_ts;
 		pfnMDtype = &vver_nh_3;
 	}
@@ -115,107 +115,48 @@ int hmc()
 		pfnRezero = &rezero_npt_ts;
 		pfnMDtype = &npt_respa;
 	}
-	
-	// if not new run, load from old file
-	if (fStart_option!=NEW)
+
+	ranmar(rndnum, 1);
+
+	if (rndnum[0] <= prob_cm) // canonical moves
 	{
-		loadit();
+		// velocity init and energy calcualtions have been done for the 1st step outside the loop
+		if (istep!=nstep_start)
+		{
+			velinit();
+			erfrc();
+			rafrc(); // we may not need rafrc here??
+		}
+		fnMDmove(nstep_md_per_hmc, pfnRezero, pfnMDtype);
+	}
+	else if (rndnum[0]<=prob_vc_upper) // volume change moves
+	{
+		fnVolumeChange();
+	}
+	else // insertions or deletions
+	{
+		fnInsDelMole();
 	}
 
-	// calculate total energies
-	erfrc();
-	rafrc();
-
-	// print out initial values
-	echo();
-	// print initial properties
-	printit();
-	// make snapshots & movies
-	if (nstep_trj)
-	{ 	
-		trajectory();
-	}
-
-	// above counts as the first step
-	counts[11]--;
-
-	// simulation loop
-	for (istep=nstep_start; istep<=nstep; istep++) // NOTE: start from 1 and <=
+	if (bEquilibrium==true)
 	{
-		ranmar(rndnum, 1);
-
-		if (rndnum[0] <= prob_cm) // canonical moves
+		if (counts[20]==nstep_delt_adj_cycle) // delt adjustment
 		{
-			// velocity init and energy calcualtions have been done for the 1st step outside the loop
-			if (istep!=nstep_start)
-			{
-				velinit();
-				erfrc();
-				rafrc(); // we may not need rafrc here??
-			}
-			fnMDmove(nstep_md_per_hmc, pfnRezero, pfnMDtype);
+			ratio = counts[21]*1.0/nstep_delt_adj_cycle;
+			delt = delt*(1.0 - ratio_cm_req + ratio);
+			counts[20] = 0;
+			counts[21] = 0;
+			// delt update
+			deltby2 = delt/2.0;
+			delts = delt/nstep_inner;
+			deltsby2 = delts/2.0;
 		}
-		else if (rndnum[0]<=prob_vc_upper) // volume change moves
+		if (counts[23]==nstep_delv_adj_cycle) // delv adjustment
 		{
-			fnVolumeChange();
-		}
-		else // insertions or deletions
-		{
-			fnInsDelMole();
-		}
-
-		// print out, snapshot, trajectory, save
-		if (istep%nstep_print == 0)
-		{
-			printit();
-		}
-		if (nstep_ss && istep%nstep_ss == 0)
-		{
-			snapshot();
-		}
-		if (nstep_trj && istep%nstep_trj==0)
-		{
-			trajectory();
-		}
-		if (istep%nstep_save==0)
-		{
-			saveit();
-		}
-
-		counts[11]--;
-		// if still in equilibrium run
-		// adjust the delt, deltv
-		// do not do averages
-		if (counts[11]>=0)
-		{
-			if (counts[20]==nstep_delt_adj_cycle) // delt adjustment
-			{
-				ratio = counts[21]*1.0/nstep_delt_adj_cycle;
-				delt = delt*(1.0 - ratio_cm_req + ratio);
-				counts[20] = 0;
-				counts[21] = 0;
-				// delt update
-				deltby2 = delt/2.0;
-				delts = delt/nstep_inner;
-				deltsby2 = delts/2.0;
-			}
-			if (counts[23]==nstep_delv_adj_cycle) // delv adjustment
-			{
-				ratio = counts[24]*1.0/nstep_delv_adj_cycle;
-				delv = delv*(1.0 - ratio_vc_req + ratio);
-				counts[23] = 0;
-				counts[24] = 0;
-			}
-			continue;
-		}
-
-		// accumulators
-		collect_aves();
-
-		// do averages
-		if ((istep-nstep_eq)%nstep_ave==0)
-		{
-			averages();
+			ratio = counts[24]*1.0/nstep_delv_adj_cycle;
+			delv = delv*(1.0 - ratio_vc_req + ratio);
+			counts[23] = 0;
+			counts[24] = 0;
 		}
 	}
 

@@ -105,6 +105,7 @@ int loop_ij(int iStartMole, int iEndMole)
 	double xxi, yyi, zzi;
 	double fxi, fyi, fzi;
 	double rxij, ryij, rzij;
+	double rxij_old, ryij_old, rzij_old;
 	double rijsq, rij, r_rijsq;
 	double r_r6, r_r12, r_r12_minus_r_r6;
 	double r_rij, r_r8, r_r9, r_r10;
@@ -113,7 +114,6 @@ int loop_ij(int iStartMole, int iEndMole)
 	double epsiloni, sigmai, chargei;
 	double epsilonij, sigmaij;
 	double sigmaij6; // used for shift energy calculation
-	int isNotexcl[NATOM_MAX];
 	double uij_vdw, uij_vdw_temp, uij_real, uij_real_temp;
 	double uij_wolf_temp;
 	double fij, fxij, fyij, fzij;
@@ -164,20 +164,21 @@ int loop_ij(int iStartMole, int iEndMole)
 				iStartMole, iEndMole);
 		exit(1);
 	}
-	
+
 	// printf("iiStart = %d,  iiEnd = %d\n",iiStart,iiEnd);
 	// printf("jjStart = %d,  jjEnd = %d\n",jjStart,jjEnd);
 
 	// atom ii
 	for (ii=iiStart; ii<iiEnd; ii++)
 	{
-		if (ghost_type[ii] == GHOST_FULL) // move to ii+1 if atom ii is full ghost atom
-		{
-			continue;
-		}
 		iMole = atom2mole[ii]; // which atom this atom belongs to, physical mole ID
 		// skip this atom if it belongs to a vacant molecule
 		if (mole_status[iMole] == MOLE_STATUS_VACANCY)
+		{
+			continue;
+		}
+
+		if (ghost_type[ii] == GHOST_FULL) // move to ii+1 if atom ii is full ghost atom
 		{
 			continue;
 		}
@@ -191,30 +192,10 @@ int loop_ij(int iStartMole, int iEndMole)
 		epsiloni = epsilon[ii];
 		sigmai = sigma[ii];
 		chargei = charge[ii];
-		
-		// printf("ii=%d\n", ii);
-		// printf("xx=%lf, yy=%lf, zz=%lf, fxl=%lf, fyl=%lf, fzl=%lf\n",xx[ii],yy[ii],zz[ii],fxl[ii],fyl[ii],fzl[ii]);
-		// printf("epsilon=%lf, sigma=%lf, charge=%lf\n",epsiloni, sigmai, chargei);
-		
-		// set the exclude list for atom ii
-		for (kk=0; kk<natom_hist_max; kk++)
-		{
-			isNotexcl[kk] = true;
-		}
-		iSpecie = mole2specie[iMole]; // which specie this molecule belongs to
-		iAtomPosInMole = ii - mole_first_atom_idx[iMole];
-		for (kk=pointexcl_atom[iSpecie][iAtomPosInMole]; kk
-				<pointexcl_atom[iSpecie][iAtomPosInMole+1]; kk++)
-		{
-			isNotexcl[excllist[kk]+ii] = false; // +ii since the excllist uses relative index
-		}
+
 		// atom jj
 		for (jj=(jjStart==-1 ? ii+1 : jjStart); jj<jjEnd; jj++) // dynamically assign the starting number of jj
 		{
-			if (ghost_type[jj] == GHOST_FULL) // move to jj+1 if atom jj is full ghost atom
-			{
-				continue;
-			}
 			jMole = atom2mole[jj]; // which atom this atom belongs to, physical mole ID
 			// skip this atom if it belongs to a vacant molecule
 			if (mole_status[jMole] == MOLE_STATUS_VACANCY)
@@ -222,22 +203,132 @@ int loop_ij(int iStartMole, int iEndMole)
 				continue;
 			}
 
-			if (isNotexcl[jj]) // calculate interactions if it is not exclusion pair
+			if (ghost_type[jj] == GHOST_FULL) // move to jj+1 if atom jj is full ghost atom
 			{
-				rxij = xxi - xx[jj];
-				ryij = yyi - yy[jj];
-				rzij = zzi - zz[jj];
+				continue;
+			}
 
-				///
+			if (iMole == jMole) // do not calculate intra-molecular interactions
+			{
+				continue;
+			}
+
+			rxij = rxij_old = xxi - xx[jj];
+			ryij = ryij_old = yyi - yy[jj];
+			rzij = rzij_old = zzi - zz[jj];
+
+			// minimum image convention
+			rxij = rxij - boxlx*rint(rxij/boxlx);
+			ryij = ryij - boxly*rint(ryij/boxly);
+			rzij = rzij - boxlz*rint(rzij/boxlz);
+			rijsq = rxij*rxij + ryij*ryij + rzij*rzij;
+			rij = sqrt(rijsq);
+
+			// LJ part, also does ghost atom check
+			if (ghost_type[ii]!=GHOST_LJ && ghost_type[jj]!=GHOST_LJ && rijsq
+					<rcutoffsq)
+			{
+				// if switch potential for LJ is on, then calculate the switch
+				if (isLJswitchOn)
+				{
+					if (rijsq<rcutonsq)
+					{
+						LJswitch = 1.0;
+					}
+					else
+					{
+						LJswitch = (rcutoffsq-rijsq)*(rcutoffsq-rijsq)
+								*(rcutoffsq+2.0*rijsq-3.0*rcutonsq)
+								/roff2_minus_ron2_cube;
+					}
+				}
+				sigmaij = 0.5*(sigmai+sigma[jj]);
+				epsilonij = sqrt(epsiloni*epsilon[jj]);
+				r_rijsq = sigmaij*sigmaij/rijsq;
+				r_r6 = r_rijsq*r_rijsq*r_rijsq;
+				r_r12 = r_r6*r_r6;
+				r_r12_minus_r_r6 = r_r12 - r_r6;
+				uij_vdw_temp = epsilonij*r_r12_minus_r_r6; // still need *4.0
+				if (isLJswitchOn) // if switch is used
+				{
+					uij_vdw += uij_vdw_temp*LJswitch; // still need 4.0
+				}
+				else
+				{
+					uij_vdw += uij_vdw_temp; // still need *4.0
+				}
+				// force calculations
+				if (isLJswitchOn)
+				{
+					if (rijsq<rcutonsq)
+					{
+						fij = 24.0*epsilonij*(r_r12_minus_r_r6+r_r12)/rijsq;
+					}
+					else
+					{
+						fij = 24.0*epsilonij*(r_r12_minus_r_r6+r_r12)/rijsq
+								*LJswitch // 4.0 for the real energy
+								-4.0*uij_vdw_temp*12.0*(rcutoffsq-rijsq)
+										*(rcutonsq-rijsq)
+										/roff2_minus_ron2_cube;
+					}
+				}
+				else
+				{
+					fij = 24.0*epsilonij*(r_r12_minus_r_r6+r_r12)/rijsq;
+
+					// only when LJ swith is not used, we calculate shift energies
+					// shift energies
+					gNcut++;
+					sigmaij6 = sigmaij*sigmaij*sigmaij*sigmaij*sigmaij *sigmaij;
+					gUShiftSession += epsilonij*sigmaij6*(sigmaij6*shift1 -1.0); // still need constant
+				}
+				fxij = fij*rxij;
+				fyij = fij*ryij;
+				fzij = fij*rzij;
+				// contribution to the virial
+				gVirialInterSession = gVirialInterSession + fxij*rxij + fyij
+						*ryij + fzij *rzij;
+				// force on atom ii
+				fxi += fxij;
+				fyi += fyij;
+				fzi += fzij;
+				// force on atom jj
+				fxl[jj] -= fxij;
+				fyl[jj] -= fyij;
+				fzl[jj] -= fzij;
+			}
+
+			// electrostatic part
+			if (isEwaldOn && rijsq<rcutoffelecsq)
+			{
+				uij_real_temp = chargei*charge[jj]/rij;
+				uij_real += uij_real_temp*erfc(kappa*rij); // real part ewald energy, still need 1/4*pi*epsilon0
+				temp1 = kappa*rij;
+				temp2 = uij_real_temp*erfc(temp1);
+				// real part force calculation
+				fij = (temp2 + uij_real_temp*2.0*temp1*exp(-temp1*temp1)
+						/sqrt(pi))*COULOMB_CONSTANT/rijsq;
+				fxij = fij*rxij;
+				fyij = fij*ryij;
+				fzij = fij*rzij;
+				// force on atom ii
+				fxi += fxij;
+				fyi += fyij;
+				fzi += fzij;
+				// force on atom jj
+				fxl[jj] -= fxij;
+				fyl[jj] -= fyij;
+				fzl[jj] -= fzij;
+
 				/// Calculate Gz=0 term for 1D ewald summation.
 				/// This has to be done before the minimum image convention.
 				/// Not sure if cutoff check should be applied.
 				/// If the cutoff is larger than the size in x,y dimension,
 				/// this should not be a problem.
-				///
-				if (isEwaldOn && fEwald_Dim==EWALD_1D)
+				if (fEwald_Dim==EWALD_1D)
 				{
-					rhoklsq = rxij*rxij + ryij*ryij;
+					rhoklsq = rxij_old*rxij_old + ryij_old*ryij_old;
 					if (rhoklsq>TOLERANCE)
 					{
 						kapparhokl_sq = kappasq*rhoklsq;
@@ -252,8 +343,8 @@ int loop_ij(int iStartMole, int iEndMole)
 								&temp2);
 						temp2 = kappasq*temp1 + 1.0/rhoklsq;
 						fij = chargei*charge[jj]*temp2*COULOMB_CONSTANT/boxlz;
-						fxij = fij*rxij;
-						fyij = fij*ryij;
+						fxij = fij*rxij_old;
+						fyij = fij*ryij_old;
 						// force on atom ii
 						fxi += fxij;
 						fyi += fyij;
@@ -262,194 +353,31 @@ int loop_ij(int iStartMole, int iEndMole)
 						fyl[jj] -= fyij;
 					} // if rhoklsq != 0.0 (>1.0e-10)
 				} // if 1D ewald is used
-
-				// minimum image convention
-				rxij = rxij - boxlx*rint(rxij/boxlx);
-				ryij = ryij - boxly*rint(ryij/boxly);
-				rzij = rzij - boxlz*rint(rzij/boxlz);
-				rijsq = rxij*rxij + ryij*ryij + rzij*rzij;
-				rij = sqrt(rijsq);
-
-				// LJ part, also does ghost atom check
-				if (ghost_type[ii]!=GHOST_LJ && ghost_type[jj]!=GHOST_LJ && rijsq
-						<rcutoffsq)
-				{
-					// if switch potential for LJ is on, then calculate the switch
-					if (isLJswitchOn)
-					{
-						if (rijsq<rcutonsq)
-						{
-							LJswitch = 1.0;
-						}
-						else
-						{
-							LJswitch = (rcutoffsq-rijsq)*(rcutoffsq-rijsq)
-									*(rcutoffsq+2.0*rijsq-3.0*rcutonsq)
-									/roff2_minus_ron2_cube;
-						}
-					}
-					sigmaij = 0.5*(sigmai+sigma[jj]);
-					epsilonij = sqrt(epsiloni*epsilon[jj]);
-					r_rijsq = sigmaij*sigmaij/rijsq;
-					r_r6 = r_rijsq*r_rijsq*r_rijsq;
-					r_r12 = r_r6*r_r6;
-					r_r12_minus_r_r6 = r_r12 - r_r6;
-					uij_vdw_temp = epsilonij*r_r12_minus_r_r6; // still need *4.0
-					if (isLJswitchOn) // if switch is used
-					{
-						uij_vdw += uij_vdw_temp*LJswitch; // still need 4.0
-					}
-					else
-					{
-						uij_vdw += uij_vdw_temp; // still need *4.0
-					}
-					// force calculations
-					if (isLJswitchOn)
-					{
-						if (rijsq<rcutonsq)
-						{
-							fij = 24.0*epsilonij*(r_r12_minus_r_r6+r_r12)/rijsq;
-						}
-						else
-						{
-							fij = 24.0*epsilonij*(r_r12_minus_r_r6+r_r12)/rijsq
-									*LJswitch // 4.0 for the real energy
-									-4.0*uij_vdw_temp*12.0*(rcutoffsq-rijsq)
-											*(rcutonsq-rijsq)
-											/roff2_minus_ron2_cube;
-						}
-					}
-					else
-					{
-						fij = 24.0*epsilonij*(r_r12_minus_r_r6+r_r12)/rijsq;
-
-						// only when LJ swith is not used, we calculate shift energies
-						// shift energies
-						gNcut++;
-						sigmaij6 = sigmaij*sigmaij*sigmaij*sigmaij*sigmaij
-								*sigmaij;
-						gUShiftSession += epsilonij*sigmaij6*(sigmaij6*shift1
-								-1.0); // still need constant
-					}
-					fxij = fij*rxij;
-					fyij = fij*ryij;
-					fzij = fij*rzij;
-					// contribution to the virial
-					gVirialInterSession = gVirialInterSession + fxij*rxij
-							+ fyij*ryij + fzij *rzij;
-					// force on atom ii
-					fxi += fxij;
-					fyi += fyij;
-					fzi += fzij;
-					// force on atom jj
-					fxl[jj] -= fxij;
-					fyl[jj] -= fyij;
-					fzl[jj] -= fzij;
-
-				}
-
-				// Inter-molecular potential of Silvera-Goldman (SG) 
-				if (iInterMolePotType == INTER_MOLE_SG)
-				{
-					if (rijsq < rcutoffsq)
-					{
-						r_rijsq = 1.0/rijsq;
-						r_rij = 1.0/rij;
-						r_r6 = r_rijsq*r_rijsq*r_rijsq;
-						r_r8 = r_r6*r_rijsq;
-						r_r9 = r_r8*r_rij;
-						r_r10 = r_r8*r_rijsq;
-
-						uij1=exp(sg_alpha-sg_beta*rij-sg_gama*rijsq);
-						uij2=sg_beta+2.0*sg_gama*rij;
-						uij3=sg_c6*r_r6+sg_c8*r_r8+sg_c10*r_r10-sg_c9*r_r9;
-						uij4=6.0*sg_c6*r_r6+8.0*sg_c8*r_r8+ 10.0*sg_c10*r_r10
-								-9.0*sg_c9*r_r9;
-
-						if (rij >= sg_rc)
-						{
-							uij=uij1-uij3;
-							fij=uij1*uij2-uij4*r_rij;
-						}
-						else
-						{
-							temp1 = (sg_rc*r_rij)-1.0;
-							uij5=exp(-temp1*temp1);
-							uij6=(sg_rc*r_rij-1.0)*2.0*sg_rc*r_rijsq;
-							uij=uij1-uij3*uij5;
-							fij=uij1*uij2-uij4*uij5*r_rij+uij3*uij5*uij6;
-						}
-
-						uij_sg += uij; // still need constant
-						gVirialInterSession += rij*fij*HARTREE_TO_J_PER_MOL;
-
-						fij=fij*r_rij*HARTREE_TO_J_PER_MOL;
-
-						fxij=fij*rxij;
-						fyij=fij*ryij;
-						fzij=fij*rzij;
-
-						// force on atom ii
-						fxi += fxij;
-						fyi += fyij;
-						fzi += fzij;
-						// force on atom jj
-						fxl[jj] -= fxij;
-						fyl[jj] -= fyij;
-						fzl[jj] -= fzij;
-
-						gNcut++;
-					}
-				}
-
-				// electrostatic part
-				if (isEwaldOn && rijsq<rcutoffelecsq)
-				{
-					uij_real_temp = chargei*charge[jj]/rij;
-					uij_real += uij_real_temp*erfc(kappa*rij); // real part ewald energy, still need 1/4*pi*epsilon0
-					temp1 = kappa*rij;
-					temp2 = uij_real_temp*erfc(temp1);
-					// real part force calculation
-					fij = (temp2 + uij_real_temp*2.0*temp1*exp(-temp1*temp1)
-							/sqrt(pi))*COULOMB_CONSTANT/rijsq;
-					fxij = fij*rxij;
-					fyij = fij*ryij;
-					fzij = fij*rzij;
-					// force on atom ii
-					fxi += fxij;
-					fyi += fyij;
-					fzi += fzij;
-					// force on atom jj
-					fxl[jj] -= fxij;
-					fyl[jj] -= fyij;
-					fzl[jj] -= fzij;
-				} // is Charge On check and rcutoffelecsq check
-
-				// wolf method for electrostatic
-				if (isWolfOn && rijsq<rcutoffelecsq)
-				{
-					gUwolfrealSession = gUwolfrealSession + chargei*charge[jj]
-							*(erfc(kappa *rij)/rij + wolfvcon1 + wolfvcon2
-									*(rij -rcutoffelec));
-					uij_wolf_temp = chargei*charge[jj]/rij;
-					fij = COULOMB_CONSTANT*uij_wolf_temp
-					*(erfc(kappa*rij)/rijsq + wolffcon1*exp(-(kappa*rij)*(kappa*rij))/rij + wolffcon2);
-					fxij = fij*rxij;
-					fyij = fij*ryij;
-					fzij = fij*rzij;
-					// contribution to the virial
-					gVirialInterSession = gVirialInterSession + fxij*rxij
-							+ fyij*ryij + fzij *rzij;
-					// force on atom ii
-					fxi += fxij;
-					fyi += fyij;
-					fzi += fzij;
-					// force on atom jj
-					fxl[jj] -= fxij;
-					fyl[jj] -= fyij;
-					fzl[jj] -= fzij;
-				}
-			} // end of excluding list
+			} // is Charge On check and rcutoffelecsq check
+			// wolf method for electrostatic
+			else if (isWolfOn && rijsq<rcutoffelecsq)
+			{
+				gUwolfrealSession = gUwolfrealSession + chargei*charge[jj]
+						*(erfc(kappa *rij)/rij + wolfvcon1 + wolfvcon2 *(rij
+								-rcutoffelec));
+				uij_wolf_temp = chargei*charge[jj]/rij;
+				fij = COULOMB_CONSTANT*uij_wolf_temp
+				*(erfc(kappa*rij)/rijsq + wolffcon1*exp(-(kappa*rij)*(kappa*rij))/rij + wolffcon2);
+				fxij = fij*rxij;
+				fyij = fij*ryij;
+				fzij = fij*rzij;
+				// contribution to the virial
+				gVirialInterSession = gVirialInterSession + fxij*rxij + fyij
+						*ryij + fzij *rzij;
+				// force on atom ii
+				fxi += fxij;
+				fyi += fyij;
+				fzi += fzij;
+				// force on atom jj
+				fxl[jj] -= fxij;
+				fyl[jj] -= fyij;
+				fzl[jj] -= fzij;
+			}
 		} // end of atom jj
 		fxl[ii] = fxi;
 		fyl[ii] = fyi;
@@ -474,6 +402,7 @@ int loop_14(int iMole)
 	int ii;
 	int ii1, ii2;
 	double rxij, ryij, rzij;
+	double rxij_old, ryij_old, rzij_old;
 	double rijsq, rij, r_rijsq;
 	double r_r6, r_r12, r_r12_minus_r_r6;
 	double sigmaij, epsilonij;
@@ -533,38 +462,9 @@ int loop_14(int iMole)
 			ii2 = dih_idx[ii][3];
 			// no ghost check needed here since 1,4 are in the same molecule
 			// and ghost check is only for inter molecules or solid-fluid
-			rxij = xx[ii1] - xx[ii2];
-			ryij = yy[ii1] - yy[ii2];
-			rzij = zz[ii1] - zz[ii2];
-
-			// Gz=0 term for 1D ewald
-			if (isEwaldOn && fEwald_Dim==EWALD_1D)
-			{
-				rhoklsq = rxij*rxij + ryij*ryij;
-				if (rhoklsq>TOLERANCE)
-				{
-					kapparhokl_sq = kappasq*rhoklsq;
-					temp1 = EULER_CONSTANT + gsl_sf_gamma_inc(0.0,kapparhokl_sq) + log(kapparhokl_sq);
-					uij_Gz0 = uij_Gz0 -charge[ii1]*charge[ii2]*temp1;
-					// forces
-					// derivative of incomplete gamma function
-					// use numerical differential
-					// This may not be a good way to do it
-					// temp1 is the value, temp2 is the absolute std. err.
-					gsl_deriv_central(&FF, kapparhokl_sq, 1.0e-8, &temp1,
-							&temp2);
-					temp2 = kappasq*temp1 + 1.0/rhoklsq;
-					fij = charge[ii1]*charge[ii2]*temp2*COULOMB_CONSTANT/boxlz;
-					fxij = fij*rxij;
-					fyij = fij*ryij;
-					// force on atom ii1
-					fxl[ii1] += fxij;
-					fyl[ii1] += fyij;
-					// force on atom ii2
-					fxl[ii2] -= fxij;
-					fyl[ii2] -= fyij;
-				} // if rhoklsq != 0.0 
-			} // if 1D ewald is used
+			rxij = rxij_old = xx[ii1] - xx[ii2];
+			ryij = ryij_old = yy[ii1] - yy[ii2];
+			rzij = rzij_old = zz[ii1] - zz[ii2];
 
 			// check for necessary 1,4 parameter modifiers
 			// and calculate the corresponding sigmaij and epsilonij
@@ -679,77 +579,105 @@ int loop_14(int iMole)
 			} // rcutoffsq
 
 			// electrostatic part
-			if (fCalculate14_elec && isEwaldOn && rijsq<rcutoffelecsq)
+			if (fCalculate14_elec && rijsq<rcutoffelecsq)
 			{
-				uij_real14_temp = charge[ii1]*charge[ii2]/rij;
-				uij_real14 += uij_real14_temp*erfc(kappa*rij); // real part ewald energy, still need 1/4*pi*epsilon0
-				temp1 = kappa*rij;
-				temp2 = uij_real14_temp*erfc(temp1);
-				// real part force calculation
-				fij = (temp2 + uij_real14_temp*2.0*temp1*exp(-temp1*temp1)
-						/sqrt(pi))*COULOMB_CONSTANT/rijsq;
-				fxij = fij*rxij;
-				fyij = fij*ryij;
-				fzij = fij*rzij;
-				// force on atom ii
-				fxl[ii1] += fxij;
-				fyl[ii1] += fyij;
-				fzl[ii1] += fzij;
-				// force on atom jj
-				fxl[ii2] -= fxij;
-				fyl[ii2] -= fyij;
-				fzl[ii2] -= fzij;
+				if (isEwaldOn)
+				{
+					uij_real14_temp = charge[ii1]*charge[ii2]/rij;
+					uij_real14 += uij_real14_temp*erfc(kappa*rij); // real part ewald energy, still need 1/4*pi*epsilon0
+					temp1 = kappa*rij;
+					temp2 = uij_real14_temp*erfc(temp1);
+					// real part force calculation
+					fij = (temp2 + uij_real14_temp*2.0*temp1*exp(-temp1*temp1)
+							/sqrt(pi))*COULOMB_CONSTANT/rijsq;
+					fxij = fij*rxij;
+					fyij = fij*ryij;
+					fzij = fij*rzij;
+					// force on atom ii
+					fxl[ii1] += fxij;
+					fyl[ii1] += fyij;
+					fzl[ii1] += fzij;
+					// force on atom jj
+					fxl[ii2] -= fxij;
+					fyl[ii2] -= fyij;
+					fzl[ii2] -= fzij;
+
+					// Gz=0 term for 1D ewald
+					if (fEwald_Dim==EWALD_1D)
+					{
+						rhoklsq = rxij_old*rxij_old + ryij_old*ryij_old;
+						if (rhoklsq>TOLERANCE)
+						{
+							kapparhokl_sq = kappasq*rhoklsq;
+							temp1 = EULER_CONSTANT + gsl_sf_gamma_inc(0.0,kapparhokl_sq) + log(kapparhokl_sq);
+							uij_Gz0 = uij_Gz0 -charge[ii1]*charge[ii2]*temp1;
+							// forces
+							// derivative of incomplete gamma function
+							// use numerical differential
+							// This may not be a good way to do it
+							// temp1 is the value, temp2 is the absolute std. err.
+							gsl_deriv_central(&FF, kapparhokl_sq, 1.0e-8,
+									&temp1, &temp2);
+							temp2 = kappasq*temp1 + 1.0/rhoklsq;
+							fij = charge[ii1]*charge[ii2]*temp2
+									*COULOMB_CONSTANT/boxlz;
+							fxij = fij*rxij_old;
+							fyij = fij*ryij_old;
+							// force on atom ii1
+							fxl[ii1] += fxij;
+							fyl[ii1] += fyij;
+							// force on atom ii2
+							fxl[ii2] -= fxij;
+							fyl[ii2] -= fyij;
+						} // if rhoklsq != 0.0 
+					} // if 1D ewald is used
+				}
+				else if (isWolfOn) // wolf method for electrostatic
+				{
+					gUwolfrealSession = gUwolfrealSession + charge[ii1]
+							*charge[ii2] *(erfc(kappa *rij)/rij + wolfvcon1
+							+ wolfvcon2*(rij -rcutoffelec));
+					// need + some scale factor here
+					uij_wolf14_temp = charge[ii1]*charge[ii2]/rij;
+					fij = COULOMB_CONSTANT*uij_wolf14_temp
+					*(erfc(kappa*rij)/rijsq + wolffcon1*exp(-(kappa*rij)*(kappa*rij))/rij + wolffcon2);
+					// need + some scale factor here 
+					fxij = fij*rxij;
+					fyij = fij*ryij;
+					fzij = fij*rzij;
+					// contribution to the virial
+					gVirialInterSession = gVirialInterSession + fxij*rxij
+							+ fyij *ryij + fzij*rzij;
+					// force on atom ii1
+					fxl[ii1] += fxij;
+					fyl[ii1] += fyij;
+					fzl[ii1] += fzij;
+					// force on atom ii2
+					fxl[ii2] -= fxij;
+					fyl[ii2] -= fyij;
+					fzl[ii2] -= fzij;
+				}
+				else if (isSimpleCoulomb) // simple coulomb 
+				{
+					uij_coulomb14_temp = charge[ii1]*charge[ii2]/rij; // need constant
+					gUcoulombSession += uij_coulomb14_temp; // need constant
+					fij = COULOMB_CONSTANT*uij_coulomb14_temp/rijsq;
+					fxij = fij*rxij;
+					fyij = fij*ryij;
+					fzij = fij*rzij;
+					// contribution to the virial
+					gVirialInterSession = gVirialInterSession + fxij*rxij
+							+ fyij *ryij + fzij*rzij;
+					// force on atom ii1
+					fxl[ii1] += fxij;
+					fyl[ii1] += fyij;
+					fzl[ii1] += fzij;
+					// force on atom ii2
+					fxl[ii2] -= fxij;
+					fyl[ii2] -= fyij;
+					fzl[ii2] -= fzij;
+				}
 			} // is charge on check and rcutoffelecsq
-
-			// wolf method for electrostatic
-			if (fCalculate14_elec && isWolfOn && rijsq<rcutoffelecsq)
-			{
-				gUwolfrealSession = gUwolfrealSession + charge[ii1]*charge[ii2]
-						*(erfc(kappa *rij)/rij + wolfvcon1 + wolfvcon2*(rij
-								-rcutoffelec));
-				// need + some scale factor here
-				uij_wolf14_temp = charge[ii1]*charge[ii2]/rij;
-				fij = COULOMB_CONSTANT*uij_wolf14_temp
-				*(erfc(kappa*rij)/rijsq + wolffcon1*exp(-(kappa*rij)*(kappa*rij))/rij + wolffcon2);
-				// need + some scale factor here 
-				fxij = fij*rxij;
-				fyij = fij*ryij;
-				fzij = fij*rzij;
-				// contribution to the virial
-				gVirialInterSession = gVirialInterSession + fxij*rxij + fyij
-						*ryij + fzij*rzij;
-				// force on atom ii1
-				fxl[ii1] += fxij;
-				fyl[ii1] += fyij;
-				fzl[ii1] += fzij;
-				// force on atom ii2
-				fxl[ii2] -= fxij;
-				fyl[ii2] -= fyij;
-				fzl[ii2] -= fzij;
-			}
-
-			// simple coulomb 
-			if (fCalculate14_elec && isSimpleCoulomb && rijsq<rcutoffelecsq)
-			{
-				uij_coulomb14_temp = charge[ii1]*charge[ii2]/rij; // need constant
-				gUcoulombSession += uij_coulomb14_temp; // need constant
-				fij = COULOMB_CONSTANT*uij_coulomb14_temp/rijsq;
-				fxij = fij*rxij;
-				fyij = fij*ryij;
-				fzij = fij*rzij;
-				// contribution to the virial
-				gVirialInterSession = gVirialInterSession + fxij*rxij + fyij
-						*ryij + fzij*rzij;
-				// force on atom ii1
-				fxl[ii1] += fxij;
-				fyl[ii1] += fyij;
-				fzl[ii1] += fzij;
-				// force on atom ii2
-				fxl[ii2] -= fxij;
-				fyl[ii2] -= fyij;
-				fzl[ii2] -= fzij;
-			}
-
 		} // unique 1,4 pair check
 	} // loop through dihedrals
 
@@ -771,6 +699,7 @@ int loop_13(int iMole)
 	int ii;
 	int ii1, ii2;
 	double rxij, ryij, rzij;
+	double rxij_old, ryij_old, rzij_old;
 	double rijsq, rij, r_rijsq;
 	double r_r6, r_r12, r_r12_minus_r_r6;
 	double sigmaij, epsilonij;
@@ -778,7 +707,6 @@ int loop_13(int iMole)
 	double uij_vdw13img, uij_vdw13img_temp;
 	double uij_real13;
 	double uij_excl_13;
-	double rxij_old, ryij_old, rzij_old;
 	double temp1, temp2, temp3;
 	double rhoklsq, kapparhokl_sq;
 	double uij_Gz0; // 1D ewald
@@ -829,44 +757,9 @@ int loop_13(int iMole)
 			ii1 = angle_idx[ii][0];
 			ii2 = angle_idx[ii][2];
 			// do not need check ghost atom since 1,3 is in the same molecule
-			rxij = xx[ii1] - xx[ii2];
-			ryij = yy[ii1] - yy[ii2];
-			rzij = zz[ii1] - zz[ii2];
-
-			// Gz=0 term for 1D ewald
-			if (isEwaldOn && fEwald_Dim==EWALD_1D)
-			{
-				rhoklsq = rxij*rxij + ryij*ryij;
-				if (rhoklsq>TOLERANCE)
-				{
-					kapparhokl_sq = kappasq*rhoklsq;
-					temp1 = EULER_CONSTANT + gsl_sf_gamma_inc(0.0,kapparhokl_sq) + log(kapparhokl_sq);
-					uij_Gz0 = uij_Gz0 -charge[ii1]*charge[ii2]*temp1;
-					// forces
-					// derivative of incomplete gamma function
-					// use numerical differential
-					// This may not be a good way to do it
-					// temp1 is the value, temp2 is the absolute std. err.
-					gsl_deriv_central(&FF, kapparhokl_sq, 1.0e-8, &temp1,
-							&temp2);
-					temp2 = kappasq*temp1 + 1.0/rhoklsq;
-					fij = charge[ii1]*charge[ii2]*temp2*COULOMB_CONSTANT/boxlz;
-					fxij = fij*rxij;
-					fyij = fij*ryij;
-					// force on atom ii1
-					fxl[ii1] += fxij;
-					fyl[ii1] += fyij;
-					// force on atom ii2
-					fxl[ii2] -= fxij;
-					fyl[ii2] -= fyij;
-				} // if rhoklsq != 0.0 
-			} // if 1D ewald is used
-
-
-			// save the old positions
-			rxij_old = rxij;
-			ryij_old = ryij;
-			rzij_old = rzij;
+			rxij = rxij_old = xx[ii1] - xx[ii2];
+			ryij = ryij_old = yy[ii1] - yy[ii2];
+			rzij = rzij_old = zz[ii1] - zz[ii2];
 
 			if (isEwaldOn || isWolfOn) // if we need charge interactions
 			{
@@ -896,6 +789,35 @@ int loop_13(int iMole)
 				fxl[ii2] -= fxij;
 				fyl[ii2] -= fyij;
 				fzl[ii2] -= fzij;
+
+				// Gz=0 term for 1D ewald
+				if (isEwaldOn && fEwald_Dim==EWALD_1D)
+				{
+					rhoklsq = rxij_old*rxij_old + ryij_old*ryij_old;
+					if (rhoklsq>TOLERANCE)
+					{
+						kapparhokl_sq = kappasq*rhoklsq;
+						temp1 = EULER_CONSTANT + gsl_sf_gamma_inc(0.0,kapparhokl_sq) + log(kapparhokl_sq);
+						uij_Gz0 = uij_Gz0 -charge[ii1]*charge[ii2]*temp1;
+						// forces
+						// derivative of incomplete gamma function
+						// use numerical differential
+						// This may not be a good way to do it
+						// temp1 is the value, temp2 is the absolute std. err.
+						gsl_deriv_central(&FF, kapparhokl_sq, 1.0e-8, &temp1,
+								&temp2);
+						temp2 = kappasq*temp1 + 1.0/rhoklsq;
+						fij = charge[ii1]*charge[ii2]*temp2*COULOMB_CONSTANT/boxlz;
+						fxij = fij*rxij_old;
+						fyij = fij*ryij_old;
+						// force on atom ii1
+						fxl[ii1] += fxij;
+						fyl[ii1] += fyij;
+						// force on atom ii2
+						fxl[ii2] -= fxij;
+						fyl[ii2] -= fyij;
+					} // if rhoklsq != 0.0 
+				} // if 1D ewald is used
 
 				// calculate the real part of ewald summation
 				// minimum image convention now
@@ -967,8 +889,8 @@ int loop_13(int iMole)
 				// LJ part, do not need check ghost atom since 1,3 are in the same molecule
 				// here we check ghost atom because in this case, 1,3 are actually 1 and 3'
 				// which are in two different molecule
-				if (ghost_type[ii1]!=GHOST_LJ && ghost_type[ii2]!=GHOST_LJ && rijsq
-						<rcutoffsq) // LJ cutoff
+				if (ghost_type[ii1]!=GHOST_LJ && ghost_type[ii2]!=GHOST_LJ
+						&& rijsq <rcutoffsq) // LJ cutoff
 				{
 					rij = sqrt(rijsq);
 					if (isLJswitchOn) // check if switch for LJ is used
@@ -1052,6 +974,7 @@ int loop_12(int iMole)
 	int ii;
 	int ii1, ii2;
 	double rxij, ryij, rzij;
+	double rxij_old, ryij_old, rzij_old;
 	double rijsq, rij, r_rijsq;
 	double r_r6, r_r12, r_r12_minus_r_r6;
 	double sigmaij, epsilonij;
@@ -1059,7 +982,6 @@ int loop_12(int iMole)
 	double uij_vdw12img, uij_vdw12img_temp;
 	double uij_real12;
 	double uij_excl_12;
-	double rxij_old, ryij_old, rzij_old;
 	double temp1, temp2, temp3;
 	double rhoklsq, kapparhokl_sq;
 	double uij_Gz0; // 1D ewald
@@ -1103,42 +1025,9 @@ int loop_12(int iMole)
 
 		ii1 = bond_idx[ii][0];
 		ii2 = bond_idx[ii][1];
-		rxij = xx[ii1] - xx[ii2];
-		ryij = yy[ii1] - yy[ii2];
-		rzij = zz[ii1] - zz[ii2];
-
-		// Gz=0 term for 1D ewald
-		if (isEwaldOn && fEwald_Dim==EWALD_1D)
-		{
-			rhoklsq = rxij*rxij + ryij*ryij;
-			if (rhoklsq>TOLERANCE)
-			{
-				kapparhokl_sq = kappasq*rhoklsq;
-				temp1 = EULER_CONSTANT + gsl_sf_gamma_inc(0.0,kapparhokl_sq) + log(kapparhokl_sq);
-				uij_Gz0 = uij_Gz0 -charge[ii1]*charge[ii2]*temp1;
-				// forces
-				// derivative of incomplete gamma function
-				// use numerical differential
-				// This may not be a good way to do it
-				// temp1 is the value, temp2 is the absolute std. err.
-				gsl_deriv_central(&FF, kapparhokl_sq, 1.0e-8, &temp1, &temp2);
-				temp2 = kappasq*temp1 + 1.0/rhoklsq;
-				fij = charge[ii1]*charge[ii2]*temp2*COULOMB_CONSTANT/boxlz;
-				fxij = fij*rxij;
-				fyij = fij*ryij;
-				// force on atom ii1
-				fxl[ii1] += fxij;
-				fyl[ii1] += fyij;
-				// force on atom ii2
-				fxl[ii2] -= fxij;
-				fyl[ii2] -= fyij;
-			} // if rhoklsq != 0.0 
-		} // if 1D ewald is used
-
-		// save the old positions
-		rxij_old = rxij;
-		ryij_old = ryij;
-		rzij_old = rzij;
+		rxij = rxij_old = xx[ii1] - xx[ii2];
+		ryij = ryij_old = yy[ii1] - yy[ii2];
+		rzij = rzij_old = zz[ii1] - zz[ii2];
 
 		if (isEwaldOn || isWolfOn) // if ewald is needed
 		{
@@ -1166,6 +1055,34 @@ int loop_12(int iMole)
 			fxl[ii2] -= fxij;
 			fyl[ii2] -= fyij;
 			fzl[ii2] -= fzij;
+			
+			// Gz=0 term for 1D ewald
+			if (isEwaldOn && fEwald_Dim==EWALD_1D)
+			{
+				rhoklsq = rxij_old*rxij_old + ryij_old*ryij_old;
+				if (rhoklsq>TOLERANCE)
+				{
+					kapparhokl_sq = kappasq*rhoklsq;
+					temp1 = EULER_CONSTANT + gsl_sf_gamma_inc(0.0,kapparhokl_sq) + log(kapparhokl_sq);
+					uij_Gz0 = uij_Gz0 -charge[ii1]*charge[ii2]*temp1;
+					// forces
+					// derivative of incomplete gamma function
+					// use numerical differential
+					// This may not be a good way to do it
+					// temp1 is the value, temp2 is the absolute std. err.
+					gsl_deriv_central(&FF, kapparhokl_sq, 1.0e-8, &temp1, &temp2);
+					temp2 = kappasq*temp1 + 1.0/rhoklsq;
+					fij = charge[ii1]*charge[ii2]*temp2*COULOMB_CONSTANT/boxlz;
+					fxij = fij*rxij_old;
+					fyij = fij*ryij_old;
+					// force on atom ii1
+					fxl[ii1] += fxij;
+					fyl[ii1] += fyij;
+					// force on atom ii2
+					fxl[ii2] -= fxij;
+					fyl[ii2] -= fyij;
+				} // if rhoklsq != 0.0 
+			} // if 1D ewald is used
 
 			// calculate the real part of ewald summation
 			// minimum image convetion now
@@ -1213,7 +1130,6 @@ int loop_12(int iMole)
 				fzl[ii2] -= fzij;
 			} // rcutoffelecsq
 		} // if ewald or wolf is needed
-
 
 		// check if 1,2 distance < 1,2' distance
 		// if it is true, no LJ needed
@@ -1506,44 +1422,10 @@ int loop_nbp(int iMole)
 		}// if LJ is needed
 
 		// if electrostatic interactions are needed
-		if (fCalculate_nbpelec == true)
+		if (fCalculate_nbpelec==true && rijsq<rcutoffelecsq)
 		{
-			// calculate Gz=0 term for 1D ewald summation
-			// this has to be done before the minimum image convention
-			// so rxij_old, ryij_old are used
-			// not sure if cutoff check should be applied
-			// If the cutoff is larger than the size in x,y dimension,
-			// this should not be a problem
-			if (isEwaldOn && fEwald_Dim==EWALD_1D)
-			{
-				rhoklsq = rxij_old*rxij_old + ryij_old*ryij_old;
-				if (rhoklsq>TOLERANCE)
-				{
-					kapparhokl_sq = kappasq*rhoklsq;
-					temp1 = EULER_CONSTANT + gsl_sf_gamma_inc(0.0,kapparhokl_sq) + log(kapparhokl_sq);
-					uij_Gz0nbp = uij_Gz0nbp -charge[ii1]*charge[ii2]*temp1;
-					// forces
-					// derivative of incomplete gamma function
-					// use numerical differential
-					// This may not be a good way to do it
-					// temp1 is the value, temp2 is the absolute std. err.
-					gsl_deriv_central(&FF, kapparhokl_sq, 1.0e-8, &temp1,
-							&temp2);
-					temp2 = kappasq*temp1 + 1.0/rhoklsq;
-					fij = charge[ii1]*charge[ii2]*temp2*COULOMB_CONSTANT/boxlz;
-					fxij = fij*rxij_old;
-					fyij = fij*ryij_old;
-					// force on atom ii1
-					fxl[ii1] += fxij;
-					fyl[ii1] += fyij;
-					// force on atom ii2
-					fxl[ii2] -= fxij;
-					fyl[ii2] -= fyij;
-				} // if rhoklsq != 0.0 (>1.0e-10)
-			} // if 1D ewald is used
-
 			// electrostatic part
-			if (isEwaldOn && rijsq<rcutoffelecsq)
+			if (isEwaldOn)
 			{
 				uij_realnbp_temp = charge[ii1]*charge[ii2]/rij;
 				uij_realnbp += uij_realnbp_temp*erfc(kappa*rij); // real part ewald energy, still need 1/4*pi*epsilon0
@@ -1563,10 +1445,43 @@ int loop_nbp(int iMole)
 				fxl[ii2] -= fxij;
 				fyl[ii2] -= fyij;
 				fzl[ii2] -= fzij;
+				
+				// calculate Gz=0 term for 1D ewald summation
+				// this has to be done before the minimum image convention
+				// so rxij_old, ryij_old are used
+				// not sure if cutoff check should be applied
+				// If the cutoff is larger than the size in x,y dimension,
+				// this should not be a problem
+				if (fEwald_Dim==EWALD_1D)
+				{
+					rhoklsq = rxij_old*rxij_old + ryij_old*ryij_old;
+					if (rhoklsq>TOLERANCE)
+					{
+						kapparhokl_sq = kappasq*rhoklsq;
+						temp1 = EULER_CONSTANT + gsl_sf_gamma_inc(0.0,kapparhokl_sq) + log(kapparhokl_sq);
+						uij_Gz0nbp = uij_Gz0nbp -charge[ii1]*charge[ii2]*temp1;
+						// forces
+						// derivative of incomplete gamma function
+						// use numerical differential
+						// This may not be a good way to do it
+						// temp1 is the value, temp2 is the absolute std. err.
+						gsl_deriv_central(&FF, kapparhokl_sq, 1.0e-8, &temp1,
+								&temp2);
+						temp2 = kappasq*temp1 + 1.0/rhoklsq;
+						fij = charge[ii1]*charge[ii2]*temp2*COULOMB_CONSTANT/boxlz;
+						fxij = fij*rxij_old;
+						fyij = fij*ryij_old;
+						// force on atom ii1
+						fxl[ii1] += fxij;
+						fyl[ii1] += fyij;
+						// force on atom ii2
+						fxl[ii2] -= fxij;
+						fyl[ii2] -= fyij;
+					} // if rhoklsq != 0.0 (>1.0e-10)
+				} // if 1D ewald is used
 			} // is Charge On check and rcutoffelecsq check
-
 			// wolf method for electrostatic
-			if (isWolfOn && rijsq<rcutoffelecsq)
+			else if (isWolfOn)
 			{
 				gUwolfrealSession = gUwolfrealSession + charge[ii1]*charge[ii2]
 						*(erfc(kappa *rij)/rij + wolfvcon1 + wolfvcon2*(rij
@@ -1589,9 +1504,8 @@ int loop_nbp(int iMole)
 				fyl[ii2] -= fyij;
 				fzl[ii2] -= fzij;
 			} // if ewald is needed
-
 			// simple coulomb method
-			if (isSimpleCoulomb && rijsq<rcutoffelecsq)
+			else if (isSimpleCoulomb)
 			{
 				uij_coulombnbp_temp = charge[ii1]*charge[ii2]/rij; // need constant
 				gUcoulombSession += uij_coulombnbp_temp; // need constant
@@ -1812,8 +1726,8 @@ int wolf_con()
 		}
 		gUwolfconSession = gUwolfconSession + charge[ii]*charge[ii];
 	}
-	gUwolfconSession = gUwolfconSession*COULOMB_CONSTANT*(kappa/sqrt(pi)+erfc(kappa
-			*rcutoffelec) /(2.0*rcutoffelec));
+	gUwolfconSession = gUwolfconSession*COULOMB_CONSTANT*(kappa/sqrt(pi)
+			+erfc(kappa *rcutoffelec) /(2.0*rcutoffelec));
 
 	return 0;
 }
@@ -2148,7 +2062,7 @@ int erfrc()
 	virial_inter = gVirialInterSession;
 	uewald = gUewaldSession;
 	uinter = gUinterSession;
-	
+
 	ushift = gUShiftSession;
 	ncut = gNcut;
 

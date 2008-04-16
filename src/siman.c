@@ -179,6 +179,6 @@ int siman()
 	}
 
 	fprintf(stderr, "accepted = %d     rejected = %d\n", n_accepts, n_rejects);
-
+	
 	return 0;
 }
