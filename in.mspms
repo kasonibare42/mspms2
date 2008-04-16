@@ -3,7 +3,7 @@
 8000.0                 Pressure (Pascal)
 100.0 100.0 100.0      box length, width, height
 20.0 20.0 20.0         rcuton, rcutoff, rcutoffelec
-1000 1 1000               number of total steps, starting option (1-new;2-continue;3-new from old), equilibrium steps
+1000 1 100               number of total steps, starting option (1-new;2-continue;3-new from old), equilibrium steps
 100 1 100 100 0        number of steps for averages, print, save, snapshots, trajectory
 1.0 5                  delt (fs), number of inner steps (cant be zero, 1 is the minimum)
 0.0                    1,4 LJ modifier (0.0 for no 14 TraPPE, 0.5 for OPLS)

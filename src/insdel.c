@@ -271,10 +271,8 @@ int InitInsertedMole(int iSpecieSelected, int iMoleSelected)
 			<sample_mole_last_bond_idx[iSpecieSelected]; kk++)
 	{
 		bnd2mole[iBond] = iMole;
-		bond_idx[iBond][0] = sample_bond_idx[kk][0] + idMoleInSpecie
-			*sample_natom_per_mole[iSpecieSelected];
-		bond_idx[iBond][1] = sample_bond_idx[kk][1] + idMoleInSpecie
-			*sample_natom_per_mole[iSpecieSelected];
+		bond_idx[iBond][0] = sample_bond_idx[kk][0] + mole_first_atom_idx[iMole];
+		bond_idx[iBond][1] = sample_bond_idx[kk][1] + mole_first_atom_idx[iMole];
 		bond_type[iBond] = sample_bond_type[kk];
 		Kb[iBond] = sample_Kb[kk];
 		Req[iBond] = sample_Req[kk];
@@ -289,12 +287,9 @@ int InitInsertedMole(int iSpecieSelected, int iMoleSelected)
 			<sample_mole_last_angle_idx[iSpecieSelected]; kk++)
 	{
 		agl2mole[iAngle] = iMole;
-		angle_idx[iAngle][0] = sample_angle_idx[kk][0] + idMoleInSpecie
-			*sample_natom_per_mole[iSpecieSelected];
-		angle_idx[iAngle][1] = sample_angle_idx[kk][1] + idMoleInSpecie
-			*sample_natom_per_mole[iSpecieSelected];
-		angle_idx[iAngle][2] = sample_angle_idx[kk][2] + idMoleInSpecie
-			*sample_natom_per_mole[iSpecieSelected];
+		angle_idx[iAngle][0] = sample_angle_idx[kk][0] + mole_first_atom_idx[iMole];
+		angle_idx[iAngle][1] = sample_angle_idx[kk][1] + mole_first_atom_idx[iMole];
+		angle_idx[iAngle][2] = sample_angle_idx[kk][2] + mole_first_atom_idx[iMole];
 		angle_type[iAngle] = sample_angle_type[kk];
 		Ktheta[iAngle] = sample_Ktheta[kk];
 		Thetaeq[iAngle] = sample_Thetaeq[kk];
@@ -311,14 +306,10 @@ int InitInsertedMole(int iSpecieSelected, int iMoleSelected)
 			<sample_mole_last_dih_idx[iSpecieSelected]; kk++)
 	{
 		dih2mole[iDih] = iMole;
-		dih_idx[iDih][0] = sample_dih_idx[kk][0] + idMoleInSpecie
-			*sample_natom_per_mole[iSpecieSelected];
-		dih_idx[iDih][1] = sample_dih_idx[kk][1] + idMoleInSpecie
-			*sample_natom_per_mole[iSpecieSelected];
-		dih_idx[iDih][2] = sample_dih_idx[kk][2] + idMoleInSpecie
-			*sample_natom_per_mole[iSpecieSelected];
-		dih_idx[iDih][3] = sample_dih_idx[kk][3] + idMoleInSpecie
-			*sample_natom_per_mole[iSpecieSelected];
+		dih_idx[iDih][0] = sample_dih_idx[kk][0] + mole_first_atom_idx[iMole];
+		dih_idx[iDih][1] = sample_dih_idx[kk][1] + mole_first_atom_idx[iMole];
+		dih_idx[iDih][2] = sample_dih_idx[kk][2] + mole_first_atom_idx[iMole];
+		dih_idx[iDih][3] = sample_dih_idx[kk][3] + mole_first_atom_idx[iMole];
 		dih_type[iDih] = sample_dih_type[kk];
 		c1[iDih] = sample_c1[kk];
 		c2[iDih] = sample_c2[kk];
@@ -334,14 +325,10 @@ int InitInsertedMole(int iSpecieSelected, int iMoleSelected)
 			<sample_mole_last_imp_idx[iSpecieSelected]; kk++)
 	{
 		imp2mole[iImp] = iMole;
-		imp_idx[iImp][0] = sample_imp_idx[kk][0] + idMoleInSpecie
-			*sample_natom_per_mole[iSpecieSelected];
-		imp_idx[iImp][1] = sample_imp_idx[kk][1] + idMoleInSpecie
-			*sample_natom_per_mole[iSpecieSelected];
-		imp_idx[iImp][2] = sample_imp_idx[kk][2] + idMoleInSpecie
-			*sample_natom_per_mole[iSpecieSelected];
-		imp_idx[iImp][3] = sample_imp_idx[kk][3] + idMoleInSpecie
-			*sample_natom_per_mole[iSpecieSelected];
+		imp_idx[iImp][0] = sample_imp_idx[kk][0] + mole_first_atom_idx[iMole];
+		imp_idx[iImp][1] = sample_imp_idx[kk][1] + mole_first_atom_idx[iMole];
+		imp_idx[iImp][2] = sample_imp_idx[kk][2] + mole_first_atom_idx[iMole];
+		imp_idx[iImp][3] = sample_imp_idx[kk][3] + mole_first_atom_idx[iMole];
 		imp_type[iImp] = sample_imp_type[kk];
 		komega[iImp] = sample_komega[kk];
 		omega0[iImp] = sample_omega0[kk];
@@ -355,10 +342,8 @@ int InitInsertedMole(int iSpecieSelected, int iMoleSelected)
 			<sample_mole_last_nbp_idx[iSpecieSelected]; kk++)
 	{
 		nbp2mole[iNbp] = iMole;
-		nbp_idx[iNbp][0] = sample_nbp_idx[kk][0] + idMoleInSpecie
-			*sample_natom_per_mole[iSpecieSelected];
-		nbp_idx[iNbp][1] = sample_nbp_idx[kk][1] + idMoleInSpecie
-			*sample_natom_per_mole[iSpecieSelected];
+		nbp_idx[iNbp][0] = sample_nbp_idx[kk][0] + mole_first_atom_idx[iMole];
+		nbp_idx[iNbp][1] = sample_nbp_idx[kk][1] + mole_first_atom_idx[iMole];
 		iNbp++;
 	}
 	mole_last_nbp_idx[iMole] = iNbp;
