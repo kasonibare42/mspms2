@@ -2019,7 +2019,7 @@ int fnErfrcSession(int iStartMole, int iEndMole)
 	}
 
 	// calculate solid fluid energy if necessary
-	if (sf_type != SF_NONE)
+	if (iSF_type != SF_NONE)
 	{
 		fnSffrcSession();
 		// Add into total Inter Energy
@@ -2027,7 +2027,7 @@ int fnErfrcSession(int iStartMole, int iEndMole)
 	}
 
 	// calculate metal cluster energy if necessary
-	if (fOtherFF == FF_DFT_METAL_CLUSTER)
+	if (iExternal_FF_type == FF_DFT_METAL_CLUSTER)
 	{
 		fnMetalClusterFF();
 		// add into total inter energy

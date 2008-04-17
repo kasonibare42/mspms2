@@ -74,7 +74,7 @@
 #define sample_sigma	(sigma+NATOM_MAX)
 #define sample_charge	(charge+NATOM_MAX)
 #define sample_ghost_type	(ghost_type+NATOM_MAX)
-#define sample_tasostype 	(tasostype+NATOM_MAX)
+#define sample_tasos_type 	(tasos_type+NATOM_MAX)
 
 #define sample_bond_idx		(&bond_idx[NBOND_MAX])
 #define sample_bond_type	(bond_type+NBOND_MAX)
@@ -124,7 +124,7 @@ int natom_hist_max, nbond_hist_max, nangle_hist_max, ndih_hist_max,
 
 char atomname[ATOM_LIST_LENGTH][5];
 int ghost_type[ATOM_LIST_LENGTH]; ///< flag of ghost atom, including ghost LJ or ghost electrostatic
-int tasostype[ATOM_LIST_LENGTH]; ///< atom type for tasos interpolation 
+int tasos_type[ATOM_LIST_LENGTH]; ///< atom type for tasos interpolation 
 double aw[ATOM_LIST_LENGTH], epsilon[ATOM_LIST_LENGTH],
 		sigma[ATOM_LIST_LENGTH], charge[ATOM_LIST_LENGTH]; ///< atom weight etc. 
 double xx[ATOM_LIST_LENGTH], yy[ATOM_LIST_LENGTH], zz[ATOM_LIST_LENGTH]; ///< atom coordinates
@@ -192,13 +192,13 @@ int angle_type[ANGLE_LIST_LENGTH];
 double agl_para_1[ANGLE_LIST_LENGTH], agl_para_2[ANGLE_LIST_LENGTH],
 		agl_para_3[ANGLE_LIST_LENGTH], agl_para_4[ANGLE_LIST_LENGTH],
 		agl_para_5[ANGLE_LIST_LENGTH];
-int isAngle_unique[ANGLE_LIST_LENGTH]; ///< make sure 1,3 atoms do not make mutiple angles, this is for possible ring structures
+bool isAngle_unique[ANGLE_LIST_LENGTH]; ///< make sure 1,3 atoms do not make mutiple angles, this is for possible ring structures
 
 int dih_idx[DIHEDRAL_LIST_LENGTH][4]; ///< dihedral
 int dih_type[DIHEDRAL_LIST_LENGTH];
 double dih_para_1[DIHEDRAL_LIST_LENGTH], dih_para_2[DIHEDRAL_LIST_LENGTH],
 		dih_para_3[DIHEDRAL_LIST_LENGTH], dih_para_4[DIHEDRAL_LIST_LENGTH];
-int isDih_unique[DIHEDRAL_LIST_LENGTH]; ///< make sure 1,4 atoms do not make mutiple dihedrals, this is for possible ring structures
+bool isDih_unique[DIHEDRAL_LIST_LENGTH]; ///< make sure 1,4 atoms do not make mutiple dihedrals, this is for possible ring structures
 
 int imp_idx[IMPROPER_LIST_LENGTH][4]; ///< improper
 int imp_type[IMPROPER_LIST_LENGTH];

@@ -79,7 +79,7 @@ int echo()
 		fprintf(fpouts, "%d improper dihedrals, and %d non-bonded pairs.\n",
 				sample_nimp_per_mole[ii], sample_nnbp_per_mole[ii]);
 	}
-	switch (fStart_option)
+	switch (iStart_option)
 	{
 	case NEW:
 		strcpy(szOutput, "New Run");
@@ -244,10 +244,10 @@ int echo()
 				prob_id);
 	}
 
-	if (sf_type != SF_NONE)
+	if (iSF_type != SF_NONE)
 	{
 		fprintf(fpouts, "Solid-fluid interaction calculation is enabled.\n");
-		if (sf_type==SF_NANOTUBE_HYPERGEO)
+		if (iSF_type==SF_NANOTUBE_HYPERGEO)
 		{
 			fprintf(
 					fpouts,
@@ -262,7 +262,7 @@ int echo()
 						hgntc_xx[ii], hgntc_yy[ii], hgnt_radius[ii]);
 			}
 		}
-		else if (sf_type==SF_NANOTUBE_ATOM_EXPLICIT)
+		else if (iSF_type==SF_NANOTUBE_ATOM_EXPLICIT)
 		{
 			fprintf(fpouts,
 					"Atom explicit Nanotube (or other absorbent) is enabled.\n");
@@ -293,12 +293,12 @@ int echo()
 				fprintf(fpouts, "Unknown solid atom type.\n");
 			}
 		}
-		else if (sf_type==SF_NANOTUBE_TASOS)
+		else if (iSF_type==SF_NANOTUBE_TASOS)
 		{
 			fprintf(fpouts,
 					"Tasos's interpolation of Nanotube potential is enabled.\n ");
 		}
-		else if (sf_type==SF_NANOTUBE_MY_INTERP)
+		else if (iSF_type==SF_NANOTUBE_MY_INTERP)
 		{
 			fprintf(fpouts,
 					"YWang's interpolation of Nanotube potential is enabled.\n");

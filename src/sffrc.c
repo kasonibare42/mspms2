@@ -16,8 +16,7 @@ extern void read_grids_(int* nspecies_yang);
 int init_tasos_grid()
 {
 	int ii, jj;
-	const int datalen = 200;
-	char buffer[200];
+	char buffer[STRING_LENGTH];
 	double auc, buc, cuc, nanotuberadius;
 	int na, nb, nc;
 	int nspecies_yang;
@@ -31,7 +30,7 @@ int init_tasos_grid()
 	// re-open input file to read extra data section
 	fpins = fopen(INPUT,"r");
 
-	while (fgets(buffer, datalen, fpins)!=NULL)
+	while (fgets(buffer, STRING_LENGTH, fpins)!=NULL)
 	{
 		sscanf(buffer, "%s", keyword);
 		for (ii=0; ii<strlen(keyword); ii++)
@@ -43,11 +42,11 @@ int init_tasos_grid()
 			fprintf(stderr,"Data section for tasos grids found...\n");
 			fprintf(fpouts, "Data section for tasos grids found...\n");
 
-			sscanf(fgets(buffer, datalen, fpins), "%lf %lf %lf %lf", &auc,
+			sscanf(fgets(buffer, STRING_LENGTH, fpins), "%lf %lf %lf %lf", &auc,
 					&buc, &cuc, &nanotuberadius);
-			sscanf(fgets(buffer, datalen, fpins), "%d %d %d", &na, &nb, &nc);
-			sscanf(fgets(buffer, datalen, fpins), "%d", &nspecies_yang);
-			sscanf(fgets(buffer, datalen, fpins), "%d", &tnuatoms);
+			sscanf(fgets(buffer, STRING_LENGTH, fpins), "%d %d %d", &na, &nb, &nc);
+			sscanf(fgets(buffer, STRING_LENGTH, fpins), "%d", &nspecies_yang);
+			sscanf(fgets(buffer, STRING_LENGTH, fpins), "%d", &tnuatoms);
 			fprintf(
 					fpouts,
 					"The size of the unit cell is %lf long, %lf wide, %lf high, with %lf radius.\n",
@@ -57,7 +56,7 @@ int init_tasos_grid()
 					nspecies_yang, tnuatoms);
 			for (ii=0; ii<tnuatoms; ii++)
 			{
-				sscanf(fgets(buffer, datalen, fpins), "%s", szgrid+ii);
+				sscanf(fgets(buffer, STRING_LENGTH, fpins), "%s", szgrid+ii);
 			}
 			initpotentialgrid_(&tnuatoms, &auc, &buc, &cuc, &na, &nb, &nc,
 					&nanotuberadius);
@@ -90,8 +89,7 @@ int init_my_interp()
 {
 	int ii;
 	FILE *fpgridfile;
-	const int datalen = 200;
-	char buffer[200];
+	char buffer[STRING_LENGTH];
 	int nunique_atom;
 	char szgrid[200];
 	char keyword[100];
@@ -111,14 +109,14 @@ int init_my_interp()
 	// myinterp type = tasos type - 1
 	for (ii=0; ii<natom; ii++)
 	{
-		tasostype[ii] -= 1;
+		tasos_type[ii] -= 1;
 	}
 
 	// set up the variable needed for interpolation
 	_safealloc(interp_vector,32,sizeof(double))
 	;
 
-	while (fgets(buffer, datalen, fpins)!=NULL)
+	while (fgets(buffer, STRING_LENGTH, fpins)!=NULL)
 	{
 		sscanf(buffer, "%s", keyword);
 		for (ii=0; ii<strlen(keyword); ii++)
@@ -130,7 +128,7 @@ int init_my_interp()
 			fprintf(stderr,"Data section for myinterp found...\n");
 			fprintf(fpouts, "Data section for myinterp found...\n");
 
-			sscanf(fgets(buffer, datalen, fpins), "%lf %lf %lf %lf %lf %lf",
+			sscanf(fgets(buffer, STRING_LENGTH, fpins), "%lf %lf %lf %lf %lf %lf",
 					&uclx, &ucly, &uclz, &xcenter, &ycenter, &zcenter);
 			xmax = xcenter + uclx/2.0;
 			xmin = xcenter - uclx/2.0;
@@ -145,10 +143,10 @@ int init_my_interp()
 			fprintf(fpouts, "xmin=%lf  xmax=%lf\n", xmin, xmax);
 			fprintf(fpouts, "ymin=%lf  ymax=%lf\n", ymin, ymax);
 			fprintf(fpouts, "zmin=%lf  zmax=%lf\n", zmin, zmax);
-			sscanf(fgets(buffer, datalen, fpins), "%d", &nunique_atom);
+			sscanf(fgets(buffer, STRING_LENGTH, fpins), "%d", &nunique_atom);
 			for (ii=0; ii<nunique_atom; ii++)
 			{
-				sscanf(fgets(buffer, datalen, fpins), "%s", szgrid);
+				sscanf(fgets(buffer, STRING_LENGTH, fpins), "%s", szgrid);
 				fpgridfile = fopen(szgrid, "rb");
 				fread(&uclx_chk, sizeof(double), 1, fpgridfile);
 				fread(&ucly_chk, sizeof(double), 1, fpgridfile);
@@ -938,8 +936,7 @@ int get_values_from_grid(double fxx, double fyy, double fzz, int type,
 int init_sf_hypergeo()
 {
 	int ii;
-	const int datalen = 200;
-	char buffer[200];
+	char buffer[STRING_LENGTH];
 	char keyword[100];
 
 	fprintf(stderr,"Reading input data for hypergeometric nanotubes...\n");
@@ -948,7 +945,7 @@ int init_sf_hypergeo()
 	// re-open input file to read extra data section
 	fpins = fopen(INPUT,"r");
 
-	while (fgets(buffer, datalen, fpins)!=NULL)
+	while (fgets(buffer, STRING_LENGTH, fpins)!=NULL)
 	{
 		sscanf(buffer, "%s", keyword);
 		for (ii=0; ii<strlen(keyword); ii++)
@@ -964,7 +961,7 @@ int init_sf_hypergeo()
 			// assume all the tubes have the same parameters
 			solid_sigma = malloc(sizeof(double));
 			solid_epsilon = malloc(sizeof(double));
-			sscanf(fgets(buffer, datalen, fpins), "%d %lf %lf", &ntube,
+			sscanf(fgets(buffer, STRING_LENGTH, fpins), "%d %lf %lf", &ntube,
 					solid_sigma, solid_epsilon);
 			fprintf(stderr,"ntube=%d  sigma=%lf  epsilon=%lf\n",ntube,*solid_sigma,*solid_epsilon);
 			fprintf(fpouts, "ntube=%d  sigma=%lf  epsilon=%lf\n", ntube,
@@ -975,7 +972,7 @@ int init_sf_hypergeo()
 			hgnt_radius = calloc(ntube, sizeof(double));
 			for (ii=0; ii<ntube; ii++)
 			{
-				sscanf(fgets(buffer, datalen, fpins), "%lf %lf %lf",
+				sscanf(fgets(buffer, STRING_LENGTH, fpins), "%lf %lf %lf",
 						&hgntc_xx[ii], &hgntc_yy[ii], &hgnt_radius[ii]);
 				fprintf(stderr,"tube %d: xx=%lf  y=%lf  radius=%lf\n",ii,hgntc_xx[ii],hgntc_yy[ii],hgnt_radius[ii]);
 				fprintf(fpouts, "tube %d: xx=%lf  y=%lf  radius=%lf\n", ii,
@@ -1119,8 +1116,7 @@ int cal_sf_hypergeo()
 int init_sf_atom_explicit()
 {
 	int ii;
-	const int datalen = 200;
-	char buffer[200];
+	char buffer[STRING_LENGTH];
 	char keyword[100];
 	int itmp;
 
@@ -1130,7 +1126,7 @@ int init_sf_atom_explicit()
 	// re-open input file to read extra data section
 	fpins = fopen(INPUT,"r");
 
-	while (fgets(buffer, datalen, fpins)!=NULL)
+	while (fgets(buffer, STRING_LENGTH, fpins)!=NULL)
 	{
 		sscanf(buffer, "%s", keyword);
 		for (ii=0; ii<strlen(keyword); ii++)
@@ -1140,8 +1136,8 @@ int init_sf_atom_explicit()
 			fprintf(stderr,"Data section for atom explicit sorbents found...\n");
 			fprintf(fpouts,
 					"Data section for atom explicit sorbents found...\n");
-			sscanf(fgets(buffer, datalen, fpins), "%d", &solid_natom);
-			sscanf(fgets(buffer, datalen, fpins), "%d", &fSolid_type);
+			sscanf(fgets(buffer, STRING_LENGTH, fpins), "%d", &solid_natom);
+			sscanf(fgets(buffer, STRING_LENGTH, fpins), "%d", &fSolid_type);
 			// fSolid_type not yet in used
 			// if (fSolid_type==SOLID_UNIFORM)
 			{
@@ -1282,20 +1278,20 @@ int fnSffrcSession()
 	// virial for solid-fluid with solid fixed
 	// is not well defined
 
-	if (sf_type==SF_NANOTUBE_HYPERGEO)
+	if (iSF_type==SF_NANOTUBE_HYPERGEO)
 	{
 		cal_sf_hypergeo();
 	}
-	else if (sf_type==SF_NANOTUBE_ATOM_EXPLICIT)
+	else if (iSF_type==SF_NANOTUBE_ATOM_EXPLICIT)
 	{
 		cal_sf_atom_explicit();
 	}
-	else if (sf_type==SF_NANOTUBE_TASOS)
+	else if (iSF_type==SF_NANOTUBE_TASOS)
 	{
 		for (ii=0; ii<natom; ii++)
 		{
 			// call Tasos's code for force calculations
-			cforce_atom_(&tasostype[ii], &xx[ii], &yy[ii], &zz[ii],
+			cforce_atom_(&tasos_type[ii], &xx[ii], &yy[ii], &zz[ii],
 					&usflj_tasos, tasos_force);
 
 			// the tasos energy has unit of K and the force has unit of K/Angstrom
@@ -1311,11 +1307,11 @@ int fnSffrcSession()
 			fzl[ii] += tasos_force[2];
 		} // natom loop
 	}
-	else if (sf_type==SF_NANOTUBE_MY_INTERP)
+	else if (iSF_type==SF_NANOTUBE_MY_INTERP)
 	{
 		for (ii=0; ii<natom; ii++)
 		{
-			get_values_from_grid(xx[ii], yy[ii], zz[ii], tasostype[ii],
+			get_values_from_grid(xx[ii], yy[ii], zz[ii], tasos_type[ii],
 					&usflj_tasos, tasos_force);
 
 			gUsfljSession += usflj_tasos;

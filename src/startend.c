@@ -180,13 +180,13 @@ int ending()
 		free(zz_old);
 	}
 
-	if (sf_type==SF_NANOTUBE_HYPERGEO)
+	if (iSF_type==SF_NANOTUBE_HYPERGEO)
 	{
 		free(hgntc_xx);
 		free(hgntc_yy);
 		free(hgnt_radius);
 	}
-	else if (sf_type==SF_NANOTUBE_ATOM_EXPLICIT)
+	else if (iSF_type==SF_NANOTUBE_ATOM_EXPLICIT)
 	{
 		free(solid_sigma);
 		free(solid_epsilon);
@@ -195,7 +195,7 @@ int ending()
 		free(solid_yy);
 		free(solid_zz);
 	}
-	else if (sf_type==SF_NANOTUBE_MY_INTERP)
+	else if (iSF_type==SF_NANOTUBE_MY_INTERP)
 	{
 		// free memories
 		free(interp_vector);

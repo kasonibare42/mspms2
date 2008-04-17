@@ -1,6 +1,12 @@
 #ifndef FUNCS_H_
 #define FUNCS_H_
 
+int init_vars();
+int velinit();
+void get_specie_and_relative_atom_id(int abs_atom_id, int *specie_id,
+		int *rela_atom_id);
+int fnValidateInput();
+
 int fnSffrcSession();
 int fnErfrcSession(int iStartMole, int iEndMole);
 int fnRafrcSession(int iMole);
@@ -14,11 +20,9 @@ int saveit();
 int printit();
 int snapshot();
 int trajectory();
-int velinit();
 int echo();
 int vver_nh_3();
 int npt_respa();
-int init_vars();
 int init_sf_hypergeo();
 int init_sf_atom_explicit();
 int init_tasos_grid();
@@ -28,7 +32,6 @@ int init_nvt();
 int init_hmc();
 int hmc();
 int calculate_ljlrc();
-int fnValidateInput();
 int fnValidateInit();
 void rezero_nvt_ts();
 void rezero_npt_ts();

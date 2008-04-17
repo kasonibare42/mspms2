@@ -11,8 +11,7 @@
 int init_npt_respa()
 {
 	int ii;
-	const int datalen = 200;
-	char buffer[200];
+	char buffer[STRING_LENGTH];
 	char keyword[100];
 
 	fprintf(stderr,"Reading input data for MD NPT simulation...\n");
@@ -21,7 +20,7 @@ int init_npt_respa()
 	// re-open input file to read extra data section
 	fpins = fopen(INPUT,"r");
 
-	while (fgets(buffer, datalen, fpins)!=NULL)
+	while (fgets(buffer, STRING_LENGTH, fpins)!=NULL)
 	{
 		sscanf(buffer, "%s", keyword);
 		for (ii=0; ii<strlen(keyword); ii++)
@@ -33,7 +32,7 @@ int init_npt_respa()
 			fprintf(stderr,"Data section for MD NPT simulation found...\n");
 			fprintf(fpouts, "Data section for MD NPT simulation found...\n");
 
-			sscanf(fgets(buffer, datalen, fpins), "%lf %lf", &Qts, &Qbs);
+			sscanf(fgets(buffer, STRING_LENGTH, fpins), "%lf %lf", &Qts, &Qbs);
 
 			// thermo/barostat
 			utsbs = 0.0;

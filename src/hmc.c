@@ -15,8 +15,7 @@
 int init_hmc()
 {
 	int ii;
-	const int datalen = 200;
-	char buffer[200];
+	char buffer[STRING_LENGTH];
 	char keyword[100];
 	int position_counter;
 
@@ -26,7 +25,7 @@ int init_hmc()
 	// re-open input file to read extra data section
 	fpins = fopen(INPUT,"r");
 
-	while (fgets(buffer, datalen, fpins)!=NULL)
+	while (fgets(buffer, STRING_LENGTH, fpins)!=NULL)
 	{
 		sscanf(buffer, "%s", keyword);
 		for (ii=0; ii<strlen(keyword); ii++)
@@ -38,14 +37,14 @@ int init_hmc()
 			fprintf(stderr,"Data section for HMC simulation found...\n");
 			fprintf(fpouts, "Data section for HMC simulation found...\n");
 
-			sscanf(fgets(buffer, datalen, fpins), "%d", &nstep_md_per_hmc);
-			sscanf(fgets(buffer, datalen, fpins), "%lf %lf %lf", &prob_cm,
+			sscanf(fgets(buffer, STRING_LENGTH, fpins), "%d", &nstep_md_per_hmc);
+			sscanf(fgets(buffer, STRING_LENGTH, fpins), "%lf %lf %lf", &prob_cm,
 					&prob_vc, &prob_id);
-			sscanf(fgets(buffer, datalen, fpins), "%lf %lf", &ratio_cm_req,
+			sscanf(fgets(buffer, STRING_LENGTH, fpins), "%lf %lf", &ratio_cm_req,
 					&ratio_vc_req);
-			sscanf(fgets(buffer, datalen, fpins), "%d %d",
+			sscanf(fgets(buffer, STRING_LENGTH, fpins), "%d %d",
 					&nstep_delt_adj_cycle, &nstep_delv_adj_cycle);
-			sscanf(fgets(buffer, datalen, fpins), "%lf", &delv);
+			sscanf(fgets(buffer, STRING_LENGTH, fpins), "%lf", &delv);
 
 			// printf("prob_id = %lf\n",prob_id);
 			// printf("delv = %lf\n",delv);
@@ -53,7 +52,7 @@ int init_hmc()
 			// readin insertion/deletion input data if required
 			if (prob_id > 0.0)
 			{
-				fgets(buffer, datalen, fpins);
+				fgets(buffer, STRING_LENGTH, fpins);
 				position_counter = 0;
 				for (ii=0; ii<nspecie; ii++)
 				{

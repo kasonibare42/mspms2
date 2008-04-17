@@ -111,7 +111,7 @@ int loadit()
 	}
 
 	// read counters and accumulators only if its a continue run
-	if (fStart_option==CONTINUE)
+	if (iStart_option==CONTINUE)
 	{
 		fread(&bEquilibrium, sizeof(bool), 1, fpload);
 		fread(&istep, sizeof(int), 1, fpload);

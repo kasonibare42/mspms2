@@ -11,10 +11,10 @@
  */
 int fnValidateInput()
 {
-	int isError;
+	bool isError;
 	double fMinBoxLength;
 
-	isError = 0;
+	isError = false;
 
 	if (ij<0 || ij>31328 || jk<0 || jk>30081)
 	{
@@ -31,14 +31,14 @@ int fnValidateInput()
 				fpouts,
 				"Error: The second seed must have a value between 0 and 30081. jk = %d\n",
 				jk);
-		isError = 1;
+		isError = true;
 	}
 	
 	if (what_simulation<MOLECULAR_DYNAMICS || what_simulation>SIMULATED_ANNEALING)
 	{
 		fprintf(stderr,"Error: unknown simulation type.\n");
 		fprintf(fpouts, "Error: unknown simulation type.\n");
-		isError = 1;
+		isError = true;
 	}
 
 	if (treq < 0.0)
@@ -46,7 +46,7 @@ int fnValidateInput()
 		fprintf(stderr,"Error: Invalid required temperature. treq = %lf\n",treq);
 		fprintf(fpouts, "Error: Invalid required temperature. treq = %lf\n",
 				treq);
-		isError = 1;
+		isError = true;
 	}
 
 	if (boxlx<=0.0 || boxly<=0.0 || boxlz<=0.0)
@@ -56,7 +56,7 @@ int fnValidateInput()
 				fpouts,
 				"Error: Invalid box size, boxlx = %lf, boxly = %lf, boxlz = %lf\n",
 				boxlx, boxly, boxlz);
-		isError = 1;
+		isError = true;
 	}
 
 	fMinBoxLength = boxlx;
@@ -71,30 +71,29 @@ int fnValidateInput()
 				fpouts,
 				"Error: Invalid cutoff. rcuton = %lf, rcutoff = %lf, rcutoffelec = %lf\n",
 				rcuton, rcutoff, rcutoffelec);
-		isError = 1;
+		isError = true;
 	}
 
-	if (sf_type < SF_NONE || sf_type > SF_NANOTUBE_MY_INTERP)
+	if (iSF_type < SF_NONE || iSF_type > SF_NANOTUBE_MY_INTERP)
 	{
-		fprintf(stderr,"Error: Invalid solid-fluid interaction type. sf_type = %d\n",sf_type);
+		fprintf(stderr,"Error: Invalid solid-fluid interaction type. iSF_type = %d\n",iSF_type);
 		fprintf(fpouts,
-				"Error: Invalid solid-fluid interaction type. sf_type = %d\n",
-				sf_type);
-		isError = 1;
+				"Error: Invalid solid-fluid interaction type. iSF_type = %d\n",
+				iSF_type);
+		isError = true;
 	}
 
-	if (iChargeType < ELECTROSTATIC_NONE || iChargeType
-			> ELECTROSTATIC_SIMPLE_COULOMB)
+	if (iChargeType < ELECTROSTATIC_NONE || iChargeType > ELECTROSTATIC_SIMPLE_COULOMB)
 	{
 		fprintf(stderr,"Error: Invalid electrostatic interaction type. iChargeType = %d\n", iChargeType);
 		fprintf(
 				fpouts,
 				"Error: Invalid electrostatic interaction type. iChargeType = %d\n",
 				iChargeType);
-		isError = 1;
+		isError = true;
 	}
 
-	if (isError == 1)
+	if (isError == true)
 	{
 		exit(1);
 	}

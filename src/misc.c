@@ -17,6 +17,25 @@
 #include <ctype.h>
 #include "mspms2.h"
 
+void get_specie_and_relative_atom_id(int abs_atom_id, int *specie_id,
+		int *rela_atom_id)
+{
+	int ii, iAtom;
+	
+	iAtom = 0;
+	for (ii=0; ii<nspecie; ii++)
+	{
+		if (abs_atom_id < iAtom+natom_per_specie[ii])
+		{
+			// We know this atom is for this specie
+			*specie_id = ii;
+			*rela_atom_id = (abs_atom_id-iAtom)%sample_natom_per_mole[ii];
+			break;
+		}
+		iAtom += natom_per_specie[ii];
+	}
+}
+
 int calculate_ljlrc()
 {
 	int mm, nn;
@@ -38,5 +57,4 @@ int calculate_ljlrc()
 
 	return 0;
 }
-
 

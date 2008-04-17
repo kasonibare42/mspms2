@@ -1,29 +1,47 @@
 #ifndef VARS_H
 #define VARS_H   
 
-/// File operators
-FILE *fpins, *fpouts, *fpcfg, *fplog;
-FILE *fpss, *fptrj, *fpsave, *fpload;
-FILE *fpcoords;
+#define STRING_LENGTH		200
 
-int nstep, nstep_eq, nstep_start, nstep_end; ///< nstep_start is the starting step for continue runs 
-int fStart_option; ///< 1-new run, 2-continue run, 3-new from old
-bool bEquilibrium; ///< Are we still in equilibrium run?
-/// steps for averages, print out, save, snapshots, trajectory
-int nstep_ave, nstep_print, nstep_save, nstep_ss, nstep_trj;
-int nstep_inner; ///< inner step for multi time step
-double delt; ///< time step
-double deltby2, delts, deltsby2;
-int ij, jk;
-double treq, preq; ///< input required temperature, pressure
-double boxv, boxlx, boxly, boxlz; ///< box size
-int nconstraint; ///< constraint, 3 for periodic, 6 for aperiodic
-double rcutoff, rcutoffsq, rcuton, rcutonsq;
-double rcutoffelec, rcutoffelecsq;
-int iInterMolePotType; ///< Inter molecular potential model type
-double f0; ///< 1,4 LJ potential modifier for OPLS, set to 1.0 for no modification or 0.5 for OPLS or 0.0 for TraPPE.
-int isLJswitchOn; ///< use switch potential for LJ or not
+/// File operators
+FILE *fpins, *fpouts, *fpcfg, *fplog, *fpss, *fptrj, *fpsave, *fpload, *fpcoords;
+
+/*************************************************************************************
+ * Input parameters and their direct related variables
+ *************************************************************************************/
+char title[200]; ///< Title of the simulation
+int ij, jk; ///< Random seeds
+double sigma_base, epsilon_base, mass_base; ///< Base units for reduced units
+double time_base, pressure_base; ///< Derived reduced units
+double treq, preq; ///< input required temperature (K), pressure (bar)
+double boxlx, boxly, boxlz; ///< box size
+double boxv;
+double rcutoff, rcuton, rcutoffelec;
+double rcutoffsq, rcutonsq, rcutoffelecsq;
 int isLJlrcOn; ///< if L-J long range correction is ON
+int isLJswitchOn; ///< use switch potential for LJ or not
+int iStart_option; ///< 1-new run, 2-continue run, 3-new from old
+/// Number of steps for total, equilibrium, averages, print, save, snapshots, trajectory
+int nstep, nstep_eq, nstep_ave, nstep_print, nstep_save, nstep_ss, nstep_trj;
+int nstep_start, nstep_end; ///< nstep_start is the starting step for continue runs 
+bool bEquilibrium; ///< Are we still in equilibrium run?
+double delt; ///< time step
+int nstep_inner; ///< inner step for multi time step
+double deltby2, delts, deltsby2;
+double f0; ///< 1,4 LJ potential modifier (1.0-no modification;0.5-OPLS;0.0-TraPPE)
+int what_simulation; ///< simulation type, MD, HMC, etc.
+int what_ensemble; ///< what type of ensemble, NVT, NPT etc.
+int nconstraint; ///< constraint, 3 for periodic, 6 for aperiodic
+int iInterMolePotType; ///< Inter molecular potential model type
+int iChargeType; ///< Electrostatic interaction type
+int iSF_type; ///< Solid-fluid interaction type
+int iExternal_FF_type; ///< flag of other non-standard force fields
+/*************************************************************************************
+ * End of Input parameters and their direct related variables
+ *************************************************************************************/
+
+
+
 double probability_to_be_selected[NSPECIE_MAX]; ///< The probability for a specie to be selected for insertion/deletion
 double probability_to_insert[NSPECIE_MAX]; ///< The probability to insert a molecule for a specie
 double fugacity_required[NSPECIE_MAX]; ///< required Fugacity of each specie 
@@ -37,7 +55,6 @@ double zact[NSPECIE_MAX]; ///< fugacity related variable for insertion/deletion
  * 2 - Wolf's method\n
  * 3 - Simple direct coulomb interaction\n
  */
-int iChargeType; 
 int isEwaldOn; ///< Ewald summation electrostatic interactions
 int fEwald_BC; ///< flag of boundary condition for ewald summation. 1-tinfoil; 2-vacuum
 int fEwald_Dim; ///< flag of Ewald method dimension. 1, 2 or 3 dimension.
@@ -46,10 +63,7 @@ int isSimpleCoulomb; ///< simple coulomb interactions on/off
 double kappa, kappasq; ///< sqrt(alpha) in ewald summation. 
 int KMAXX, KMAXY, KMAXZ; ///< ewald parameters
 int KSQMAX; ///< ewald parameter
-int what_simulation; ///< simulation type, MD, HMC, etc.
-int what_ensemble; ///< what type of ensemble, NVT, NPT etc.
 int whichNH; ///< which nose hoover subroutine to use? usually 3 for molecule, 2 for atoms, see more details in nvtnh.c
-int fOtherFF; ///< flag of other non-standard force fields
 /** 
  * \brief solid-fluid type. for different nanotube potentials and future possible other materials
  * 
@@ -59,7 +73,6 @@ int fOtherFF; ///< flag of other non-standard force fields
  * 3 - Tasos interpolation\n
  * 4 - Yang's interpolation\n
  */
-int sf_type; 
 
 int istep; ///< counter of step, current step
 double utot; ///< calculated in printit()

@@ -84,11 +84,12 @@
 
 #define STEP_SIZE	1.0e-8
 
+#define AVOGADRO	6.0221415e23    ///< mol^-1
+#define BOLTZMAN_CONSTANT   1.3806505e-23  ///< J/K
 #define PLANCK_CONSTANT		6.6260693e-34		///< J*s or (kg*m^2/s)
 #define HBAR		1.05457168e-34		///< J*s or (kg*m^2/s)
 #define RGAS		8.314472 ///< J/mol/K 
 #define R_RGAS		0.120272219 ///< reciprocal of RGAS
-#define AVOGADRO	6.0221415e23    ///< mol^-1
 #define HBAR_AVOGADRO_SQ		4.03324050696405689198634513984e-21			///< (hbar*avogadro)^2
 #define COULOMB_CONSTANT	1389355.1051  ///< unit is J/mol. Na*(1.602177e-19)^2/4/PI/epsilon0/(1.0e-10)
 #define KB_OVER_1E30		1.3806505e7   ///< kb/1e-30  

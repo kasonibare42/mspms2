@@ -260,7 +260,7 @@ int InitInsertedMole(int iSpecieSelected, int iMoleSelected)
 		sigma[iAtom] = sample_sigma[kk];
 		charge[iAtom] = sample_charge[kk];
 		ghost_type[iAtom] = sample_ghost_type[kk];
-		tasostype[iAtom] = sample_tasostype[kk];
+		tasos_type[iAtom] = sample_tasos_type[kk];
 		iAtom++;
 	}
 	mole_last_atom_idx[iMole] = iAtom;
