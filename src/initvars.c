@@ -10,7 +10,7 @@
 /**
  * Check if any dihedral, angle, bond share the same ending pairs.
  */
-int CheckUniques()
+int InitCheckUniques()
 {
 	int ii, jj;
 	int iFirst_Dih, iLast_Dih, iFirst_Agl, iLast_Agl, iFirst_Bnd, iLast_Bnd;
@@ -154,69 +154,326 @@ int velinit()
 	int ii;
 	double px, py, pz;
 	double stdvtmp, stdv;
-	double totalmass;
-	double scaling;
-	int specie_id, rela_atom_id;
+	int specie_id, rela_atom_id, sample_atom_id;
 
-	totalmass = 0.0;
 	px = py = pz = 0.0;
 	// mv^2=kT, So, p = sqrt(kTm), v = sqrt(kT/m)
 	// Use reduced units, v* = sqrt(T*/m*)
 	stdvtmp = sqrt(treq);
 	
-
 	for (ii=0; ii<natom; ii++)
 	{
 		// From index ii, we calculate which specie this atom belongs to and
 		// its position within a molecule
-		get_specie_and_relative_atom_id(ii, &specie_id, &rela_atom_id);
-		// stdv = stdvtmp/sqrt(sample_aw[]);
-		stdv = stdvtmp/sqrt(aw[ii]);
+		get_specie_and_relative_atom_id(ii, &specie_id, &rela_atom_id, &sample_atom_id);
+		stdv = stdvtmp/sqrt(sample_aw[sample_atom_id]);
 		vx[ii] = stdv*gaussran();
 		vy[ii] = stdv*gaussran();
 		vz[ii] = stdv*gaussran();
-		px += vx[ii]*aw[ii];
-		py += vy[ii]*aw[ii];
-		pz += vz[ii]*aw[ii];
-		totalmass += aw[ii];
+		px += vx[ii]*sample_aw[sample_atom_id];
+		py += vy[ii]*sample_aw[sample_atom_id];
+		pz += vz[ii]*sample_aw[sample_atom_id];
 	}
 	// zero the momentum
-	px /= totalmass;
-	py /= totalmass;
-	pz /= totalmass;
+	px /= natom;
+	py /= natom;
+	pz /= natom;
 	for (ii=0; ii<natom; ii++)
 	{
-		vx[ii] -= px;
-		vy[ii] -= py;
-		vz[ii] -= pz;
+		get_specie_and_relative_atom_id(ii, &specie_id, &rela_atom_id, &sample_atom_id);
+		vx[ii] -= px/sample_aw[sample_atom_id];
+		vy[ii] -= py/sample_aw[sample_atom_id];
+		vz[ii] -= pz/sample_aw[sample_atom_id];
 	}
 	// rescale velocity for required temperature
 	ukin = 0.0;
 	for (ii=0; ii<natom; ii++)
 	{
-		ukin += aw[ii]*(vx[ii]*vx[ii]+vy[ii]*vy[ii]+vz[ii]*vz[ii]);
+		get_specie_and_relative_atom_id(ii, &specie_id, &rela_atom_id, &sample_atom_id);
+		ukin += sample_aw[sample_atom_id]*(vx[ii]*vx[ii]+vy[ii]*vy[ii]+vz[ii]*vz[ii]);
 	}
 	ukin = 0.5*ukin;
-	tinst = 2.0*ukin/(RGAS*nfree);
-	scaling = sqrt(treq/tinst);
-	for (ii=0; ii<natom; ii++)
-	{
-		vx[ii] *= scaling;
-		vy[ii] *= scaling;
-		vz[ii] *= scaling;
-	}
-	// recalculate the kinetic energy and instantaneous temperature
-	// should be exactly the set tempature
-	ukin = 0.0;
-	for (ii=0; ii<natom; ii++)
-	{
-		ukin += aw[ii]*(vx[ii]*vx[ii]+vy[ii]*vy[ii]+vz[ii]*vz[ii]);
-	}
-	ukin = 0.5*ukin;
-	tinst = 2.0*ukin/(RGAS*nfree);
-
+	tinst = 2.0*ukin/nfree;
+	
 	return 0;
 }
+
+// Read and initialize the necessary variables for HMC
+int init_hmc()
+{
+	int ii;
+	char buffer[STRING_LENGTH];
+	char keyword[100];
+	int position_counter;
+
+	fprintf(stderr,"Reading input data for HMC simulation...\n");
+	fprintf(fpouts, "Reading input data for HMC simulation...\n");
+
+	// re-open input file to read extra data section
+	fpins = fopen(INPUT,"r");
+
+	while (fgets(buffer, STRING_LENGTH, fpins)!=NULL)
+	{
+		sscanf(buffer, "%s", keyword);
+		for (ii=0; ii<strlen(keyword); ii++)
+		{
+			keyword[ii] = toupper(keyword[ii]);
+		}
+		if (!strcmp(keyword, "HMC"))
+		{
+			fprintf(stderr,"Data section for HMC simulation found...\n");
+			fprintf(fpouts, "Data section for HMC simulation found...\n");
+
+			sscanf(fgets(buffer, STRING_LENGTH, fpins), "%d", &nstep_md_per_hmc);
+			sscanf(fgets(buffer, STRING_LENGTH, fpins), "%lf", &pdisp);
+			sscanf(fgets(buffer, STRING_LENGTH, fpins), "%lf", &pvolm);
+			sscanf(fgets(buffer, STRING_LENGTH, fpins), "%lf", &pmake);
+			sscanf(fgets(buffer, STRING_LENGTH, fpins), "%lf", &pkill);
+			sscanf(fgets(buffer, STRING_LENGTH, fpins), "%lf", &rreq_disp);
+			sscanf(fgets(buffer, STRING_LENGTH, fpins), "%lf", &rreq_volm);
+			sscanf(fgets(buffer, STRING_LENGTH, fpins), "%lf", &delv);
+			sscanf(fgets(buffer, STRING_LENGTH, fpins), "%d", &nstep_delt_adj_cycle);
+			sscanf(fgets(buffer, STRING_LENGTH, fpins), "%d", &nstep_delv_adj_cycle);
+
+			// Read insertion/deletion input data if required
+			if (pmake+pkill > 0.0)
+			{
+				for (ii=0; ii<nspecie; ii++)
+				{
+					sscanf(fgets(buffer, STRING_LENGTH, fpins), "%lf %lf", &cpt[ii], &pcomp[ii]);
+					// initialize zact
+					zact[ii] = exp(cpt[ii]/treq)*boxv;
+				}
+			}
+
+			// Allocate memory for saving positions
+			_safealloc(xx_old,natom,sizeof(double)) ;
+			_safealloc(yy_old,natom,sizeof(double)) ;
+			_safealloc(zz_old,natom,sizeof(double)) ;
+
+			fclose(fpins);
+			return 0;
+		} // if keyword found
+	} // read through the lines
+	fprintf(stderr,"Error: Data for HMC simulation not found.\n");
+	fprintf(fpouts, "Error: Data for HMC simulation not found.\n");
+	fclose(fpins);
+	exit(1);
+}
+
+/// Read parameters from the input file for MDNVT and initialize the variables needed for NVT simulation
+int init_nvt()
+{
+	int ii;
+	char buffer[STRING_LENGTH];
+	char keyword[100];
+
+	fprintf(stderr,"Reading input data for MD NVT simulation...\n");
+	fprintf(fpouts, "Reading input data for MD NVT simulation...\n");
+
+	// re-open input file to read extra data section
+	fpins = fopen(INPUT,"r");
+
+	while (fgets(buffer, STRING_LENGTH, fpins)!=NULL)
+	{
+		sscanf(buffer, "%s", keyword);
+		for (ii=0; ii<strlen(keyword); ii++)
+		{
+			keyword[ii] = toupper(keyword[ii]);
+		}
+		if (!strcmp(keyword, "MDNVT"))
+		{
+			fprintf(stderr,"Data section for MD NVT simulation found...\n");
+			fprintf(fpouts, "Data section for MD NVT simulation found...\n");
+			sscanf(fgets(buffer, STRING_LENGTH, fpins), "%lf %lf", &qq, &qqs);
+
+			/**
+			 * Qts = RGAS*treq*nfree/Omega
+			 * where Omega is a parameter related to the mass of the thermostat
+			 * for this program, we read in the Qts directly.
+			 */
+			// variables for nose-hoover NVT, see frenkel and smit
+			delt_sqby2 = delt*delt/2.0;
+			delts_sqby2 = delts*delts/2.0;
+			unhts = 0.0;
+			gg = nfree; // need double check
+			ss = 0.0;
+			ps = 0.0;
+			ggs = nfree;
+			sss = 0.0;
+			pss = 0.0;
+			unhtss = 0.0;
+
+			fclose(fpins);
+			return 0;
+		} // if keyword found
+	} // read through lines
+	fprintf(stderr,"Error: data for MD NVT not found.\n");
+	fprintf(fpouts, "Error: data for MD NVT not found.\n");
+	fclose(fpins);
+	exit(1);
+}
+
+// Read and initialize NPT related variables
+int init_npt_respa()
+{
+	int ii;
+	char buffer[STRING_LENGTH];
+	char keyword[100];
+
+	fprintf(stderr,"Reading input data for MD NPT simulation...\n");
+	fprintf(fpouts, "Reading input data for MD NPT simulation...\n");
+
+	// re-open input file to read extra data section
+	fpins = fopen(INPUT,"r");
+
+	while (fgets(buffer, STRING_LENGTH, fpins)!=NULL)
+	{
+		sscanf(buffer, "%s", keyword);
+		for (ii=0; ii<strlen(keyword); ii++)
+		{
+			keyword[ii] = toupper(keyword[ii]);
+		}
+		if (!strcmp(keyword, "MDNPT"))
+		{
+			fprintf(stderr,"Data section for MD NPT simulation found...\n");
+			fprintf(fpouts, "Data section for MD NPT simulation found...\n");
+
+			sscanf(fgets(buffer, STRING_LENGTH, fpins), "%lf %lf", &Qts, &Qbs);
+
+			// thermo/barostat
+			utsbs = 0.0;
+			vts = sqrt((nfree+1.0)/Qts);
+			vbs = sqrt((nfree+1.0)/Qbs);
+			rts = 0.0;
+
+			utsbs = 0.5*Qbs*vbs*vbs + 0.5*Qts*vts*vts + (nfree+1)*treq*rts
+					+ preq*boxv;
+
+			fclose(fpins);
+			return 0;
+		} // if keyword found
+	} // read through lines
+	fprintf(stderr,"Error: data for MD NPT not found.\n");
+	fprintf(fpouts, "Error: data for MD NPT not found.\n");
+	fclose(fpins);
+	exit(1);
+}
+
+
+// Read and initialize hypergeo nanotubes
+int init_sf_hypergeo()
+{
+	int ii;
+	char buffer[STRING_LENGTH];
+	char keyword[100];
+
+	fprintf(stderr,"Reading input data for hypergeometric nanotubes...\n");
+	fprintf(fpouts, "Reading input data for hypergeometric nanotubes...\n");
+
+	// re-open input file to read extra data section
+	fpins = fopen(INPUT,"r");
+
+	while (fgets(buffer, STRING_LENGTH, fpins)!=NULL)
+	{
+		sscanf(buffer, "%s", keyword);
+		for (ii=0; ii<strlen(keyword); ii++)
+		{
+			keyword[ii] = toupper(keyword[ii]);
+		}
+		if (!strcmp(keyword, "HYPERGEO"))
+		{
+			fprintf(stderr,"Data section for hypergeometric nanotoubes found...\n");
+			fprintf(fpouts, "Data section for hypergeometric nanotoubes found...\n");
+			// use solid sigma and epsilon for hypergeometric parameters
+			// assume all the tubes have the same parameters
+			solid_sigma = malloc(sizeof(double));
+			solid_epsilon = malloc(sizeof(double));
+			sscanf(fgets(buffer, STRING_LENGTH, fpins), "%d", &ntube);
+			sscanf(fgets(buffer, STRING_LENGTH, fpins), "%lf", solid_sigma);
+			sscanf(fgets(buffer, STRING_LENGTH, fpins), "%lf", solid_epsilon);
+			
+			fprintf(stderr,"ntube=%d  sigma=%lf  epsilon=%lf\n",ntube,*solid_sigma,*solid_epsilon);
+			fprintf(fpouts, "ntube=%d  sigma=%lf  epsilon=%lf\n", ntube,*solid_sigma, *solid_epsilon);
+			
+			// allocate memories
+			hgntc_xx = calloc(ntube, sizeof(double));
+			hgntc_yy = calloc(ntube, sizeof(double));
+			hgnt_radius = calloc(ntube, sizeof(double));
+			for (ii=0; ii<ntube; ii++)
+			{
+				sscanf(fgets(buffer, STRING_LENGTH, fpins), "%lf %lf %lf", &hgntc_xx[ii], &hgntc_yy[ii], &hgnt_radius[ii]);
+				fprintf(stderr,"tube %d: xx=%lf  y=%lf  radius=%lf\n",ii,hgntc_xx[ii],hgntc_yy[ii],hgnt_radius[ii]);
+				fprintf(fpouts, "tube %d: xx=%lf  y=%lf  radius=%lf\n", ii,hgntc_xx[ii], hgntc_yy[ii], hgnt_radius[ii]);
+			}
+			fclose(fpins);
+			return 0;
+		} // if keyword found
+	} // read through the lines
+	fprintf(stderr,"Error: data for heypergeometric nanotubes not found.\n");
+	fprintf(fpouts, "Error: data for heypergeometric nanotubes not found.\n");
+	fclose(fpins);
+	exit(1);
+}
+
+// Read and initialize atom explicit adsorbents
+int init_sf_atom_explicit()
+{
+	int ii;
+	char buffer[STRING_LENGTH];
+	char keyword[100];
+	int itmp;
+
+	fprintf(stderr,"Reading input data for atom explicit sorbents...\n");
+	fprintf(fpouts, "Reading input data for atom explicit sorbents...\n");
+
+	// re-open input file to read extra data section
+	fpins = fopen(INPUT,"r");
+
+	while (fgets(buffer, STRING_LENGTH, fpins)!=NULL)
+	{
+		sscanf(buffer, "%s", keyword);
+		for (ii=0; ii<strlen(keyword); ii++)
+			keyword[ii] = toupper(keyword[ii]);
+		if (!strcmp(keyword, "ATOMEXPLICIT"))
+		{
+			fprintf(stderr,"Data section for atom explicit sorbents found...\n");
+			fprintf(fpouts,
+					"Data section for atom explicit sorbents found...\n");
+			sscanf(fgets(buffer, STRING_LENGTH, fpins), "%d", &solid_natom);
+			sscanf(fgets(buffer, STRING_LENGTH, fpins), "%d", &fSolid_type);
+			// fSolid_type not yet in used
+			// if (fSolid_type==SOLID_UNIFORM)
+			{
+				solid_sigma = malloc(sizeof(double));
+				solid_epsilon = malloc(sizeof(double));
+				solid_charge = malloc(sizeof(double));
+				// epsilon must be J/mol!! important
+				sscanf(buffer, "%d %lf %lf %lf", &itmp, solid_sigma,
+						solid_epsilon, solid_charge);
+			}
+			solid_xx = calloc(solid_natom, sizeof(double));
+			solid_yy = calloc(solid_natom, sizeof(double));
+			solid_zz = calloc(solid_natom, sizeof(double));
+			assert(solid_xx!=NULL);
+			assert(solid_yy!=NULL);
+			assert(solid_zz!=NULL);
+			// readin solid coordinates
+			for (ii=0; ii<solid_natom; ii++)
+			{
+				fscanf(fpins, "%s %lf %lf %lf\n", buffer, &solid_xx[ii],
+						&solid_yy[ii], &solid_zz[ii]);
+			}
+			fclose(fpins);
+			return 0;
+		} // if keyword found
+	} // read through the lines
+	fprintf(stderr,"Error: data for atom explicit sorbents not found.\n");
+	fprintf(fpouts, "Error: data for atom explicit sorbents not found.\n");
+	fclose(fpins);
+	exit(1);
+}
+
 
 /// Read in electrostatic parametes and initialize related variables
 int fnInitCharge()
@@ -250,13 +507,16 @@ int fnInitCharge()
 			{
 				isEwaldOn = 1;
 				sscanf(fgets(buffer, STRING_LENGTH, fpins), "%lf", &kappa);
-				sscanf(fgets(buffer, STRING_LENGTH, fpins), "%d %d %d %d",
-						&KMAXX, &KMAXY, &KMAXZ, &KSQMAX);
-				sscanf(fgets(buffer, STRING_LENGTH, fpins), "%d %d",
-						&fEwald_BC, &fEwald_Dim);
+				sscanf(fgets(buffer, STRING_LENGTH, fpins), "%d", &KMAXX);
+				sscanf(fgets(buffer, STRING_LENGTH, fpins), "%d", &KMAXY);
+				sscanf(fgets(buffer, STRING_LENGTH, fpins), "%d", &KMAXZ);
+				sscanf(fgets(buffer, STRING_LENGTH, fpins), "%d", &KSQMAX);
+				sscanf(fgets(buffer, STRING_LENGTH, fpins), "%d", &fEwald_BC);
+				sscanf(fgets(buffer, STRING_LENGTH, fpins), "%d", &fEwald_Dim);
 
 				// Initialization
 				// set ewald parameters
+				kappa = kappa*sigma_base; // Reduce the kappa
 				kappasq = kappa*kappa;
 				Bfactor_ewald = 1.0/(4.0*kappa*kappa);
 				Vfactor_ewald = 2.0*pi/(boxlx*boxly*boxlz);
@@ -270,8 +530,9 @@ int fnInitCharge()
 			{
 				isWolfOn = 1;
 				sscanf(fgets(buffer, STRING_LENGTH, fpins), "%lf", &kappa);
-
+				
 				// set wolf parameters
+				kappa = kappa*sigma_base; // Reduce the kappa
 				wolfvcon1 = -erfc(kappa*rcutoffelec)/rcutoffelec;
 				wolfvcon2 = erfc(kappa*rcutoffelec)/rcutoffelecsq + 2.0*kappa
 						*exp(-(kappa *rcutoffelec)*(kappa*rcutoffelec))
@@ -328,21 +589,15 @@ int InitLJlrcCommonTerms()
 				for (jj=0; jj<sample_natom_per_mole[nn]; jj++)
 				{
 					atomid_2 = sample_mole_first_atom_idx[nn] + ii;
-					sigmaij = 0.5*(sample_sigma[atomid_1]
-					+sample_sigma[atomid_2]);
-					epsilonij = sqrt(sample_epsilon[atomid_1]
-					*sample_epsilon[atomid_2]);
-					temp1 = pow(sigmaij, 9.0)*uljlrc_term1 + pow(sigmaij, 3.0)
-							*uljlrc_term2;
+					sigmaij = 0.5*(sample_sigma[atomid_1]+sample_sigma[atomid_2]);
+					epsilonij = sqrt(sample_epsilon[atomid_1]*sample_epsilon[atomid_2]);
+					temp1 = pow(sigmaij, 9.0)*uljlrc_term1 + pow(sigmaij, 3.0)*uljlrc_term2;
 					temp2 = epsilonij*pow(sigmaij, 3.0);
-					temp3 = pow(sigmaij, 9.0)*pljlrc_term1 + pow(sigmaij, 3.0)
-							*pljlrc_term2;
+					temp3 = pow(sigmaij, 9.0)*pljlrc_term1 + pow(sigmaij, 3.0)*pljlrc_term2;
 					uljlrc_term[mm][nn] += temp1*temp2;
 					pljlrc_term[mm][nn] += temp3*temp2;
-
 				} // through all atom in one molecule of specie 2
 			} // through all atom in one molecule of specie 1
-
 		} // loop through specie 2
 	} // loop through speice 1
 
@@ -362,7 +617,6 @@ int InitLJlrcCommonTerms()
 int init_vars()
 {
 	int ii, jj, kk;
-	int iAtom, iMole, iBond, iAngle, iDih, iImp, iNbp;
 
 	fprintf(stderr,"Initializing variables...\n");
 	fprintf(fpouts, "Initializing variables...\n");
@@ -425,8 +679,13 @@ int init_vars()
 	dt_outer8 = delt/8.0;
 	
 	// Check if any bond, angle, dihedral share the same ending pairs.
-	CheckUniques();
-
+	InitCheckUniques();
+	
+	// initialize velocities for needed simulations
+	fprintf(stderr, "initializing velocities...\n");
+	fprintf(fpouts, "initializing velocities...\n");
+	velinit();
+	
 	if (what_simulation == MOLECULAR_DYNAMICS)
 	{
 	}
@@ -436,23 +695,18 @@ int init_vars()
 	}
 	else if (what_simulation == SIMULATED_ANNEALING)
 	{
-		init_siman();
+		// init_siman();
 	}
 
 	// initialize thermostat/baron stat input data
-	if (what_ensemble == NPT)
-	{
-		init_npt_respa();
-	}
-	else if (what_ensemble == NVT)
+	if (what_ensemble == NVT)
 	{
 		init_nvt();
 	}
-
-	// initialize velocities for needed simulations
-	fprintf(stderr, "initializing velocities...\n");
-	fprintf(fpouts, "initializing velocities...\n");
-	velinit();
+	else if (what_ensemble == NPT)
+	{
+		init_npt_respa();
+	}
 
 	// If Solid-fluid interaction is required, initiliaze the related variables.
 	if (iSF_type==SF_NANOTUBE_HYPERGEO)

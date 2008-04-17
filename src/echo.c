@@ -234,14 +234,14 @@ int echo()
 		fprintf(
 				fpouts,
 				"    The probability of MD move is %lf, with required acceptance ratio %lf. The delt (%lf) will be adjusted every %d trials.\n",
-				prob_cm, ratio_cm_req, delt, nstep_delt_adj_cycle);
+				pdisp, rreq_disp, delt, nstep_delt_adj_cycle);
 		fprintf(
 				fpouts,
 				"    The probability of Volume Change move is %lf, with required acceptance ratio %lf. The delv (%lf) will be adjusted every %d trials.\n",
-				prob_vc, ratio_vc_req, delv, nstep_delv_adj_cycle);
+				pvolm, rreq_volm, delv, nstep_delv_adj_cycle);
 		fprintf(fpouts,
 				"    The probability of insertion/deletion move is %lf.\n",
-				prob_id);
+				pmake);
 	}
 
 	if (iSF_type != SF_NONE)

@@ -153,7 +153,7 @@ int ending()
 				*1.0/counts[20]);
 		fprintf(fpouts, "   delt                     %15.4lf\n", delt);
 
-		if (prob_vc > 0.0)
+		if (pvolm > 0.0)
 		{
 			fprintf(fpouts, "Total volume changes        %15d\n", counts[23]);
 			fprintf(fpouts, "accepted volume changes     %15d\n", counts[24]);

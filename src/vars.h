@@ -41,11 +41,30 @@ int iExternal_FF_type; ///< flag of other non-standard force fields
  *************************************************************************************/
 
 
+/*************************************************************************************
+ * HMC Input parameters and their direct related variables
+ *************************************************************************************/
+double pdisp, ///< canonical move probability
+		pvolm, ///< volume change probability
+		pmake, ///< insertion probability
+		pkill; ///< deletion probability
+double delv;
+double rreq_disp, ///< required canonical move accept ratio
+		rreq_volm; ///< required volume change accept ratio
+int nstep_md_per_hmc; ///< steps of md moves per hmc cycle
+int nstep_delt_adj_cycle; ///< steps between two delt adjustment
+int nstep_delv_adj_cycle; ///< steps between two delv adjustment
+double pcomp[NSPECIE_MAX]; ///< The probability for a specie to be selected for insertion/deletion
+double cpt[NSPECIE_MAX]; ///< pseudo chemcial potential
+double zact[NSPECIE_MAX]; ///< activity
 
-double probability_to_be_selected[NSPECIE_MAX]; ///< The probability for a specie to be selected for insertion/deletion
+
+double pvolm_upper; ///< upper limit of volume change probability, i.e. pdisp+pvolm
 double probability_to_insert[NSPECIE_MAX]; ///< The probability to insert a molecule for a specie
 double fugacity_required[NSPECIE_MAX]; ///< required Fugacity of each specie 
-double zact[NSPECIE_MAX]; ///< fugacity related variable for insertion/deletion
+/*************************************************************************************
+ * End of HMC Input parameters and their direct related variables
+ *************************************************************************************/
 
 /** 
  * \brief Electrostatic interaction type
@@ -64,6 +83,30 @@ double kappa, kappasq; ///< sqrt(alpha) in ewald summation.
 int KMAXX, KMAXY, KMAXZ; ///< ewald parameters
 int KSQMAX; ///< ewald parameter
 int whichNH; ///< which nose hoover subroutine to use? usually 3 for molecule, 2 for atoms, see more details in nvtnh.c
+double TWOPI_LX, TWOPI_LY, TWOPI_LZ; ///< ewald
+double Bfactor_ewald, Vfactor_ewald;
+double twopi_over_3v; ///< constant for vacuum boundary
+/// variables for wolf method
+double uwolf, uwolf_real, uwolf_con, wolfvcon1, wolfvcon2, wolffcon1, wolffcon2;
+
+
+/// variables for nose hoover method
+double Gts, Qts, vts, rts, dt_outer2, dt_outer4;
+/// NPT 
+double Gbs, Qbs, vbs, rbs, dt_outer8;
+double utsbs; ///< extra energy for the barostat NPT
+
+/// frenkel and smit's nose hoover method
+double qq, ps, gg, ss;
+double delt_sqby2, delts_sqby2;
+double vxo[NATOM_MAX], vyo[NATOM_MAX], vzo[NATOM_MAX];
+double vxn[NATOM_MAX], vyn[NATOM_MAX], vzn[NATOM_MAX];
+double bx[NATOM_MAX], by[NATOM_MAX], bz[NATOM_MAX];
+double unhts;
+double qqs, pss, ggs, sss;
+double unhtss;
+
+
 /** 
  * \brief solid-fluid type. for different nanotube potentials and future possible other materials
  * 
@@ -154,42 +197,8 @@ double sg_alpha, sg_beta, sg_gama, sg_c6,
        sg_c8, sg_c9, sg_c10, sg_rc;
 double spring[NSPECIE_MAX]; ///< spring constant for polymer bead ring
 
-double TWOPI_LX, TWOPI_LY, TWOPI_LZ; ///< ewald
-double Bfactor_ewald, Vfactor_ewald;
-double twopi_over_3v; ///< constant for vacuum boundary
-
-/// variables for wolf method
-double uwolf, uwolf_real, uwolf_con, wolfvcon1, wolfvcon2, wolffcon1, wolffcon2;
-
 double roff2_minus_ron2_cube; ///< used for switch potential
 
-/// variables for nose hoover method
-double Gts, Qts, vts, rts, dt_outer2, dt_outer4;
-/// NPT 
-double Gbs, Qbs, vbs, rbs, dt_outer8;
-double utsbs; ///< extra energy for the barostat NPT
-
-/// frenkel and smit's nose hoover method
-double qq, ps, gg, ss;
-double delt_sqby2, delts_sqby2;
-double vxo[NATOM_MAX], vyo[NATOM_MAX], vzo[NATOM_MAX];
-double vxn[NATOM_MAX], vyn[NATOM_MAX], vzn[NATOM_MAX];
-double bx[NATOM_MAX], by[NATOM_MAX], bz[NATOM_MAX];
-double unhts;
-double qqs, pss, ggs, sss;
-double unhtss;
-
-// for HMC simulation
-double prob_cm, ///< canonical move probability
-		prob_vc, ///< volume change probability
-		prob_id; ///< insertion/deletion probability
-double ratio_cm_req, ///< required canonical move accept ratio
-		ratio_vc_req; ///< required volume change accept ratio
-int nstep_md_per_hmc; ///< steps of md moves per hmc cycle
-int nstep_delt_adj_cycle; ///< steps between two delt adjustment
-int nstep_delv_adj_cycle; ///< steps between two delv adjustment
-double delv;
-double prob_vc_upper; ///< upper limit of volume change probability, i.e. prob_cm+prob_vc
 
 /* set up parameters for this simulated annealing run */
 /* how many points do we try before stepping (move to the next temperature) */

@@ -8,56 +8,6 @@
 #include "mspms2.h"
 
 
-int init_npt_respa()
-{
-	int ii;
-	char buffer[STRING_LENGTH];
-	char keyword[100];
-
-	fprintf(stderr,"Reading input data for MD NPT simulation...\n");
-	fprintf(fpouts, "Reading input data for MD NPT simulation...\n");
-
-	// re-open input file to read extra data section
-	fpins = fopen(INPUT,"r");
-
-	while (fgets(buffer, STRING_LENGTH, fpins)!=NULL)
-	{
-		sscanf(buffer, "%s", keyword);
-		for (ii=0; ii<strlen(keyword); ii++)
-		{
-			keyword[ii] = toupper(keyword[ii]);
-		}
-		if (!strcmp(keyword, "MDNPT"))
-		{
-			fprintf(stderr,"Data section for MD NPT simulation found...\n");
-			fprintf(fpouts, "Data section for MD NPT simulation found...\n");
-
-			sscanf(fgets(buffer, STRING_LENGTH, fpins), "%lf %lf", &Qts, &Qbs);
-
-			// thermo/barostat
-			utsbs = 0.0;
-			vts = sqrt((nfree+1.0)*RGAS/Qts);
-			vbs = sqrt((nfree+1.0)*RGAS/Qbs);
-			rts = 0.0;
-
-			// extra enery from the thermo/barostat for conserve energy
-			// utsbs = 0.5*Qbs*vbs*vbs + 0.5*Qts*vts*vts + (nfree+1)*RGAS*treq*rts*1.0e-10 + preq*boxv*PA_A3_TO_J_PER_MOL;
-
-			utsbs = 0.5*Qbs*vbs*vbs + 0.5*Qts*vts*vts + (nfree+1)*RGAS*treq*rts
-					+ preq*boxv*PA_A3_TO_J_PER_MOL;
-
-			// printf("initiate   vts=%lf  vbs=%lf  utsbs=%lf\n",vts,vbs,utsbs);
-
-			fclose(fpins);
-			return 0;
-		} // if keyword found
-	} // read through lines
-	fprintf(stderr,"Error: data for MD NPT not found.\n");
-	fprintf(fpouts, "Error: data for MD NPT not found.\n");
-	fclose(fpins);
-	exit(1);
-}
-
 void rezero_npt_ts()
 {
 	// thermo/barostat

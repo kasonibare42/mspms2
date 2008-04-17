@@ -18,11 +18,12 @@
 #include "mspms2.h"
 
 void get_specie_and_relative_atom_id(int abs_atom_id, int *specie_id,
-		int *rela_atom_id)
+		int *rela_atom_id, int *sample_atom_id)
 {
-	int ii, iAtom;
+	int ii, iAtom, iSampleAtom;
 	
 	iAtom = 0;
+	iSampleAtom = 0;
 	for (ii=0; ii<nspecie; ii++)
 	{
 		if (abs_atom_id < iAtom+natom_per_specie[ii])
@@ -30,9 +31,11 @@ void get_specie_and_relative_atom_id(int abs_atom_id, int *specie_id,
 			// We know this atom is for this specie
 			*specie_id = ii;
 			*rela_atom_id = (abs_atom_id-iAtom)%sample_natom_per_mole[ii];
+			*sample_atom_id = *rela_atom_id + iSampleAtom;
 			break;
 		}
 		iAtom += natom_per_specie[ii];
+		iSampleAtom += sample_natom_per_mole[ii];
 	}
 }
 
@@ -47,13 +50,10 @@ int calculate_ljlrc()
 	{
 		for (nn=0; nn<nspecie; nn++)
 		{
-			uljlrc += (uljlrc_term[mm][nn]*nmole_per_specie[mm]
-					*nmole_per_specie[nn]/boxv);
-			pljlrc += (pljlrc_term[mm][nn]*nmole_per_specie[mm]
-					*nmole_per_specie[nn]/boxv/boxv);
+			uljlrc += (uljlrc_term[mm][nn]*nmole_per_specie[mm]*nmole_per_specie[nn]/boxv);
+			pljlrc += (pljlrc_term[mm][nn]*nmole_per_specie[mm]*nmole_per_specie[nn]/boxv/boxv);
 		}
 	}
-	pljlrc = pljlrc*J_PER_MOL_A3_TO_PA; // convert J/mol/A^3 to Pascal
 
 	return 0;
 }

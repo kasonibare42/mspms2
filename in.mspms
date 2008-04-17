@@ -34,19 +34,25 @@ Title: This is just an Example!
 0                      Other force fields (0-no other FF;1-metal cluster FF)
 
    Electrostatic
-0.2                   kappa ~4/cutoff
-2 2 2 16          kmaxx,kmaxy,kmaxz,ksqmax ~kappa*box length,  kmax^2<ksqmax<3*kmax^2
-1 3                    Boundary conditions(1-tinfoil,2-vaccum), Dimension(1,2,3 D)
+0.2                    kappa ~4/cutoff (1/A)
+2                      kmaxx
+2                      kmaxy
+2                      kmaxz
+16                     ksqmax ~kappa*box length, kmax^2<ksqmax<3*kmax^2
+1                      Boundary conditions(1-tinfoil,2-vaccum)
+3                      Dimension(1,2,3 D)
 
-   MDnvt
+   MDNVT
 1e14 1e9               qq qqs (outer and inner) Nose hoover thermostat mass, qq goes to infinity->NVE
 
-   MDnpt
+   MDNPT
 1.0e8 1.0e8            Qts Qbs (mass of thermostat, barostat), larger number = weaker coupling
 
-   hypergeo
-1 3.4 232.805216       number of tubes, sigma, epsilon(J/mol)
-0.0 0.0  7.458         x,y,radius
+   HyperGeo
+1                      Number of tubes
+3.4                    Tube Sigma (A)
+28.0                   Tube Epsilon(K)
+0.0 0.0 7.458          Tube X center, Y center, radius (A)
 
    Tasos
 14.916 14.916 4.919 7.458       x,y,z,radius
@@ -58,25 +64,31 @@ Title: This is just an Example!
 
    AtomExplicit
 4
-1 3.4 232.8052160 0.0   sorbent type(1-uniform), sigma, epsilon (J/mol), charge
+1 3.4 28.0 0.0          sorbent type(1-uniform), sigma, epsilon (J/mol), charge
 C    14.781224634762     8.869435899814     0.000000000000
 C    14.882230020493     8.166928031101     1.229756073374
 C    14.086935109222    10.875453681938     1.229756073374
 C    14.381768410313    10.229858825919     2.459512146748
 
   MyInterp
-14.916 14.916 2.45951214674781  7.458 7.458 0.0 uclx, ucly, uclz, x,y,z center
-2                                   number of unique atoms
+14.916 14.916 2.4595                uclx, ucly, uclz (A)
+7.458 7.458 0.0                     x,y,z center (A)
+2                                   Number of unique atoms
 /mnt/hgfs/winxp_mydoc/programs/Runs/Grids/CH3-11x11.grid       grid file 1
 /mnt/hgfs/winxp_mydoc/programs/Runs/Grids/CH2-11x11.grid       grid file 2
 
   HMC
-10                            Number of MD steps per HMC cycle
-1.0  0.0  0.0                 probability of canonical moves, volume changes, and insertion/deletion
-0.5  0.5                      Required acceptance ratio for canonical moves, volumen changes
-100  100                      Number of steps between adjustments for canonical moves, volume changes 
-100.0                         delv
-1.0 0.5 10000.0				  specie 0 selected probability, insert probability, fugacity. (other species uses seperate lines)
+10                     Number of MD steps per HMC cycle
+1.0                    probability of displacement
+0.0                    probability of volume change
+0.0                    probability of insertion
+0.0                    probability of deletion
+0.5                    Required acceptance ratio for displacement
+0.5                    Required acceptance ratio for volume change
+100.0                  delv
+100                    Number of steps between adjustments for displacement
+100                    Number of steps between adjustments for volume changes 
+-10.0 1.0              Cpt, specie 0 selected probability, insert probability (other species uses seperate lines)
 
   SimAn
 10  1						How many steps before move to next temperature; How many MD steps before use acceptance rule

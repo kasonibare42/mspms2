@@ -383,14 +383,14 @@ int fnInsDelMole()
 	// Find out which specie to insert/delete
 	for (ii=0; ii<nspecie; ii++)
 	{
-		if (rndnum[0] < probability_to_be_selected[ii])
+		if (rndnum[0] < pcomp[ii])
 		{
 			iSpecieSelected = ii;
 			break;
 		}
 		else
 		{
-			rndnum[0] = rndnum[0] - probability_to_be_selected[ii];
+			rndnum[0] = rndnum[0] - pcomp[ii];
 		}
 	}
 	

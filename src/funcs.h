@@ -3,8 +3,17 @@
 
 int init_vars();
 int velinit();
+int rezero();
 void get_specie_and_relative_atom_id(int abs_atom_id, int *specie_id,
-		int *rela_atom_id);
+		int *rela_atom_id, int *sample_atom_id);
+int init_sf_hypergeo();
+int init_sf_atom_explicit();
+int init_tasos_grid();
+int init_my_interp();
+int init_npt_respa();
+int init_nvt();
+int init_hmc();
+int calculate_ljlrc();
 int fnValidateInput();
 
 int fnSffrcSession();
@@ -23,15 +32,7 @@ int trajectory();
 int echo();
 int vver_nh_3();
 int npt_respa();
-int init_sf_hypergeo();
-int init_sf_atom_explicit();
-int init_tasos_grid();
-int init_my_interp();
-int init_npt_respa();
-int init_nvt();
-int init_hmc();
 int hmc();
-int calculate_ljlrc();
 int fnValidateInit();
 void rezero_nvt_ts();
 void rezero_npt_ts();
@@ -44,7 +45,6 @@ int opening();
 int ending();
 int readins();
 int siman();
-int rezero();
 
 
 #endif /*FUNCS_H_*/

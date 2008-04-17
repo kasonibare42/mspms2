@@ -933,60 +933,6 @@ int get_values_from_grid(double fxx, double fyy, double fzz, int type,
 	return 0;
 }
 
-int init_sf_hypergeo()
-{
-	int ii;
-	char buffer[STRING_LENGTH];
-	char keyword[100];
-
-	fprintf(stderr,"Reading input data for hypergeometric nanotubes...\n");
-	fprintf(fpouts, "Reading input data for hypergeometric nanotubes...\n");
-
-	// re-open input file to read extra data section
-	fpins = fopen(INPUT,"r");
-
-	while (fgets(buffer, STRING_LENGTH, fpins)!=NULL)
-	{
-		sscanf(buffer, "%s", keyword);
-		for (ii=0; ii<strlen(keyword); ii++)
-		{
-			keyword[ii] = toupper(keyword[ii]);
-		}
-		if (!strcmp(keyword, "HYPERGEO"))
-		{
-			fprintf(stderr,"Data section for hypergeometric nanotoubes found...\n");
-			fprintf(fpouts,
-					"Data section for hypergeometric nanotoubes found...\n");
-			// use solid sigma and epsilon for hypergeometric parameters
-			// assume all the tubes have the same parameters
-			solid_sigma = malloc(sizeof(double));
-			solid_epsilon = malloc(sizeof(double));
-			sscanf(fgets(buffer, STRING_LENGTH, fpins), "%d %lf %lf", &ntube,
-					solid_sigma, solid_epsilon);
-			fprintf(stderr,"ntube=%d  sigma=%lf  epsilon=%lf\n",ntube,*solid_sigma,*solid_epsilon);
-			fprintf(fpouts, "ntube=%d  sigma=%lf  epsilon=%lf\n", ntube,
-					*solid_sigma, *solid_epsilon);
-			// allocate memories
-			hgntc_xx = calloc(ntube, sizeof(double));
-			hgntc_yy = calloc(ntube, sizeof(double));
-			hgnt_radius = calloc(ntube, sizeof(double));
-			for (ii=0; ii<ntube; ii++)
-			{
-				sscanf(fgets(buffer, STRING_LENGTH, fpins), "%lf %lf %lf",
-						&hgntc_xx[ii], &hgntc_yy[ii], &hgnt_radius[ii]);
-				fprintf(stderr,"tube %d: xx=%lf  y=%lf  radius=%lf\n",ii,hgntc_xx[ii],hgntc_yy[ii],hgnt_radius[ii]);
-				fprintf(fpouts, "tube %d: xx=%lf  y=%lf  radius=%lf\n", ii,
-						hgntc_xx[ii], hgntc_yy[ii], hgnt_radius[ii]);
-			}
-			fclose(fpins);
-			return 0;
-		} // if keyword found
-	} // read through the lines
-	fprintf(stderr,"Error: data for heypergeometric nanotubes not found.\n");
-	fprintf(fpouts, "Error: data for heypergeometric nanotubes not found.\n");
-	fclose(fpins);
-	exit(1);
-}
 
 // calculate the hypergeo series
 int hypergeo(double a, double b, double c, double z, double rr, double *sumV,
@@ -1111,63 +1057,6 @@ int cal_sf_hypergeo()
 	} // loop through all fluid atoms
 
 	return 0;
-}
-
-int init_sf_atom_explicit()
-{
-	int ii;
-	char buffer[STRING_LENGTH];
-	char keyword[100];
-	int itmp;
-
-	fprintf(stderr,"Reading input data for atom explicit sorbents...\n");
-	fprintf(fpouts, "Reading input data for atom explicit sorbents...\n");
-
-	// re-open input file to read extra data section
-	fpins = fopen(INPUT,"r");
-
-	while (fgets(buffer, STRING_LENGTH, fpins)!=NULL)
-	{
-		sscanf(buffer, "%s", keyword);
-		for (ii=0; ii<strlen(keyword); ii++)
-			keyword[ii] = toupper(keyword[ii]);
-		if (!strcmp(keyword, "ATOMEXPLICIT"))
-		{
-			fprintf(stderr,"Data section for atom explicit sorbents found...\n");
-			fprintf(fpouts,
-					"Data section for atom explicit sorbents found...\n");
-			sscanf(fgets(buffer, STRING_LENGTH, fpins), "%d", &solid_natom);
-			sscanf(fgets(buffer, STRING_LENGTH, fpins), "%d", &fSolid_type);
-			// fSolid_type not yet in used
-			// if (fSolid_type==SOLID_UNIFORM)
-			{
-				solid_sigma = malloc(sizeof(double));
-				solid_epsilon = malloc(sizeof(double));
-				solid_charge = malloc(sizeof(double));
-				// epsilon must be J/mol!! important
-				sscanf(buffer, "%d %lf %lf %lf", &itmp, solid_sigma,
-						solid_epsilon, solid_charge);
-			}
-			solid_xx = calloc(solid_natom, sizeof(double));
-			solid_yy = calloc(solid_natom, sizeof(double));
-			solid_zz = calloc(solid_natom, sizeof(double));
-			assert(solid_xx!=NULL);
-			assert(solid_yy!=NULL);
-			assert(solid_zz!=NULL);
-			// readin solid coordinates
-			for (ii=0; ii<solid_natom; ii++)
-			{
-				fscanf(fpins, "%s %lf %lf %lf\n", buffer, &solid_xx[ii],
-						&solid_yy[ii], &solid_zz[ii]);
-			}
-			fclose(fpins);
-			return 0;
-		} // if keyword found
-	} // read through the lines
-	fprintf(stderr,"Error: data for atom explicit sorbents not found.\n");
-	fprintf(fpouts, "Error: data for atom explicit sorbents not found.\n");
-	fclose(fpins);
-	exit(1);
 }
 
 // calcuate the interactions between solid and fluid

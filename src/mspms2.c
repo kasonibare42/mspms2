@@ -81,12 +81,11 @@ int main(int argc, char *argv[])
 	/// Validate the initialized variables.
 	fnValidateInit();
 	
-	// TODO: need to add loading function to the init_vars()
-	
 	erfrc();
 	rafrc();
 	echo();
 	printit();
+	
 	if (nstep_trj>0)
 	{
 		trajectory();

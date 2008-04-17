@@ -5,62 +5,6 @@
 #include <ctype.h>
 #include "mspms2.h"
 
-/// Read parameters from the input file for MDNVT and initialize the variables needed for NVT simulation
-int init_nvt()
-{
-	int ii;
-	char buffer[STRING_LENGTH];
-	char keyword[100];
-
-	fprintf(stderr,"Reading input data for MD NVT simulation...\n");
-	fprintf(fpouts, "Reading input data for MD NVT simulation...\n");
-
-	// re-open input file to read extra data section
-	fpins = fopen(INPUT,"r");
-
-	while (fgets(buffer, STRING_LENGTH, fpins)!=NULL)
-	{
-		sscanf(buffer, "%s", keyword);
-		for (ii=0; ii<strlen(keyword); ii++)
-			keyword[ii] = toupper(keyword[ii]);
-		if (!strcmp(keyword, "MDNVT"))
-		{
-			fprintf(stderr,"Data section for MD NVT simulation found...\n");
-			fprintf(fpouts, "Data section for MD NVT simulation found...\n");
-			sscanf(fgets(buffer, STRING_LENGTH, fpins), "%lf %lf", &qq, &qqs);
-
-			// nose hoover
-			// following for Dr. Maginn's nose hoover
-			// Gts = 0.0;
-			// vts = 0.0;
-			// rts = 0.0;
-			/*
-			 * Qts = RGAS*treq*nfree/Omega
-			 * where Omega is a parameter related to the mass of the thermostat
-			 * for this program, we read in the Qts directly.
-			 */
-
-			// variables for nose-hoover NVT, see frenkel and smit
-			delt_sqby2 = delt*delt/2.0;
-			delts_sqby2 = delts*delts/2.0;
-			unhts = 0.0;
-			gg = nfree; // need double check
-			ss = 0.0;
-			ps = 0.0;
-			ggs = nfree;
-			sss = 0.0;
-			pss = 0.0;
-			unhtss = 0.0;
-
-			fclose(fpins);
-			return 0;
-		} // if keyword found
-	} // read through lines
-	fprintf(stderr,"Error: data for MD NVT not found.\n");
-	fprintf(fpouts, "Error: data for MD NVT not found.\n");
-	fclose(fpins);
-	exit(1);
-}
 
 void rezero_nvt_ts()
 {
