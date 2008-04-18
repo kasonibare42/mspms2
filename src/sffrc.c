@@ -16,7 +16,7 @@ extern void read_grids_(int* nspecies_yang);
 int init_tasos_grid()
 {
 	int ii, jj;
-	char buffer[STRING_LENGTH];
+	char buffer[LONG_STRING_LENGTH];
 	double auc, buc, cuc, nanotuberadius;
 	int na, nb, nc;
 	int nspecies_yang;
@@ -30,7 +30,7 @@ int init_tasos_grid()
 	// re-open input file to read extra data section
 	fpins = fopen(INPUT,"r");
 
-	while (fgets(buffer, STRING_LENGTH, fpins)!=NULL)
+	while (fgets(buffer, LONG_STRING_LENGTH, fpins)!=NULL)
 	{
 		sscanf(buffer, "%s", keyword);
 		for (ii=0; ii<strlen(keyword); ii++)
@@ -42,11 +42,11 @@ int init_tasos_grid()
 			fprintf(stderr,"Data section for tasos grids found...\n");
 			fprintf(fpouts, "Data section for tasos grids found...\n");
 
-			sscanf(fgets(buffer, STRING_LENGTH, fpins), "%lf %lf %lf %lf", &auc,
+			sscanf(fgets(buffer, LONG_STRING_LENGTH, fpins), "%lf %lf %lf %lf", &auc,
 					&buc, &cuc, &nanotuberadius);
-			sscanf(fgets(buffer, STRING_LENGTH, fpins), "%d %d %d", &na, &nb, &nc);
-			sscanf(fgets(buffer, STRING_LENGTH, fpins), "%d", &nspecies_yang);
-			sscanf(fgets(buffer, STRING_LENGTH, fpins), "%d", &tnuatoms);
+			sscanf(fgets(buffer, LONG_STRING_LENGTH, fpins), "%d %d %d", &na, &nb, &nc);
+			sscanf(fgets(buffer, LONG_STRING_LENGTH, fpins), "%d", &nspecies_yang);
+			sscanf(fgets(buffer, LONG_STRING_LENGTH, fpins), "%d", &tnuatoms);
 			fprintf(
 					fpouts,
 					"The size of the unit cell is %lf long, %lf wide, %lf high, with %lf radius.\n",
@@ -56,7 +56,7 @@ int init_tasos_grid()
 					nspecies_yang, tnuatoms);
 			for (ii=0; ii<tnuatoms; ii++)
 			{
-				sscanf(fgets(buffer, STRING_LENGTH, fpins), "%s", szgrid+ii);
+				sscanf(fgets(buffer, LONG_STRING_LENGTH, fpins), "%s", szgrid+ii);
 			}
 			initpotentialgrid_(&tnuatoms, &auc, &buc, &cuc, &na, &nb, &nc,
 					&nanotuberadius);
@@ -89,7 +89,7 @@ int init_my_interp()
 {
 	int ii;
 	FILE *fpgridfile;
-	char buffer[STRING_LENGTH];
+	char buffer[LONG_STRING_LENGTH];
 	int nunique_atom;
 	char szgrid[200];
 	char keyword[100];
@@ -116,7 +116,7 @@ int init_my_interp()
 	_safealloc(interp_vector,32,sizeof(double))
 	;
 
-	while (fgets(buffer, STRING_LENGTH, fpins)!=NULL)
+	while (fgets(buffer, LONG_STRING_LENGTH, fpins)!=NULL)
 	{
 		sscanf(buffer, "%s", keyword);
 		for (ii=0; ii<strlen(keyword); ii++)
@@ -128,7 +128,7 @@ int init_my_interp()
 			fprintf(stderr,"Data section for myinterp found...\n");
 			fprintf(fpouts, "Data section for myinterp found...\n");
 
-			sscanf(fgets(buffer, STRING_LENGTH, fpins), "%lf %lf %lf %lf %lf %lf",
+			sscanf(fgets(buffer, LONG_STRING_LENGTH, fpins), "%lf %lf %lf %lf %lf %lf",
 					&uclx, &ucly, &uclz, &xcenter, &ycenter, &zcenter);
 			xmax = xcenter + uclx/2.0;
 			xmin = xcenter - uclx/2.0;
@@ -143,10 +143,10 @@ int init_my_interp()
 			fprintf(fpouts, "xmin=%lf  xmax=%lf\n", xmin, xmax);
 			fprintf(fpouts, "ymin=%lf  ymax=%lf\n", ymin, ymax);
 			fprintf(fpouts, "zmin=%lf  zmax=%lf\n", zmin, zmax);
-			sscanf(fgets(buffer, STRING_LENGTH, fpins), "%d", &nunique_atom);
+			sscanf(fgets(buffer, LONG_STRING_LENGTH, fpins), "%d", &nunique_atom);
 			for (ii=0; ii<nunique_atom; ii++)
 			{
-				sscanf(fgets(buffer, STRING_LENGTH, fpins), "%s", szgrid);
+				sscanf(fgets(buffer, LONG_STRING_LENGTH, fpins), "%s", szgrid);
 				fpgridfile = fopen(szgrid, "rb");
 				fread(&uclx_chk, sizeof(double), 1, fpgridfile);
 				fread(&ucly_chk, sizeof(double), 1, fpgridfile);

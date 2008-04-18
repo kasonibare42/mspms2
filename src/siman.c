@@ -8,7 +8,7 @@
 int init_siman()
 {
 	int ii;
-	char buffer[STRING_LENGTH];
+	char buffer[LONG_STRING_LENGTH];
 	char keyword[100];
 	int position_counter;
 
@@ -18,7 +18,7 @@ int init_siman()
 	// re-open input file to read extra data section
 	fpins = fopen(INPUT,"r");
 
-	while (fgets(buffer, STRING_LENGTH, fpins)!=NULL)
+	while (fgets(buffer, LONG_STRING_LENGTH, fpins)!=NULL)
 	{
 		sscanf(buffer, "%s", keyword);
 		for (ii=0; ii<strlen(keyword); ii++)
@@ -30,9 +30,9 @@ int init_siman()
 			fprintf(stderr,"Data section for Simulated Annealing found...\n");
 			fprintf(fpouts, "Data section for Simulated Annealing found...\n");
 
-			sscanf(fgets(buffer, STRING_LENGTH, fpins), "%d %d", &n_tries,
+			sscanf(fgets(buffer, LONG_STRING_LENGTH, fpins), "%d %d", &n_tries,
 					&iters_fixed_t);
-			sscanf(fgets(buffer, STRING_LENGTH, fpins), "%lf %lf %lf", &t_initial,
+			sscanf(fgets(buffer, LONG_STRING_LENGTH, fpins), "%lf %lf %lf", &t_initial,
 					&t_min, &mu_t);
 
 			// set the required temperature for velocity initialization

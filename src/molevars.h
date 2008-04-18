@@ -106,6 +106,41 @@
 
 #define sample_nbp_idx 		(&nbp_idx[NNBP_MAX])
 
+typedef struct _SAMPLE_MOLECULE
+{
+    // Atom related properties
+	char atom_name[SAMPLE_NATOM_MAX][SHORT_STRING_LENGTH];
+	int ghost_type[SAMPLE_NATOM_MAX], tasos_type[SAMPLE_NATOM_MAX];
+	double aw[SAMPLE_NATOM_MAX], epsilon[SAMPLE_NATOM_MAX], 
+	       sigma[SAMPLE_NATOM_MAX], charge[SAMPLE_NATOM_MAX];
+	double xx[SAMPLE_NATOM_MAX], yy[SAMPLE_NATOM_MAX], zz[SAMPLE_NATOM_MAX];
+	double ee[SAMPLE_NATOM_MAX], ff[SAMPLE_NATOM_MAX], gg[SAMPLE_NATOM_MAX];
+	// Molecule related properties
+	char mole_name[LONG_STRING_LENGTH];
+	double mw; // molecular weight
+	int natom, nbond, nangle, ndih, nimp, nnbp;
+	int bnd_idx[SAMPLE_NBOND_MAX][2];
+	int bnd_type[SAMPLE_NBOND_MAX];
+	double bnd_para_0[SAMPLE_NBOND_MAX], bnd_para_1[SAMPLE_NBOND_MAX], 
+	       bnd_para_2[SAMPLE_NBOND_MAX];
+	int agl_idx[SAMPLE_NANGLE_MAX][3];
+	int agl_type[SAMPLE_NANGLE_MAX];
+	double agl_para_1[SAMPLE_NANGLE_MAX], agl_para_2[SAMPLE_NANGLE_MAX], 
+	       agl_para_3[SAMPLE_NANGLE_MAX], agl_para_4[SAMPLE_NANGLE_MAX], 
+	       agl_para_5[SAMPLE_NANGLE_MAX];
+	bool isAngle_unique[SAMPLE_NANGLE_MAX];
+	int dih_idx[SAMPLE_NDIH_MAX][4];
+	int dih_type[SAMPLE_NDIH_MAX];
+	double dih_para_1[SAMPLE_NDIH_MAX], dih_para_2[SAMPLE_NDIH_MAX], 
+	       dih_para_3[SAMPLE_NDIH_MAX], dih_para_4[SAMPLE_NDIH_MAX];
+	bool isDih_unique[SAMPLE_NDIH_MAX];
+	int imp_idx[SAMPLE_NIMP_MAX][4];
+	int imp_type[SAMPLE_NIMP_MAX];
+	double imp_para_0[SAMPLE_NIMP_MAX], imp_para_1[SAMPLE_NIMP_MAX];
+	double nbp_idx[SAMPLE_NNBP_MAX][2];
+} SAMPLE_MOLECULE, *PSAMPLE_MOLECULE;
+
+
 // atoms
 int natom; ///< total number of atoms in the system
 /** max total number of atoms ever achieved in the system

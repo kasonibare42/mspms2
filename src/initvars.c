@@ -202,7 +202,7 @@ int velinit()
 int init_hmc()
 {
 	int ii;
-	char buffer[STRING_LENGTH];
+	char buffer[LONG_STRING_LENGTH];
 	char keyword[100];
 	int position_counter;
 
@@ -212,7 +212,7 @@ int init_hmc()
 	// re-open input file to read extra data section
 	fpins = fopen(INPUT,"r");
 
-	while (fgets(buffer, STRING_LENGTH, fpins)!=NULL)
+	while (fgets(buffer, LONG_STRING_LENGTH, fpins)!=NULL)
 	{
 		sscanf(buffer, "%s", keyword);
 		for (ii=0; ii<strlen(keyword); ii++)
@@ -224,23 +224,23 @@ int init_hmc()
 			fprintf(stderr,"Data section for HMC simulation found...\n");
 			fprintf(fpouts, "Data section for HMC simulation found...\n");
 
-			sscanf(fgets(buffer, STRING_LENGTH, fpins), "%d", &nstep_md_per_hmc);
-			sscanf(fgets(buffer, STRING_LENGTH, fpins), "%lf", &pdisp);
-			sscanf(fgets(buffer, STRING_LENGTH, fpins), "%lf", &pvolm);
-			sscanf(fgets(buffer, STRING_LENGTH, fpins), "%lf", &pmake);
-			sscanf(fgets(buffer, STRING_LENGTH, fpins), "%lf", &pkill);
-			sscanf(fgets(buffer, STRING_LENGTH, fpins), "%lf", &rreq_disp);
-			sscanf(fgets(buffer, STRING_LENGTH, fpins), "%lf", &rreq_volm);
-			sscanf(fgets(buffer, STRING_LENGTH, fpins), "%lf", &delv);
-			sscanf(fgets(buffer, STRING_LENGTH, fpins), "%d", &nstep_delt_adj_cycle);
-			sscanf(fgets(buffer, STRING_LENGTH, fpins), "%d", &nstep_delv_adj_cycle);
+			sscanf(fgets(buffer, LONG_STRING_LENGTH, fpins), "%d", &nstep_md_per_hmc);
+			sscanf(fgets(buffer, LONG_STRING_LENGTH, fpins), "%lf", &pdisp);
+			sscanf(fgets(buffer, LONG_STRING_LENGTH, fpins), "%lf", &pvolm);
+			sscanf(fgets(buffer, LONG_STRING_LENGTH, fpins), "%lf", &pmake);
+			sscanf(fgets(buffer, LONG_STRING_LENGTH, fpins), "%lf", &pkill);
+			sscanf(fgets(buffer, LONG_STRING_LENGTH, fpins), "%lf", &rreq_disp);
+			sscanf(fgets(buffer, LONG_STRING_LENGTH, fpins), "%lf", &rreq_volm);
+			sscanf(fgets(buffer, LONG_STRING_LENGTH, fpins), "%lf", &delv);
+			sscanf(fgets(buffer, LONG_STRING_LENGTH, fpins), "%d", &nstep_delt_adj_cycle);
+			sscanf(fgets(buffer, LONG_STRING_LENGTH, fpins), "%d", &nstep_delv_adj_cycle);
 
 			// Read insertion/deletion input data if required
 			if (pmake+pkill > 0.0)
 			{
 				for (ii=0; ii<nspecie; ii++)
 				{
-					sscanf(fgets(buffer, STRING_LENGTH, fpins), "%lf %lf", &cpt[ii], &pcomp[ii]);
+					sscanf(fgets(buffer, LONG_STRING_LENGTH, fpins), "%lf %lf", &cpt[ii], &pcomp[ii]);
 					// initialize zact
 					zact[ii] = exp(cpt[ii]/treq)*boxv;
 				}
@@ -265,7 +265,7 @@ int init_hmc()
 int init_nvt()
 {
 	int ii;
-	char buffer[STRING_LENGTH];
+	char buffer[LONG_STRING_LENGTH];
 	char keyword[100];
 
 	fprintf(stderr,"Reading input data for MD NVT simulation...\n");
@@ -274,7 +274,7 @@ int init_nvt()
 	// re-open input file to read extra data section
 	fpins = fopen(INPUT,"r");
 
-	while (fgets(buffer, STRING_LENGTH, fpins)!=NULL)
+	while (fgets(buffer, LONG_STRING_LENGTH, fpins)!=NULL)
 	{
 		sscanf(buffer, "%s", keyword);
 		for (ii=0; ii<strlen(keyword); ii++)
@@ -285,7 +285,7 @@ int init_nvt()
 		{
 			fprintf(stderr,"Data section for MD NVT simulation found...\n");
 			fprintf(fpouts, "Data section for MD NVT simulation found...\n");
-			sscanf(fgets(buffer, STRING_LENGTH, fpins), "%lf %lf", &qq, &qqs);
+			sscanf(fgets(buffer, LONG_STRING_LENGTH, fpins), "%lf %lf", &qq, &qqs);
 
 			/**
 			 * Qts = RGAS*treq*nfree/Omega
@@ -318,7 +318,7 @@ int init_nvt()
 int init_npt_respa()
 {
 	int ii;
-	char buffer[STRING_LENGTH];
+	char buffer[LONG_STRING_LENGTH];
 	char keyword[100];
 
 	fprintf(stderr,"Reading input data for MD NPT simulation...\n");
@@ -327,7 +327,7 @@ int init_npt_respa()
 	// re-open input file to read extra data section
 	fpins = fopen(INPUT,"r");
 
-	while (fgets(buffer, STRING_LENGTH, fpins)!=NULL)
+	while (fgets(buffer, LONG_STRING_LENGTH, fpins)!=NULL)
 	{
 		sscanf(buffer, "%s", keyword);
 		for (ii=0; ii<strlen(keyword); ii++)
@@ -339,7 +339,7 @@ int init_npt_respa()
 			fprintf(stderr,"Data section for MD NPT simulation found...\n");
 			fprintf(fpouts, "Data section for MD NPT simulation found...\n");
 
-			sscanf(fgets(buffer, STRING_LENGTH, fpins), "%lf %lf", &Qts, &Qbs);
+			sscanf(fgets(buffer, LONG_STRING_LENGTH, fpins), "%lf %lf", &Qts, &Qbs);
 
 			// thermo/barostat
 			utsbs = 0.0;
@@ -365,7 +365,7 @@ int init_npt_respa()
 int init_sf_hypergeo()
 {
 	int ii;
-	char buffer[STRING_LENGTH];
+	char buffer[LONG_STRING_LENGTH];
 	char keyword[100];
 
 	fprintf(stderr,"Reading input data for hypergeometric nanotubes...\n");
@@ -374,7 +374,7 @@ int init_sf_hypergeo()
 	// re-open input file to read extra data section
 	fpins = fopen(INPUT,"r");
 
-	while (fgets(buffer, STRING_LENGTH, fpins)!=NULL)
+	while (fgets(buffer, LONG_STRING_LENGTH, fpins)!=NULL)
 	{
 		sscanf(buffer, "%s", keyword);
 		for (ii=0; ii<strlen(keyword); ii++)
@@ -389,9 +389,9 @@ int init_sf_hypergeo()
 			// assume all the tubes have the same parameters
 			solid_sigma = malloc(sizeof(double));
 			solid_epsilon = malloc(sizeof(double));
-			sscanf(fgets(buffer, STRING_LENGTH, fpins), "%d", &ntube);
-			sscanf(fgets(buffer, STRING_LENGTH, fpins), "%lf", solid_sigma);
-			sscanf(fgets(buffer, STRING_LENGTH, fpins), "%lf", solid_epsilon);
+			sscanf(fgets(buffer, LONG_STRING_LENGTH, fpins), "%d", &ntube);
+			sscanf(fgets(buffer, LONG_STRING_LENGTH, fpins), "%lf", solid_sigma);
+			sscanf(fgets(buffer, LONG_STRING_LENGTH, fpins), "%lf", solid_epsilon);
 			
 			fprintf(stderr,"ntube=%d  sigma=%lf  epsilon=%lf\n",ntube,*solid_sigma,*solid_epsilon);
 			fprintf(fpouts, "ntube=%d  sigma=%lf  epsilon=%lf\n", ntube,*solid_sigma, *solid_epsilon);
@@ -402,7 +402,7 @@ int init_sf_hypergeo()
 			hgnt_radius = calloc(ntube, sizeof(double));
 			for (ii=0; ii<ntube; ii++)
 			{
-				sscanf(fgets(buffer, STRING_LENGTH, fpins), "%lf %lf %lf", &hgntc_xx[ii], &hgntc_yy[ii], &hgnt_radius[ii]);
+				sscanf(fgets(buffer, LONG_STRING_LENGTH, fpins), "%lf %lf %lf", &hgntc_xx[ii], &hgntc_yy[ii], &hgnt_radius[ii]);
 				fprintf(stderr,"tube %d: xx=%lf  y=%lf  radius=%lf\n",ii,hgntc_xx[ii],hgntc_yy[ii],hgnt_radius[ii]);
 				fprintf(fpouts, "tube %d: xx=%lf  y=%lf  radius=%lf\n", ii,hgntc_xx[ii], hgntc_yy[ii], hgnt_radius[ii]);
 			}
@@ -420,7 +420,7 @@ int init_sf_hypergeo()
 int init_sf_atom_explicit()
 {
 	int ii;
-	char buffer[STRING_LENGTH];
+	char buffer[LONG_STRING_LENGTH];
 	char keyword[100];
 	int itmp;
 
@@ -430,7 +430,7 @@ int init_sf_atom_explicit()
 	// re-open input file to read extra data section
 	fpins = fopen(INPUT,"r");
 
-	while (fgets(buffer, STRING_LENGTH, fpins)!=NULL)
+	while (fgets(buffer, LONG_STRING_LENGTH, fpins)!=NULL)
 	{
 		sscanf(buffer, "%s", keyword);
 		for (ii=0; ii<strlen(keyword); ii++)
@@ -440,8 +440,8 @@ int init_sf_atom_explicit()
 			fprintf(stderr,"Data section for atom explicit sorbents found...\n");
 			fprintf(fpouts,
 					"Data section for atom explicit sorbents found...\n");
-			sscanf(fgets(buffer, STRING_LENGTH, fpins), "%d", &solid_natom);
-			sscanf(fgets(buffer, STRING_LENGTH, fpins), "%d", &fSolid_type);
+			sscanf(fgets(buffer, LONG_STRING_LENGTH, fpins), "%d", &solid_natom);
+			sscanf(fgets(buffer, LONG_STRING_LENGTH, fpins), "%d", &fSolid_type);
 			// fSolid_type not yet in used
 			// if (fSolid_type==SOLID_UNIFORM)
 			{
@@ -479,7 +479,7 @@ int init_sf_atom_explicit()
 int fnInitCharge()
 {
 	int ii;
-	char buffer[STRING_LENGTH];
+	char buffer[LONG_STRING_LENGTH];
 	char keyword[100];
 
 	fprintf(stderr,"Reading input data for Electrostatic interactions...\n");
@@ -488,7 +488,7 @@ int fnInitCharge()
 	// re-open input file to read extra data section
 	fpins = fopen(INPUT,"r");
 
-	while (fgets(buffer, STRING_LENGTH, fpins)!=NULL)
+	while (fgets(buffer, LONG_STRING_LENGTH, fpins)!=NULL)
 	{
 		sscanf(buffer, "%s", keyword);
 		for (ii=0; ii<strlen(keyword); ii++)
@@ -506,13 +506,13 @@ int fnInitCharge()
 			if (iChargeType == ELECTROSTATIC_EWALD)
 			{
 				isEwaldOn = 1;
-				sscanf(fgets(buffer, STRING_LENGTH, fpins), "%lf", &kappa);
-				sscanf(fgets(buffer, STRING_LENGTH, fpins), "%d", &KMAXX);
-				sscanf(fgets(buffer, STRING_LENGTH, fpins), "%d", &KMAXY);
-				sscanf(fgets(buffer, STRING_LENGTH, fpins), "%d", &KMAXZ);
-				sscanf(fgets(buffer, STRING_LENGTH, fpins), "%d", &KSQMAX);
-				sscanf(fgets(buffer, STRING_LENGTH, fpins), "%d", &fEwald_BC);
-				sscanf(fgets(buffer, STRING_LENGTH, fpins), "%d", &fEwald_Dim);
+				sscanf(fgets(buffer, LONG_STRING_LENGTH, fpins), "%lf", &kappa);
+				sscanf(fgets(buffer, LONG_STRING_LENGTH, fpins), "%d", &KMAXX);
+				sscanf(fgets(buffer, LONG_STRING_LENGTH, fpins), "%d", &KMAXY);
+				sscanf(fgets(buffer, LONG_STRING_LENGTH, fpins), "%d", &KMAXZ);
+				sscanf(fgets(buffer, LONG_STRING_LENGTH, fpins), "%d", &KSQMAX);
+				sscanf(fgets(buffer, LONG_STRING_LENGTH, fpins), "%d", &fEwald_BC);
+				sscanf(fgets(buffer, LONG_STRING_LENGTH, fpins), "%d", &fEwald_Dim);
 
 				// Initialization
 				// set ewald parameters
@@ -529,7 +529,7 @@ int fnInitCharge()
 			else if (iChargeType == ELECTROSTATIC_WOLF)
 			{
 				isWolfOn = 1;
-				sscanf(fgets(buffer, STRING_LENGTH, fpins), "%lf", &kappa);
+				sscanf(fgets(buffer, LONG_STRING_LENGTH, fpins), "%lf", &kappa);
 				
 				// set wolf parameters
 				kappa = kappa*sigma_base; // Reduce the kappa

@@ -16,6 +16,8 @@ int init_hmc();
 int calculate_ljlrc();
 int fnValidateInput();
 
+int frclong();
+
 int fnSffrcSession();
 int fnErfrcSession(int iStartMole, int iEndMole);
 int fnRafrcSession(int iMole);

@@ -81,6 +81,10 @@ int main(int argc, char *argv[])
 	/// Validate the initialized variables.
 	fnValidateInit();
 	
+	frclong();
+	
+	exit(1);
+	
 	erfrc();
 	rafrc();
 	echo();

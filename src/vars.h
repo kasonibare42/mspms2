@@ -1,8 +1,6 @@
 #ifndef VARS_H
 #define VARS_H   
 
-#define STRING_LENGTH		200
-
 /// File operators
 FILE *fpins, *fpouts, *fpcfg, *fplog, *fpss, *fptrj, *fpsave, *fpload, *fpcoords;
 

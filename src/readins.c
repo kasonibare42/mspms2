@@ -21,7 +21,7 @@
 int readins()
 {
 	int ii, jj;
-	char buffer[STRING_LENGTH];
+	char buffer[LONG_STRING_LENGTH];
 	int atomid;
 	int iAtom, iBond, iAngle, iDih, iImp, iNbp;
 
@@ -29,55 +29,55 @@ int readins()
 	fprintf(fpouts, "Reading input file...\n");
 	/* read input file */
 	fpins = fopen(INPUT,"r");
-	fgets(title, STRING_LENGTH, fpins);
-	sscanf(fgets(buffer, STRING_LENGTH, fpins), "%d", &ij);
-	sscanf(fgets(buffer, STRING_LENGTH, fpins), "%d", &jk);
-	sscanf(fgets(buffer, STRING_LENGTH, fpins), "%lf", &sigma_base);
-	sscanf(fgets(buffer, STRING_LENGTH, fpins), "%lf", &epsilon_base);
-	sscanf(fgets(buffer, STRING_LENGTH, fpins), "%lf", &mass_base);
+	fgets(title, LONG_STRING_LENGTH, fpins);
+	sscanf(fgets(buffer, LONG_STRING_LENGTH, fpins), "%d", &ij);
+	sscanf(fgets(buffer, LONG_STRING_LENGTH, fpins), "%d", &jk);
+	sscanf(fgets(buffer, LONG_STRING_LENGTH, fpins), "%lf", &sigma_base);
+	sscanf(fgets(buffer, LONG_STRING_LENGTH, fpins), "%lf", &epsilon_base);
+	sscanf(fgets(buffer, LONG_STRING_LENGTH, fpins), "%lf", &mass_base);
 	// Calculate reduced unit for time step, unit is fs.
 	time_base = sqrt(mass_base*1.0e-27/(epsilon_base*BOLTZMAN_CONSTANT))*sigma_base*1.0e5;
 	// Calculate reduced unit for pressure, unit is bar.
 	pressure_base = BOLTZMAN_CONSTANT*epsilon_base*1.0e25/(sigma_base*sigma_base*sigma_base);
-	sscanf(fgets(buffer, STRING_LENGTH, fpins), "%lf", &treq);
+	sscanf(fgets(buffer, LONG_STRING_LENGTH, fpins), "%lf", &treq);
 	treq /= epsilon_base;
-	sscanf(fgets(buffer, STRING_LENGTH, fpins), "%lf", &preq);
+	sscanf(fgets(buffer, LONG_STRING_LENGTH, fpins), "%lf", &preq);
 	preq /= pressure_base;
-	sscanf(fgets(buffer, STRING_LENGTH, fpins), "%lf", &boxlx);
-	sscanf(fgets(buffer, STRING_LENGTH, fpins), "%lf", &boxly);
-	sscanf(fgets(buffer, STRING_LENGTH, fpins), "%lf", &boxlz);
+	sscanf(fgets(buffer, LONG_STRING_LENGTH, fpins), "%lf", &boxlx);
+	sscanf(fgets(buffer, LONG_STRING_LENGTH, fpins), "%lf", &boxly);
+	sscanf(fgets(buffer, LONG_STRING_LENGTH, fpins), "%lf", &boxlz);
 	boxlx /= sigma_base;
 	boxly /= sigma_base;
 	boxlz /= sigma_base;
-	sscanf(fgets(buffer, STRING_LENGTH, fpins), "%lf", &rcuton);
-	sscanf(fgets(buffer, STRING_LENGTH, fpins), "%lf", &rcutoff);
-	sscanf(fgets(buffer, STRING_LENGTH, fpins), "%lf", &rcutoffelec);
+	sscanf(fgets(buffer, LONG_STRING_LENGTH, fpins), "%lf", &rcuton);
+	sscanf(fgets(buffer, LONG_STRING_LENGTH, fpins), "%lf", &rcutoff);
+	sscanf(fgets(buffer, LONG_STRING_LENGTH, fpins), "%lf", &rcutoffelec);
 	rcuton /= sigma_base;
 	rcutoff /= sigma_base;
 	rcutoffelec /= sigma_base;
-	sscanf(fgets(buffer, STRING_LENGTH, fpins), "%d", &isLJlrcOn);
-	sscanf(fgets(buffer, STRING_LENGTH, fpins), "%d", &isLJswitchOn);
-	sscanf(fgets(buffer, STRING_LENGTH, fpins), "%d", &iStart_option);
-	sscanf(fgets(buffer, STRING_LENGTH, fpins), "%d", &nstep);
-	sscanf(fgets(buffer, STRING_LENGTH, fpins), "%d", &nstep_eq);
+	sscanf(fgets(buffer, LONG_STRING_LENGTH, fpins), "%d", &isLJlrcOn);
+	sscanf(fgets(buffer, LONG_STRING_LENGTH, fpins), "%d", &isLJswitchOn);
+	sscanf(fgets(buffer, LONG_STRING_LENGTH, fpins), "%d", &iStart_option);
+	sscanf(fgets(buffer, LONG_STRING_LENGTH, fpins), "%d", &nstep);
+	sscanf(fgets(buffer, LONG_STRING_LENGTH, fpins), "%d", &nstep_eq);
 	// Set the equilibrium run flag to true if number of equilibrium run is greater than 0
 	bEquilibrium = (nstep_eq>0) ? true : false;
-	sscanf(fgets(buffer, STRING_LENGTH, fpins), "%d", &nstep_ave);
-	sscanf(fgets(buffer, STRING_LENGTH, fpins), "%d", &nstep_print);
-	sscanf(fgets(buffer, STRING_LENGTH, fpins), "%d", &nstep_save);
-	sscanf(fgets(buffer, STRING_LENGTH, fpins), "%d", &nstep_ss);
-	sscanf(fgets(buffer, STRING_LENGTH, fpins), "%d", &nstep_trj);
-	sscanf(fgets(buffer, STRING_LENGTH, fpins), "%lf", &delt);
+	sscanf(fgets(buffer, LONG_STRING_LENGTH, fpins), "%d", &nstep_ave);
+	sscanf(fgets(buffer, LONG_STRING_LENGTH, fpins), "%d", &nstep_print);
+	sscanf(fgets(buffer, LONG_STRING_LENGTH, fpins), "%d", &nstep_save);
+	sscanf(fgets(buffer, LONG_STRING_LENGTH, fpins), "%d", &nstep_ss);
+	sscanf(fgets(buffer, LONG_STRING_LENGTH, fpins), "%d", &nstep_trj);
+	sscanf(fgets(buffer, LONG_STRING_LENGTH, fpins), "%lf", &delt);
 	delt /= time_base;
-	sscanf(fgets(buffer, STRING_LENGTH, fpins), "%d", &nstep_inner);
-	sscanf(fgets(buffer, STRING_LENGTH, fpins), "%lf", &f0);
-	sscanf(fgets(buffer, STRING_LENGTH, fpins), "%d", &what_simulation);
-	sscanf(fgets(buffer, STRING_LENGTH, fpins), "%d", &what_ensemble);
-	sscanf(fgets(buffer, STRING_LENGTH, fpins), "%d", &nconstraint);
-	sscanf(fgets(buffer, STRING_LENGTH, fpins), "%d", &iInterMolePotType);
-	sscanf(fgets(buffer, STRING_LENGTH, fpins), "%d", &iChargeType);
-	sscanf(fgets(buffer, STRING_LENGTH, fpins), "%d", &iSF_type);
-	sscanf(fgets(buffer, STRING_LENGTH, fpins), "%d", &iExternal_FF_type);
+	sscanf(fgets(buffer, LONG_STRING_LENGTH, fpins), "%d", &nstep_inner);
+	sscanf(fgets(buffer, LONG_STRING_LENGTH, fpins), "%lf", &f0);
+	sscanf(fgets(buffer, LONG_STRING_LENGTH, fpins), "%d", &what_simulation);
+	sscanf(fgets(buffer, LONG_STRING_LENGTH, fpins), "%d", &what_ensemble);
+	sscanf(fgets(buffer, LONG_STRING_LENGTH, fpins), "%d", &nconstraint);
+	sscanf(fgets(buffer, LONG_STRING_LENGTH, fpins), "%d", &iInterMolePotType);
+	sscanf(fgets(buffer, LONG_STRING_LENGTH, fpins), "%d", &iChargeType);
+	sscanf(fgets(buffer, LONG_STRING_LENGTH, fpins), "%d", &iSF_type);
+	sscanf(fgets(buffer, LONG_STRING_LENGTH, fpins), "%d", &iExternal_FF_type);
 	fclose(fpins);
 	
 	iAtom = 0;
@@ -99,15 +99,15 @@ int readins()
 	// Read config file 
 	fpcfg = fopen(CONFIG,"r");
 	fscanf(fpcfg, "%s\n", sysname);
-	sscanf(fgets(buffer, STRING_LENGTH, fpcfg), "%d", &nspecie);
+	sscanf(fgets(buffer, LONG_STRING_LENGTH, fpcfg), "%d", &nspecie);
 	assert(nspecie<NSPECIE_MAX);
 	for (ii=0; ii<nspecie; ii++)
 	{
 		fscanf(fpcfg, "%s\n", szSpecieName[ii]);
-		sscanf(fgets(buffer, STRING_LENGTH, fpcfg), "%d", &nmole_per_specie[ii]);
+		sscanf(fgets(buffer, LONG_STRING_LENGTH, fpcfg), "%d", &nmole_per_specie[ii]);
 		
 		// Read atom information
-		sscanf(fgets(buffer, STRING_LENGTH, fpcfg), "%d", &sample_natom_per_mole[ii]);
+		sscanf(fgets(buffer, LONG_STRING_LENGTH, fpcfg), "%d", &sample_natom_per_mole[ii]);
 		natom_per_specie[ii] = sample_natom_per_mole[ii]*nmole_per_specie[ii];
 		natom += natom_per_specie[ii]; // Total number of atoms
 		nmole += nmole_per_specie[ii]; // Total number of molecules
@@ -144,7 +144,7 @@ int readins()
 		}
 		
 		// Read bond information
-		sscanf(fgets(buffer, STRING_LENGTH, fpcfg), "%d", &sample_nbond_per_mole[ii]);
+		sscanf(fgets(buffer, LONG_STRING_LENGTH, fpcfg), "%d", &sample_nbond_per_mole[ii]);
 		nbond += sample_nbond_per_mole[ii]*nmole_per_specie[ii]; // Total number of bonds
 		assert(nbond<=NBOND_MAX);
 		sample_mole_first_bond_idx[ii] = iBond; // First bond of this sample molecule
@@ -170,7 +170,7 @@ int readins()
 		}
 
 		// Read angle information
-		sscanf(fgets(buffer, STRING_LENGTH, fpcfg), "%d", &sample_nangle_per_mole[ii]);
+		sscanf(fgets(buffer, LONG_STRING_LENGTH, fpcfg), "%d", &sample_nangle_per_mole[ii]);
 		nangle += sample_nangle_per_mole[ii]*nmole_per_specie[ii]; // Total number of angles
 		assert(nangle<=NANGLE_MAX);
 		sample_mole_first_angle_idx[ii] = iAngle; // First angle of this sample molecule
@@ -200,7 +200,7 @@ int readins()
 		}
 
 		// Read in dihedral information
-		sscanf(fgets(buffer, STRING_LENGTH, fpcfg), "%d", &sample_ndih_per_mole[ii]);
+		sscanf(fgets(buffer, LONG_STRING_LENGTH, fpcfg), "%d", &sample_ndih_per_mole[ii]);
 		ndih += sample_ndih_per_mole[ii]*nmole_per_specie[ii]; // Total number of dihedrals
 		assert(ndih<=NDIH_MAX);
 		sample_mole_first_dih_idx[ii] = iDih; // First dihedral of this sample molecule
@@ -228,7 +228,7 @@ int readins()
 		}
 
 		// Read in improper information
-		sscanf(fgets(buffer, STRING_LENGTH, fpcfg), "%d", &sample_nimp_per_mole[ii]);
+		sscanf(fgets(buffer, LONG_STRING_LENGTH, fpcfg), "%d", &sample_nimp_per_mole[ii]);
 		nimp += sample_nimp_per_mole[ii]*nmole_per_specie[ii]; // Total number of impropers
 		assert(nimp<=NIMP_MAX);
 		sample_mole_first_imp_idx[ii] = iImp; // First improper of this sample molecule
@@ -248,7 +248,7 @@ int readins()
 		}
 
 		// Read in non-bonded pair list
-		sscanf(fgets(buffer, STRING_LENGTH, fpcfg), "%d", &sample_nnbp_per_mole[ii]);
+		sscanf(fgets(buffer, LONG_STRING_LENGTH, fpcfg), "%d", &sample_nnbp_per_mole[ii]);
 		nnbp += sample_nnbp_per_mole[ii]*nmole_per_specie[ii]; // Total number of non-bonded pairs
 		assert(nnbp<=NNBP_MAX);
 		sample_mole_first_nbp_idx[ii] = iNbp; // First nbp of this sample molecule
@@ -267,8 +267,8 @@ int readins()
 	fprintf(stderr,"Reading initial coordinates of the system...\n");
 	fprintf(fpouts, "Reading initial coordinates of the system...\n");
 	fpcoords = fopen(COORDSIN,"r");
-	fgets(buffer, STRING_LENGTH, fpcoords);
-	fgets(buffer, STRING_LENGTH, fpcoords);
+	fgets(buffer, LONG_STRING_LENGTH, fpcoords);
+	fgets(buffer, LONG_STRING_LENGTH, fpcoords);
 	for (ii=0; ii<natom; ii++)
 	{
 		fscanf(fpcoords, "%s %lf %lf %lf\n", buffer, &xx[ii], &yy[ii], &zz[ii]);

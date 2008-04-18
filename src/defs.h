@@ -20,6 +20,7 @@
 #define NPT		2
 
 #define ENTIRE_SYSTEM	-1
+#define DYNAMIC_ID			-1
 
 #define GHOST_NONE	0
 #define GHOST_LJ	1
@@ -104,6 +105,9 @@
 
 #define EV_TO_J_PER_MOLE	96485.3840868795   ///< 1 electronvolt = 1.6021773e-19 joule
 #define HARTREE_TO_J_PER_MOL	2625499.6295540055		///< 1 hartree = 4.359 744 17(75)×10-18 J
+
+#define SHORT_STRING_LENGTH		5
+#define LONG_STRING_LENGTH		200
 
 
 #endif /*DEFS_H_*/
