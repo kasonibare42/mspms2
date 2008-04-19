@@ -60,6 +60,7 @@ int saveit()
 int loadit()
 {
 	int ii;
+	int specie_id, sample_atom_id;
 
 	fprintf(stderr,"loading from saved file...\n");
 	fprintf(fpouts, "loading from saved file...\n");
@@ -77,7 +78,8 @@ int loadit()
 	ukin = 0.0;
 	for (ii=0; ii<natom; ii++)
 	{
-		ukin += aw[ii]*(vx[ii]*vx[ii]+vy[ii]*vy[ii]+vz[ii]*vz[ii]);
+		get_specie_and_relative_atom_id(ii, &specie_id, &sample_atom_id);
+		ukin += sample_mole[specie_id].aw[sample_atom_id]*(vx[ii]*vx[ii]+vy[ii]*vy[ii]+vz[ii]*vz[ii]);
 	}
 	ukin = 0.5*ukin;
 	tinst = 2.0*ukin/(RGAS*nfree);

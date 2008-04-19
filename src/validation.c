@@ -19,10 +19,7 @@ int fnValidateInput()
 	if (ij<0 || ij>31328 || jk<0 || jk>30081)
 	{
 		fprintf(stderr, "Error: The first random number seed must have a value between 0 and 31328. ij = %d\n",ij);
-		fprintf(
-		stderr,
-		"Error: The second seed must have a value between 0 and 30081. jk = %d\n",
-		jk);
+		fprintf(stderr, "Error: The second seed must have a value between 0 and 30081. jk = %d\n", jk);
 		fprintf(
 				fpouts,
 				"Error: The first random number seed must have a value between 0 and 31328. ij = %d\n",
@@ -33,8 +30,9 @@ int fnValidateInput()
 				jk);
 		isError = true;
 	}
-	
-	if (what_simulation<MOLECULAR_DYNAMICS || what_simulation>SIMULATED_ANNEALING)
+
+	if (what_simulation<MOLECULAR_DYNAMICS || what_simulation
+			>SIMULATED_ANNEALING)
 	{
 		fprintf(stderr,"Error: unknown simulation type.\n");
 		fprintf(fpouts, "Error: unknown simulation type.\n");
@@ -83,7 +81,8 @@ int fnValidateInput()
 		isError = true;
 	}
 
-	if (iChargeType < ELECTROSTATIC_NONE || iChargeType > ELECTROSTATIC_SIMPLE_COULOMB)
+	if (iChargeType < ELECTROSTATIC_NONE || iChargeType
+			> ELECTROSTATIC_SIMPLE_COULOMB)
 	{
 		fprintf(stderr,"Error: Invalid electrostatic interaction type. iChargeType = %d\n", iChargeType);
 		fprintf(
@@ -109,9 +108,12 @@ int fnValidateInit()
 	if (pdisp+pvolm+pmake+pkill>1.0)
 	{
 		fprintf( stderr, "Warning: pdisp (%lf) + pvolm (%lf) + pmake (%lf) + pkill (%lf) > 1.0 \n", pdisp, pvolm, pmake, pkill);
-		fprintf( fpouts, "Warning: pdisp (%lf) + pvolm (%lf) + pmake (%lf) + pkill (%lf) > 1.0 \n", pdisp, pvolm, pmake, pkill);
+		fprintf(
+				fpouts,
+				"Warning: pdisp (%lf) + pvolm (%lf) + pmake (%lf) + pkill (%lf) > 1.0 \n",
+				pdisp, pvolm, pmake, pkill);
 	}
-	
+
 	return 0;
 }
 

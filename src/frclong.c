@@ -43,6 +43,8 @@ int frclong()
 
 	int count = 0;
 	
+	// STOPPED HERE!!
+	
 	printf("%d, %d, %d\n",nspecie, nmole, natom);
 	
 	isum_mole = 0; // Count molecules for iSpecie

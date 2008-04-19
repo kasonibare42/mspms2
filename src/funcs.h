@@ -4,8 +4,7 @@
 int init_vars();
 int velinit();
 int rezero();
-void get_specie_and_relative_atom_id(int abs_atom_id, int *specie_id,
-		int *rela_atom_id, int *sample_atom_id);
+void get_specie_and_relative_atom_id(int abs_atom_id, int *specie_id, int *sample_atom_id);
 int init_sf_hypergeo();
 int init_sf_atom_explicit();
 int init_tasos_grid();

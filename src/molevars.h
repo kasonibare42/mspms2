@@ -140,6 +140,7 @@ typedef struct _SAMPLE_MOLECULE
 	double nbp_idx[SAMPLE_NNBP_MAX][2];
 } SAMPLE_MOLECULE, *PSAMPLE_MOLECULE;
 
+SAMPLE_MOLECULE sample_mole[NSPECIE_MAX]; // sample molecules
 
 // atoms
 int natom; ///< total number of atoms in the system

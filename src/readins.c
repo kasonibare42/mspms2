@@ -23,7 +23,6 @@ int readins()
 	int ii, jj;
 	char buffer[LONG_STRING_LENGTH];
 	int atomid;
-	int iAtom, iBond, iAngle, iDih, iImp, iNbp;
 
 	fprintf(stderr,"Reading input file...\n");
 	fprintf(fpouts, "Reading input file...\n");
@@ -80,6 +79,8 @@ int readins()
 	sscanf(fgets(buffer, LONG_STRING_LENGTH, fpins), "%d", &iExternal_FF_type);
 	fclose(fpins);
 	
+	int iAtom, iBond, iAngle, iDih, iImp, iNbp;
+	PSAMPLE_MOLECULE pSampleMole;
 	iAtom = 0;
 	iBond = 0;
 	iAngle = 0;
@@ -103,162 +104,145 @@ int readins()
 	assert(nspecie<NSPECIE_MAX);
 	for (ii=0; ii<nspecie; ii++)
 	{
-		fscanf(fpcfg, "%s\n", szSpecieName[ii]);
+	    pSampleMole = sample_mole + ii;
+		fscanf(fpcfg, "%s\n", pSampleMole->mole_name);
 		sscanf(fgets(buffer, LONG_STRING_LENGTH, fpcfg), "%d", &nmole_per_specie[ii]);
 		
 		// Read atom information
-		sscanf(fgets(buffer, LONG_STRING_LENGTH, fpcfg), "%d", &sample_natom_per_mole[ii]);
-		natom_per_specie[ii] = sample_natom_per_mole[ii]*nmole_per_specie[ii];
+		sscanf(fgets(buffer, LONG_STRING_LENGTH, fpcfg), "%d", &pSampleMole->natom);
+		natom_per_specie[ii] = pSampleMole->natom*nmole_per_specie[ii];
 		natom += natom_per_specie[ii]; // Total number of atoms
 		nmole += nmole_per_specie[ii]; // Total number of molecules
 		assert(natom<NATOM_MAX);
 		assert(nmole<NMOLE_MAX);
-		sample_mole_first_atom_idx[ii] = iAtom; // First atom of this sample molecule
-		iAtom += sample_natom_per_mole[ii]; // Number of atoms for this sample molecule
-		sample_mole_last_atom_idx[ii] = iAtom; // Last atom of this sample molecule
 		// Set the weight of the molecule
-		sample_mw[ii] = 0.0;
+		pSampleMole->mw = 0.0;
 		// Read detailed atom information
 		// Input parameters have units of Angstrom, K, Kg/mol
-		for (jj=sample_mole_first_atom_idx[ii];jj<sample_mole_last_atom_idx[ii];jj++)
+		for (jj=0;jj<pSampleMole->natom;jj++)
 		{
 			fscanf(fpcfg,
 					"%d %s %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %d %d\n",
-					&atomid, sample_atomname[jj], &sample_xx[jj],
-					&sample_yy[jj], &sample_zz[jj], &sample_ee[jj],
-					&sample_ff[jj], &sample_gg[jj], &sample_aw[jj],
-					&sample_epsilon[jj], &sample_sigma[jj], &sample_charge[jj],
-					&sample_ghost_type[jj], &sample_tasos_type[jj]);
+					&atomid, pSampleMole->atom_name[jj], &pSampleMole->xx[jj],
+					&pSampleMole->yy[jj], &pSampleMole->zz[jj], &pSampleMole->ee[jj],
+					&pSampleMole->ff[jj], &pSampleMole->gg[jj], &pSampleMole->aw[jj],
+					&pSampleMole->epsilon[jj], &pSampleMole->sigma[jj], &pSampleMole->charge[jj],
+					&pSampleMole->ghost_type[jj], &pSampleMole->tasos_type[jj]);
 			// Reduce units
-			sample_xx[jj] /=sigma_base;
-			sample_yy[jj] /=sigma_base;
-			sample_zz[jj] /=sigma_base;
-			sample_ee[jj] /=sigma_base;
-			sample_ff[jj] /=sigma_base;
-			sample_gg[jj] /=sigma_base;
-			sample_sigma[jj] /= sigma_base;
-			sample_epsilon[jj] /= epsilon_base;
+			pSampleMole->xx[jj] /=sigma_base;
+			pSampleMole->yy[jj] /=sigma_base;
+			pSampleMole->zz[jj] /=sigma_base;
+			pSampleMole->ee[jj] /=sigma_base;
+			pSampleMole->ff[jj] /=sigma_base;
+			pSampleMole->gg[jj] /=sigma_base;
+			pSampleMole->sigma[jj] /= sigma_base;
+			pSampleMole->epsilon[jj] /= epsilon_base;
 			// Calculate the reduced mass
-			sample_aw[jj] = (sample_aw[jj]/AVOGADRO)/(mass_base*1.0e-27);
-			sample_mw[ii] += sample_aw[jj];
+			pSampleMole->aw[jj] = (pSampleMole->aw[jj]/AVOGADRO)/(mass_base*1.0e-27);
+			pSampleMole->mw += pSampleMole->aw[jj];
 		}
 		
 		// Read bond information
-		sscanf(fgets(buffer, LONG_STRING_LENGTH, fpcfg), "%d", &sample_nbond_per_mole[ii]);
-		nbond += sample_nbond_per_mole[ii]*nmole_per_specie[ii]; // Total number of bonds
+		sscanf(fgets(buffer, LONG_STRING_LENGTH, fpcfg), "%d", &pSampleMole->nbond);
+		nbond += pSampleMole->nbond*nmole_per_specie[ii]; // Total number of bonds
 		assert(nbond<=NBOND_MAX);
-		sample_mole_first_bond_idx[ii] = iBond; // First bond of this sample molecule
-		iBond += sample_nbond_per_mole[ii]; // Number of bonds of this sample molecule
-		sample_mole_last_bond_idx[ii] = iBond; // Last bond of this sample molecule
 		// Read detailed bond information
 		// Input parameters have units of Angstrom, K
-		for (jj=sample_mole_first_bond_idx[ii];jj<sample_mole_last_bond_idx[ii];jj++)
+		for (jj=0;jj<pSampleMole->nbond;jj++)
 		{
-			fscanf(fpcfg, "%d %d %d %lf %lf %lf\n", &sample_bond_idx[jj][0],
-					&sample_bond_idx[jj][1], &sample_bond_type[jj],
-					&sample_Kb[jj], &sample_Req[jj], &sample_alpha[jj]);
-			if (sample_bond_type[jj]==BOND_MORSE)
+			fscanf(fpcfg, "%d %d %d %lf %lf %lf\n", &pSampleMole->bnd_idx[jj][0],
+					&pSampleMole->bnd_idx[jj][1], &pSampleMole->bnd_type[jj],
+					&pSampleMole->Kb[jj], &pSampleMole->Req[jj], &pSampleMole->alpha[jj]);
+			if (pSampleMole->bnd_type[jj]==BOND_MORSE)
 			{ 
-				sample_Kb[jj] /= epsilon_base;
+				pSampleMole->Kb[jj] /= epsilon_base;
 			}
 			else
 			{
-				sample_Kb[jj] = sample_Kb[jj]*sigma_base*sigma_base/epsilon_base;
+				pSampleMole->Kb[jj] = pSampleMole->Kb[jj]*sigma_base*sigma_base/epsilon_base;
 			}
-			sample_Req[jj] /= sigma_base;
-			sample_alpha[jj] /= sigma_base;
+			pSampleMole->Req[jj] /= sigma_base;
+			pSampleMole->alpha[jj] /= sigma_base;
 		}
 
 		// Read angle information
-		sscanf(fgets(buffer, LONG_STRING_LENGTH, fpcfg), "%d", &sample_nangle_per_mole[ii]);
-		nangle += sample_nangle_per_mole[ii]*nmole_per_specie[ii]; // Total number of angles
+		sscanf(fgets(buffer, LONG_STRING_LENGTH, fpcfg), "%d", &pSampleMole->nangle);
+		nangle += pSampleMole->nangle*nmole_per_specie[ii]; // Total number of angles
 		assert(nangle<=NANGLE_MAX);
-		sample_mole_first_angle_idx[ii] = iAngle; // First angle of this sample molecule
-		iAngle += sample_nangle_per_mole[ii]; // Number of angles of this sample molecule
-		sample_mole_last_angle_idx[ii] = iAngle; // Last angle of this sample molecule
 		// Read detailed angle information
-		for (jj=sample_mole_first_angle_idx[ii]; jj<sample_mole_last_angle_idx[ii]; jj++)
+		for (jj=0; jj<pSampleMole->nangle; jj++)
 		{
 			fscanf(fpcfg, "%d %d %d %d %lf %lf %lf %lf %lf\n",
-					&sample_angle_idx[jj][0], &sample_angle_idx[jj][1],
-					&sample_angle_idx[jj][2], &sample_angle_type[jj],
-					&sample_Ktheta[jj], &sample_Thetaeq[jj],
-					&sample_agl_para_3[jj], &sample_agl_para_4[jj],
-					&sample_agl_para_5[jj]); // these 3 parameters only for TRwater
-			if (sample_angle_type[jj]==ANGLE_TR_WATER)
+					&pSampleMole->agl_idx[jj][0], &pSampleMole->agl_idx[jj][1],
+					&pSampleMole->agl_idx[jj][2], &pSampleMole->agl_type[jj],
+					&pSampleMole->Ktheta[jj], &pSampleMole->Thetaeq[jj],
+					&pSampleMole->agl_para_3[jj], &pSampleMole->agl_para_4[jj],
+					&pSampleMole->agl_para_5[jj]); // these 3 parameters only for TRwater
+			if (pSampleMole->agl_type[jj]==ANGLE_TR_WATER)
 			{
-				sample_Ktheta[jj] = sample_Ktheta[jj]*sigma_base*sigma_base/epsilon_base;
-				sample_Thetaeq[jj] = sample_Thetaeq[jj]*sigma_base*sigma_base/epsilon_base;
-				sample_agl_para_3[jj] = sample_agl_para_3[jj]*sigma_base*sigma_base/epsilon_base;
-				sample_agl_para_4[jj] /= sigma_base;
-				sample_agl_para_5[jj] /= sigma_base;
+				pSampleMole->Ktheta[jj] = pSampleMole->Ktheta[jj]*sigma_base*sigma_base/epsilon_base;
+				pSampleMole->Thetaeq[jj] = pSampleMole->Thetaeq[jj]*sigma_base*sigma_base/epsilon_base;
+				pSampleMole->agl_para_3[jj] = pSampleMole->agl_para_3[jj]*sigma_base*sigma_base/epsilon_base;
+				pSampleMole->agl_para_4[jj] /= sigma_base;
+				pSampleMole->agl_para_5[jj] /= sigma_base;
 			}
 			else
 			{
-				sample_Ktheta[jj] /= epsilon_base;
+				pSampleMole->Ktheta[jj] /= epsilon_base;
 			}
 		}
 
 		// Read in dihedral information
-		sscanf(fgets(buffer, LONG_STRING_LENGTH, fpcfg), "%d", &sample_ndih_per_mole[ii]);
-		ndih += sample_ndih_per_mole[ii]*nmole_per_specie[ii]; // Total number of dihedrals
+		sscanf(fgets(buffer, LONG_STRING_LENGTH, fpcfg), "%d", &pSampleMole->ndih);
+		ndih += pSampleMole->ndih*nmole_per_specie[ii]; // Total number of dihedrals
 		assert(ndih<=NDIH_MAX);
-		sample_mole_first_dih_idx[ii] = iDih; // First dihedral of this sample molecule
-		iDih += sample_ndih_per_mole[ii]; // Number of dihedrals in this sample molecule
-		sample_mole_last_dih_idx[ii] = iDih; // Last dihedral of this sample molecule
 		// Readin detailed dihedral information
-		for (jj=sample_mole_first_dih_idx[ii]; jj<sample_mole_last_dih_idx[ii]; jj++)
+		for (jj=0; jj<pSampleMole->ndih; jj++)
 		{
 			fscanf(fpcfg, "%d %d %d %d %d %lf %lf %lf %lf\n",
-					&sample_dih_idx[jj][0], &sample_dih_idx[jj][1],
-					&sample_dih_idx[jj][2], &sample_dih_idx[jj][3],
-					&sample_dih_type[jj], &sample_c1[jj], &sample_c2[jj],
-					&sample_c3[jj], &sample_c4[jj]);
-			if (sample_dih_type[jj]==DIH_OPLS_COSIN)
+					&pSampleMole->dih_idx[jj][0], &pSampleMole->dih_idx[jj][1],
+					&pSampleMole->dih_idx[jj][2], &pSampleMole->dih_idx[jj][3],
+					&pSampleMole->dih_type[jj], &pSampleMole->c1[jj], &pSampleMole->c2[jj],
+					&pSampleMole->c3[jj], &pSampleMole->c4[jj]);
+			if (pSampleMole->dih_type[jj]==DIH_OPLS_COSIN)
 			{
-				sample_c1[jj] /= epsilon_base;
-				sample_c2[jj] /= epsilon_base;
-				sample_c3[jj] /= epsilon_base;
-				sample_c4[jj] /= epsilon_base;
+				pSampleMole->c1[jj] /= epsilon_base;
+				pSampleMole->c2[jj] /= epsilon_base;
+				pSampleMole->c3[jj] /= epsilon_base;
+				pSampleMole->c4[jj] /= epsilon_base;
 			}
-			else if (sample_dih_type[jj]==DIH_CHARMM)
+			else if (pSampleMole->dih_type[jj]==DIH_CHARMM)
 			{
-				sample_c1[jj] /= epsilon_base;
+				pSampleMole->c1[jj] /= epsilon_base;
 			}
 		}
 
 		// Read in improper information
-		sscanf(fgets(buffer, LONG_STRING_LENGTH, fpcfg), "%d", &sample_nimp_per_mole[ii]);
-		nimp += sample_nimp_per_mole[ii]*nmole_per_specie[ii]; // Total number of impropers
+		sscanf(fgets(buffer, LONG_STRING_LENGTH, fpcfg), "%d", &pSampleMole->nimp);
+		nimp += pSampleMole->nimp*nmole_per_specie[ii]; // Total number of impropers
 		assert(nimp<=NIMP_MAX);
-		sample_mole_first_imp_idx[ii] = iImp; // First improper of this sample molecule
-		iImp += sample_nimp_per_mole[ii]; // Number of impropers of this sample molecule
-		sample_mole_last_imp_idx[ii] = iImp; // Last impropers of this sample molecule
 		// Read detailed improper dihedral information
-		for (jj=sample_mole_first_imp_idx[ii]; jj<sample_mole_last_imp_idx[ii]; jj++)
+		for (jj=0; jj<pSampleMole->nimp; jj++)
 		{
-			fscanf(fpcfg, "%d %d %d %d %d %lf %lf\n", &sample_imp_idx[jj][0],
-					&sample_imp_idx[jj][1], &sample_imp_idx[jj][2],
-					&sample_imp_idx[jj][3], &sample_imp_type[jj],
-					&sample_komega[jj], &sample_omega0[jj]);
-			if (sample_imp_type[jj]==IMP_CHARMM)
+			fscanf(fpcfg, "%d %d %d %d %d %lf %lf\n", &pSampleMole->imp_idx[jj][0],
+					&pSampleMole->imp_idx[jj][1], &pSampleMole->imp_idx[jj][2],
+					&pSampleMole->imp_idx[jj][3], &pSampleMole->imp_type[jj],
+					&pSampleMole->komega[jj], &pSampleMole->omega0[jj]);
+			if (pSampleMole->imp_type[jj]==IMP_CHARMM)
 			{
-				sample_komega[jj] /= epsilon_base;
+				pSampleMole->komega[jj] /= epsilon_base;
 			}
 		}
 
 		// Read in non-bonded pair list
-		sscanf(fgets(buffer, LONG_STRING_LENGTH, fpcfg), "%d", &sample_nnbp_per_mole[ii]);
-		nnbp += sample_nnbp_per_mole[ii]*nmole_per_specie[ii]; // Total number of non-bonded pairs
+		sscanf(fgets(buffer, LONG_STRING_LENGTH, fpcfg), "%d", &pSampleMole->nnbp);
+		nnbp += pSampleMole->nnbp*nmole_per_specie[ii]; // Total number of non-bonded pairs
 		assert(nnbp<=NNBP_MAX);
-		sample_mole_first_nbp_idx[ii] = iNbp; // First nbp of this sample molecule
-		iNbp += sample_nnbp_per_mole[ii]; // Number of nbp of this sample molecule
-		sample_mole_last_nbp_idx[ii] = iNbp; // Last nbp of this sample molecule
 		// Read detailed nonbonded pair information
-		for (jj=sample_mole_first_nbp_idx[ii]; jj<sample_mole_last_nbp_idx[ii]; jj++)
+		for (jj=0; jj<pSampleMole->nnbp; jj++)
 		{
-			fscanf(fpcfg, "%d %d\n", &sample_nbp_idx[jj][0],
-					&sample_nbp_idx[jj][1]);
+			fscanf(fpcfg, "%d %d\n", &pSampleMole->nbp_idx[jj][0],
+					&pSampleMole->nbp_idx[jj][1]);
 		}
 	}
 	fclose(fpcfg);

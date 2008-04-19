@@ -12,7 +12,8 @@
  */
 int InitCheckUniques()
 {
-	int ii, jj;
+	int mm, ii, jj;
+	PSAMPLE_MOLECULE pSampleMole;
 	int iFirst_Dih, iLast_Dih, iFirst_Agl, iLast_Agl, iFirst_Bnd, iLast_Bnd;
 
 	// Check unique for dihedrals.
@@ -22,126 +23,125 @@ int InitCheckUniques()
 	// 1234 and 1564
 	// The 14 pair should only be calculated once for energy/force.
 	// That is what the unique check is for.
-	iFirst_Dih = sample_mole_first_dih_idx[0]; // The very first dihedral
-	iLast_Dih = sample_mole_last_dih_idx[nspecie-1]; // The very last dihedral
-	iFirst_Agl = sample_mole_first_angle_idx[0]; // The very first angle
-	iLast_Agl = sample_mole_last_angle_idx[nspecie-1]; // The very last angle
-	iFirst_Bnd = sample_mole_first_bond_idx[0]; // The very first bond
-	iLast_Bnd = sample_mole_last_bond_idx[nspecie-1]; // The very last bond
-	for (ii=iFirst_Dih; ii<iLast_Dih; ii++)
+	
+	for (mm=0;mm<nspecie;mm++)
 	{
-		sample_isDih_unique[ii] = true;
-	}
-	for (ii=iFirst_Dih; ii<iLast_Dih-1; ii++)
-	{
-		if (sample_isDih_unique[ii])
+		pSampleMole = sample_mole + mm;
+		for (ii=0;ii<pSampleMole->ndih;ii++)
 		{
-			for (jj=ii+1; jj<iLast_Dih; jj++)
+			pSampleMole->isDih_unique[ii] = true;
+		}
+		for (ii=0; ii<pSampleMole->ndih-1; ii++)
+		{
+			if (pSampleMole->isDih_unique[ii])
 			{
-				if (sample_isDih_unique[jj])
+				for (jj=ii+1; jj<pSampleMole->ndih; jj++)
 				{
-					if ((sample_dih_idx[ii][0]==sample_dih_idx[jj][0] && sample_dih_idx[ii][3]==sample_dih_idx[jj][3])
-							|| (sample_dih_idx[ii][0]==sample_dih_idx[jj][3] && sample_dih_idx[ii][3]==sample_dih_idx[jj][0]))
+					if (pSampleMole->isDih_unique[jj])
 					{
-						sample_isDih_unique[jj] = false;
+						if ((pSampleMole->dih_idx[ii][0]==pSampleMole->dih_idx[jj][0] && pSampleMole->dih_idx[ii][3]==pSampleMole->dih_idx[jj][3])
+								|| (pSampleMole->dih_idx[ii][0]==pSampleMole->dih_idx[jj][3] && pSampleMole->dih_idx[ii][3]==pSampleMole->dih_idx[jj][0]))
+						{
+							pSampleMole->isDih_unique[jj] = false;
+							fprintf(
+									fpouts,
+									"Sample molecule %d: Dihedral %d and dihedral %d have the same ending pairs.\n",
+									mm, ii, jj);
+						} // Check uniqueness
+					} // End if dihedral jj is unique
+				} // End of dihedral jj
+			} // End if dihedral ii is unique
+		} // End of Dihedral ii
+		
+		// following codes make sure 14 and 13 do not share same ending pairs
+		// this is also for ring kind structures
+		for (ii=0; ii<pSampleMole->ndih; ii++)
+		{
+			if (pSampleMole->isDih_unique[ii])
+			{
+				for (jj=0; jj<pSampleMole->nangle; jj++)
+				{
+					if ((pSampleMole->dih_idx[ii][0]==pSampleMole->agl_idx[jj][0] && pSampleMole->dih_idx[ii][3]==pSampleMole->agl_idx[jj][2])
+							|| (pSampleMole->dih_idx[ii][0]==pSampleMole->agl_idx[jj][2] && pSampleMole->dih_idx[ii][3]==pSampleMole->agl_idx[jj][0]))
+					{
+						pSampleMole->isDih_unique[jj] = false;
 						fprintf(
 								fpouts,
-								"Dihedral %d and dihedral %d have the same ending pairs.\n",
-								ii, jj);
+								"Sample molecule %d: Dihedral %d and angle %d have the same ending pairs.\n",
+								mm, ii, jj);
 					} // Check uniqueness
-				} // End if dihedral jj is unique
-			} // End of dihedral jj
-		} // End if dihedral ii is unique
-	} // End of Dihedral ii
+				} // End of Angle loop
+			} // If dihedral is unique
+		} // End of Dihedral loop
 
-	// following codes make sure 14 and 13 do not share same ending pairs
-	// this is also for ring kind structures
-	for (ii=iFirst_Dih; ii<iLast_Dih; ii++)
-	{
-		if (sample_isDih_unique[ii])
+		// following codes make sure 14 and 12 do not share the same ending pairs
+		for (ii=0; ii<pSampleMole->ndih; ii++)
 		{
-			for (jj=iFirst_Agl; jj<iLast_Agl; jj++)
+			if (pSampleMole->isDih_unique[ii])
 			{
-				if ((sample_dih_idx[ii][0]==sample_angle_idx[jj][0] && sample_dih_idx[ii][3]==sample_angle_idx[jj][2])
-						|| (sample_dih_idx[ii][0]==sample_angle_idx[jj][2] && sample_dih_idx[ii][3]==sample_angle_idx[jj][0]))
+				for (jj=0; jj<pSampleMole->nbond; jj++)
 				{
-					sample_isDih_unique[jj] = false;
-					fprintf(
-							fpouts,
-							"Dihedral %d and angle %d have the same ending pairs.\n",
-							ii, jj);
-				} // Check uniqueness
-			} // End of Angle loop
-		} // If dihedral is unique
-	} // End of Dihedral loop
-
-	// following codes make sure 14 and 12 do not share the same ending pairs
-	for (ii=iFirst_Dih; ii<iLast_Dih; ii++)
-	{
-		if (sample_isDih_unique[ii])
-		{
-			for (jj=iFirst_Bnd; jj<iLast_Bnd; jj++)
-			{
-				if ((sample_dih_idx[ii][0]==sample_bond_idx[jj][0] && sample_dih_idx[ii][3]==sample_bond_idx[jj][1])
-						|| (sample_dih_idx[ii][0]==sample_bond_idx[jj][1] && sample_dih_idx[ii][3]==sample_bond_idx[jj][0]))
-				{
-					sample_isDih_unique[jj] = false;
-					fprintf(
-							fpouts,
-							"Dihedral %d and bond %d have the same ending pairs.\n",
-							ii, jj);
-				} // End of check of uniqueness
-			} // End of Bond loop
-		} // End if dihedral unique
-	} // End of dihedral loop
-
-	// check unique for angles
-	// see above comments for dihedrals
-	for (ii=iFirst_Agl; ii<iLast_Agl; ii++)
-	{
-		sample_isAngle_unique[ii] = true;
-	}
-	for (ii=iFirst_Agl; ii<iLast_Agl-1; ii++)
-	{
-		if (sample_isAngle_unique[ii])
-		{
-			for (jj=ii+1; jj<iLast_Agl; jj++)
-			{
-				if (sample_isAngle_unique[jj])
-				{
-					if ((sample_angle_idx[ii][0]==sample_angle_idx[jj][0] && sample_angle_idx[ii][2]==sample_angle_idx[jj][2])
-							|| (sample_angle_idx[ii][0]==sample_angle_idx[jj][2] && sample_angle_idx[ii][2]==sample_angle_idx[jj][0]))
+					if ((pSampleMole->dih_idx[ii][0]==pSampleMole->bnd_idx[jj][0] && pSampleMole->dih_idx[ii][3]==pSampleMole->bnd_idx[jj][1])
+							|| (pSampleMole->dih_idx[ii][0]==pSampleMole->bnd_idx[jj][1] && pSampleMole->dih_idx[ii][3]==pSampleMole->bnd_idx[jj][0]))
 					{
-						sample_isAngle_unique[jj] = false;
+						pSampleMole->isDih_unique[jj] = false;
 						fprintf(
 								fpouts,
-								"Angle %d and angle %d have the same ending pairs.\n",
-								ii, jj);
-					} // Check the angle uniqueness
-				} // End angle jj uniqueness
-			} // End of angle jj loop
-		} // End angle ii uniqueness
-	} // End of angle ii loop
+								"Sample molecule %d: Dihedral %d and bond %d have the same ending pairs.\n",
+								mm, ii, jj);
+					} // End of check of uniqueness
+				} // End of Bond loop
+			} // End if dihedral unique
+		} // End of dihedral loop
 
-	// following codes make sure 13 and 12 do not share the same ending pairs
-	for (ii=iFirst_Agl; ii<iLast_Agl; ii++)
-	{
-		if (sample_isAngle_unique[ii])
+		// check unique for angles
+		// see above comments for dihedrals
+		for (ii=0; ii<pSampleMole->nangle; ii++)
 		{
-			for (jj=iFirst_Bnd; jj<iLast_Bnd; jj++)
+			pSampleMole->isAngle_unique[ii] = true;
+		}
+		for (ii=0; ii<pSampleMole->nangle-1; ii++)
+		{
+			if (pSampleMole->isAngle_unique[ii])
 			{
-				if ((sample_angle_idx[ii][0]==sample_bond_idx[jj][0] && sample_angle_idx[ii][2]==sample_bond_idx[jj][1])
-						|| (sample_angle_idx[ii][0]==sample_bond_idx[jj][1] && sample_angle_idx[ii][2]==sample_bond_idx[jj][0]))
+				for (jj=ii+1; jj<pSampleMole->nangle; jj++)
 				{
-					sample_isAngle_unique[jj] = false;
-					fprintf(
-							fpouts,
-							"Angle %d and bond %d have the same ending pairs.\n",
-							ii, jj);
-				} // End of angle uniqueness check
-			} // End of bond loop
-		} // End of Angle uniqueness
-	} // End of Angle loop
+					if (pSampleMole->isAngle_unique[jj])
+					{
+						if ((pSampleMole->agl_idx[ii][0]==pSampleMole->agl_idx[jj][0] && pSampleMole->agl_idx[ii][2]==pSampleMole->agl_idx[jj][2])
+								|| (pSampleMole->agl_idx[ii][0]==pSampleMole->agl_idx[jj][2] && pSampleMole->agl_idx[ii][2]==pSampleMole->agl_idx[jj][0]))
+						{
+							pSampleMole->isAngle_unique[jj] = false;
+							fprintf(
+									fpouts,
+									"Sample molecule %d: Angle %d and angle %d have the same ending pairs.\n",
+									mm, ii, jj);
+						} // Check the angle uniqueness
+					} // End angle jj uniqueness
+				} // End of angle jj loop
+			} // End angle ii uniqueness
+		} // End of angle ii loop
+
+		// following codes make sure 13 and 12 do not share the same ending pairs
+		for (ii=0; ii<pSampleMole->nangle; ii++)
+		{
+			if (pSampleMole->isAngle_unique[ii])
+			{
+				for (jj=iFirst_Bnd; jj<iLast_Bnd; jj++)
+				{
+					if ((pSampleMole->agl_idx[ii][0]==pSampleMole->bnd_idx[jj][0] && pSampleMole->agl_idx[ii][2]==pSampleMole->bnd_idx[jj][1])
+							|| (pSampleMole->agl_idx[ii][0]==pSampleMole->bnd_idx[jj][1] && pSampleMole->agl_idx[ii][2]==pSampleMole->bnd_idx[jj][0]))
+					{
+						pSampleMole->isAngle_unique[jj] = false;
+						fprintf(
+								fpouts,
+								"Sample molecule %d: Angle %d and bond %d have the same ending pairs.\n",
+								mm, ii, jj);
+					} // End of angle uniqueness check
+				} // End of bond loop
+			} // End of Angle uniqueness
+		} // End of Angle loop
+	}
 
 	return 0;
 }
@@ -154,7 +154,7 @@ int velinit()
 	int ii;
 	double px, py, pz;
 	double stdvtmp, stdv;
-	int specie_id, rela_atom_id, sample_atom_id;
+	int specie_id, sample_atom_id;
 
 	px = py = pz = 0.0;
 	// mv^2=kT, So, p = sqrt(kTm), v = sqrt(kT/m)
@@ -165,14 +165,14 @@ int velinit()
 	{
 		// From index ii, we calculate which specie this atom belongs to and
 		// its position within a molecule
-		get_specie_and_relative_atom_id(ii, &specie_id, &rela_atom_id, &sample_atom_id);
-		stdv = stdvtmp/sqrt(sample_aw[sample_atom_id]);
+		get_specie_and_relative_atom_id(ii, &specie_id, &sample_atom_id);
+		stdv = stdvtmp/sqrt(sample_mole[specie_id].aw[sample_atom_id]);
 		vx[ii] = stdv*gaussran();
 		vy[ii] = stdv*gaussran();
 		vz[ii] = stdv*gaussran();
-		px += vx[ii]*sample_aw[sample_atom_id];
-		py += vy[ii]*sample_aw[sample_atom_id];
-		pz += vz[ii]*sample_aw[sample_atom_id];
+		px += vx[ii]*sample_mole[specie_id].aw[sample_atom_id];
+		py += vy[ii]*sample_mole[specie_id].aw[sample_atom_id];
+		pz += vz[ii]*sample_mole[specie_id].aw[sample_atom_id];
 	}
 	// zero the momentum
 	px /= natom;
@@ -180,17 +180,17 @@ int velinit()
 	pz /= natom;
 	for (ii=0; ii<natom; ii++)
 	{
-		get_specie_and_relative_atom_id(ii, &specie_id, &rela_atom_id, &sample_atom_id);
-		vx[ii] -= px/sample_aw[sample_atom_id];
-		vy[ii] -= py/sample_aw[sample_atom_id];
-		vz[ii] -= pz/sample_aw[sample_atom_id];
+		get_specie_and_relative_atom_id(ii, &specie_id, &sample_atom_id);
+		vx[ii] -= px/sample_mole[specie_id].aw[sample_atom_id];
+		vy[ii] -= py/sample_mole[specie_id].aw[sample_atom_id];
+		vz[ii] -= pz/sample_mole[specie_id].aw[sample_atom_id];
 	}
 	// rescale velocity for required temperature
 	ukin = 0.0;
 	for (ii=0; ii<natom; ii++)
 	{
-		get_specie_and_relative_atom_id(ii, &specie_id, &rela_atom_id, &sample_atom_id);
-		ukin += sample_aw[sample_atom_id]*(vx[ii]*vx[ii]+vy[ii]*vy[ii]+vz[ii]*vz[ii]);
+		get_specie_and_relative_atom_id(ii, &specie_id, &sample_atom_id);
+		ukin += sample_mole[specie_id].aw[sample_atom_id]*(vx[ii]*vx[ii]+vy[ii]*vy[ii]+vz[ii]*vz[ii]);
 	}
 	ukin = 0.5*ukin;
 	tinst = 2.0*ukin/nfree;
@@ -581,16 +581,16 @@ int InitLJlrcCommonTerms()
 			uljlrc_term[mm][nn] = 0.0;
 			pljlrc_term[mm][nn] = 0.0;
 			// loop through the atoms in one molecule of specie mm
-			for (ii=0; ii<sample_natom_per_mole[mm]; ii++)
+			for (ii=0; ii<sample_mole[mm].natom; ii++)
 			{
 				// use the first molecule of one specie to do the calculation
-				atomid_1 = sample_mole_first_atom_idx[mm] + ii;
+				atomid_1 = ii;
 				// loop through all the atoms in one molecule of specie nn
-				for (jj=0; jj<sample_natom_per_mole[nn]; jj++)
+				for (jj=0; jj<sample_mole[nn].natom; jj++)
 				{
-					atomid_2 = sample_mole_first_atom_idx[nn] + ii;
-					sigmaij = 0.5*(sample_sigma[atomid_1]+sample_sigma[atomid_2]);
-					epsilonij = sqrt(sample_epsilon[atomid_1]*sample_epsilon[atomid_2]);
+					atomid_2 = jj;
+					sigmaij = 0.5*(sample_mole[mm].sigma[atomid_1]+sample_mole[nn].sigma[atomid_2]);
+					epsilonij = sqrt(sample_mole[mm].epsilon[atomid_1]*sample_mole[nn].epsilon[atomid_2]);
 					temp1 = pow(sigmaij, 9.0)*uljlrc_term1 + pow(sigmaij, 3.0)*uljlrc_term2;
 					temp2 = epsilonij*pow(sigmaij, 3.0);
 					temp3 = pow(sigmaij, 9.0)*pljlrc_term1 + pow(sigmaij, 3.0)*pljlrc_term2;
@@ -628,14 +628,9 @@ int init_vars()
 
 	/// Calculate molecule weight for the real list.
 	system_mass = 0.0;
-	for (ii=0; ii<nmole; ii++)
+	for (ii=0; ii<nspecie; ii++)
 	{
-		mw[ii] = 0.0;
-		for (jj=mole_first_atom_idx[ii]; jj<mole_last_atom_idx[ii]; jj++)
-		{
-			mw[ii] += aw[jj];
-		}
-		system_mass += mw[ii];
+		system_mass += sample_mole[ii].mw;
 	}
 	/// Zero the number of frames in trajectory file.
 	nframe = 0;
