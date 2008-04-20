@@ -23,7 +23,6 @@ int InitCheckUniques()
 	// 1234 and 1564
 	// The 14 pair should only be calculated once for energy/force.
 	// That is what the unique check is for.
-	
 	for (mm=0;mm<nspecie;mm++)
 	{
 		pSampleMole = sample_mole + mm;
@@ -31,11 +30,11 @@ int InitCheckUniques()
 		{
 			pSampleMole->isDih_unique[ii] = true;
 		}
-		for (ii=0; ii<pSampleMole->ndih-1; ii++)
+		for (ii=0; ii<pSampleMole->ndih-1; ii++) // ii diehdral
 		{
 			if (pSampleMole->isDih_unique[ii])
 			{
-				for (jj=ii+1; jj<pSampleMole->ndih; jj++)
+				for (jj=ii+1; jj<pSampleMole->ndih; jj++) // jj dihedral
 				{
 					if (pSampleMole->isDih_unique[jj])
 					{
@@ -127,7 +126,7 @@ int InitCheckUniques()
 		{
 			if (pSampleMole->isAngle_unique[ii])
 			{
-				for (jj=iFirst_Bnd; jj<iLast_Bnd; jj++)
+				for (jj=0; jj<pSampleMole->nbond; jj++)
 				{
 					if ((pSampleMole->agl_idx[ii][0]==pSampleMole->bnd_idx[jj][0] && pSampleMole->agl_idx[ii][2]==pSampleMole->bnd_idx[jj][1])
 							|| (pSampleMole->agl_idx[ii][0]==pSampleMole->bnd_idx[jj][1] && pSampleMole->agl_idx[ii][2]==pSampleMole->bnd_idx[jj][0]))

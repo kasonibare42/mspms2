@@ -83,8 +83,6 @@ int main(int argc, char *argv[])
 	
 	frclong();
 	
-	exit(1);
-	
 	erfrc();
 	rafrc();
 	echo();
