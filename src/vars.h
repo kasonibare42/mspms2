@@ -143,6 +143,8 @@ double pinst; ///< instantaneous pressure
 
 double ushift; ///< shift energy for cut and shift
 
+double coulomb_prefactor; ///< This is the reduced value of COULOMB_PREFACTOR
+
 /// the constant terms for shift energies
 /// They are related to rcutoff
 /// shift1 = (1/rcutoff)^6

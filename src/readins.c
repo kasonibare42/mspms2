@@ -22,7 +22,6 @@ int readins()
 {
 	int ii, jj;
 	char buffer[LONG_STRING_LENGTH];
-	int atomid;
 
 	fprintf(stderr,"Reading input file...\n");
 	fprintf(fpouts, "Reading input file...\n");
@@ -79,14 +78,7 @@ int readins()
 	sscanf(fgets(buffer, LONG_STRING_LENGTH, fpins), "%d", &iExternal_FF_type);
 	fclose(fpins);
 	
-	int iAtom, iBond, iAngle, iDih, iImp, iNbp;
 	PSAMPLE_MOLECULE pSampleMole;
-	iAtom = 0;
-	iBond = 0;
-	iAngle = 0;
-	iDih = 0;
-	iImp = 0;
-	iNbp = 0;
 	natom = 0;
 	nmole = 0;
 	nbond = 0;
@@ -123,7 +115,7 @@ int readins()
 		{
 			fscanf(fpcfg,
 					"%d %s %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %d %d\n",
-					&atomid, pSampleMole->atom_name[jj], &pSampleMole->xx[jj],
+					&pSampleMole->type[jj], pSampleMole->atom_name[jj], &pSampleMole->xx[jj],
 					&pSampleMole->yy[jj], &pSampleMole->zz[jj], &pSampleMole->ee[jj],
 					&pSampleMole->ff[jj], &pSampleMole->gg[jj], &pSampleMole->aw[jj],
 					&pSampleMole->epsilon[jj], &pSampleMole->sigma[jj], &pSampleMole->charge[jj],

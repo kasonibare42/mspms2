@@ -110,7 +110,8 @@ typedef struct _SAMPLE_MOLECULE
 {
     // Atom related properties
 	char atom_name[SAMPLE_NATOM_MAX][SHORT_STRING_LENGTH];
-	int ghost_type[SAMPLE_NATOM_MAX], tasos_type[SAMPLE_NATOM_MAX];
+	int type[SAMPLE_NATOM_MAX], ghost_type[SAMPLE_NATOM_MAX], 
+		tasos_type[SAMPLE_NATOM_MAX];
 	double aw[SAMPLE_NATOM_MAX], epsilon[SAMPLE_NATOM_MAX], 
 	       sigma[SAMPLE_NATOM_MAX], charge[SAMPLE_NATOM_MAX];
 	double xx[SAMPLE_NATOM_MAX], yy[SAMPLE_NATOM_MAX], zz[SAMPLE_NATOM_MAX];
@@ -141,6 +142,8 @@ typedef struct _SAMPLE_MOLECULE
 } SAMPLE_MOLECULE, *PSAMPLE_MOLECULE;
 
 SAMPLE_MOLECULE sample_mole[NSPECIE_MAX]; // sample molecules
+
+
 
 // atoms
 int natom; ///< total number of atoms in the system

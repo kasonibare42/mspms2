@@ -543,6 +543,9 @@ int fnInitCharge()
 			{
 				isSimpleCoulomb = 1;
 			}
+			
+			// calculate the reduced coulomb constant
+			coulomb_prefactor = COULOMB_PREFACTOR/epsilon_base/sigma_base;
 
 			fclose(fpins);
 			return 0;

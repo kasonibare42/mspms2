@@ -35,6 +35,37 @@ void get_specie_and_relative_atom_id(int abs_atom_id, int *specie_id, int *sampl
 	}
 }
 
+int cal_com_and_efg(int iSpecie, int iMole, int iabs, int iAtom)
+{
+	int ii, jj;
+	PSAMPLE_MOLECULE pSampleMole;
+	
+	pSampleMole = sample_mole + iSpecie;
+	mole_xx[iMole] = 0.0;
+	mole_yy[iMole] = 0.0;
+	mole_zz[iMole] = 0.0;
+	for (ii=0;ii<iAtom;ii++)
+	{
+		jj = iabs + ii;
+		mole_xx[iMole] += xx[jj]*pSampleMole->aw[ii];
+		mole_yy[iMole] += yy[jj]*pSampleMole->aw[ii];
+		mole_zz[iMole] += zz[jj]*pSampleMole->aw[ii];
+	}
+	mole_xx[iMole] /= pSampleMole->mw;
+	mole_xx[iMole] /= pSampleMole->mw;
+	mole_xx[iMole] /= pSampleMole->mw;
+	
+	for (ii=0;ii<iAtom;ii++)
+	{
+		jj = iabs + ii;
+		ex[jj] = xx[jj] - mole_xx[ii];
+		fy[jj] = yy[jj] - mole_yy[ii];
+		gz[jj] = zz[jj] - mole_zz[ii];
+	}
+	
+	return 0;
+}
+
 int calculate_ljlrc()
 {
 	int mm, nn;

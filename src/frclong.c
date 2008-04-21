@@ -44,9 +44,22 @@ int frclong()
 	int iabs, jabs; // absolute atom id 
 	int ii, jj, mm, nn;
 	double xxi, yyi, zzi;
+	double fxi, fyi, fzi;
 	double rxij, ryij, rzij, rijsq;
 	double sigmaij, epsilonij, chargeij;
+	double uij, fij, uijshift;
+	double fxij, fyij, fzij;
 
+	uvdw = 0.0;
+	ureal = 0.0;
+	ucoulomb = 0.0;
+	virial_inter = 0.0;
+	for (ii=0; ii<natom; ii++)
+	{
+		fxl[ii] = fyl[ii] = fzl[ii] = 0.0;
+	}
+
+	// Start of inter-molecule interactions --------------------------------------------------------------------------------------
 	isum_atom = 0; // Count atoms for iSpecie
 	isum_mole = 0; // Count molecules for iSpecie
 	// ---------------------- Start of Species ------------------------------------------------------------------------------
@@ -96,6 +109,9 @@ int frclong()
 						xxi = xx[ii];
 						yyi = yy[ii];
 						zzi = zz[ii];
+						fxi = fxl[ii];
+						fyi = fyl[ii];
+						fzi = fzl[ii];
 						for (nn=0; nn<jAtom; nn++) // atoms in jMole (relative position)
 						{
 							if (pSampleMole_j->ghost_type[nn]==GHOST_FULL)
@@ -114,22 +130,92 @@ int frclong()
 							rzij = rzij - boxlz*rint(rzij/boxlz);
 							rijsq = rxij*rxij + ryij*ryij + rzij*rzij;
 							// Lennard-Jones
-							if (pSampleMole_i->ghost_type[mm]!=GHOST_LJ&&pSampleMole_j->ghost_type[nn]!=GHOST_LJ&&rijsq<rcutoffsq)
+							if (pSampleMole_i->ghost_type[mm]!=GHOST_LJ
+									&&pSampleMole_j->ghost_type[nn]!=GHOST_LJ
+									&&rijsq<rcutoffsq)
 							{
-								sigmaij = 0.5*(pSampleMole_i->sigma[mm]+pSampleMole_j->sigma[nn]);
-								epsilonij = sqrt(pSampleMole_i->epsilon[mm]*pSampleMole_j->epsilon[nn]);
-								// STOPPED HERE!
-								// ljfrc();
-							}
-							
-							
-							
-							
+								sigmaij = 0.5*(pSampleMole_i->sigma[mm]
+										+pSampleMole_j->sigma[nn]);
+								epsilonij = sqrt(pSampleMole_i->epsilon[mm]
+										*pSampleMole_j->epsilon[nn]);
+								ljfrc(rijsq, sigmaij, epsilonij, &uij, &fij,
+										&uijshift);
+								uvdw += uij;
+								virial_inter += fij*rijsq;
+								fxij = fij*rxij;
+								fyij = fij*ryij;
+								fzij = fij*rzij;
+								// forces on atom ii
+								fxi += fxij;
+								fyi += fyij;
+								fzi += fzij;
+								// forces on atom jj
+								fxl[jj] -= fxij;
+								fyl[jj] -= fyij;
+								fzl[jj] -= fzij;
+							} // End of LJ calculations
 
-						} // End of nn  
-					} // End of mm
+							// Electrostatic interactions
+							if (iChargeType!=ELECTROSTATIC_NONE)
+							{
+								chargeij = pSampleMole_i->charge[mm]
+										*pSampleMole_j->charge[nn];
+								if (iChargeType==ELECTROSTATIC_EWALD) // Ewald summation
+								{
+									if (rijsq<rcutoffelecsq)
+									{
+										ewald_real_frc(rijsq, chargeij, &uij,
+												&fij);
+										ureal += uij;
+										virial_inter += fij*rijsq;
+										fxij = fij*rxij;
+										fyij = fij*ryij;
+										fzij = fij*rzij;
+										// forces on atom ii
+										fxi += fxij;
+										fyi += fyij;
+										fzi += fzij;
+										// forces on atom jj
+										fxl[jj] -= fxij;
+										fyl[jj] -= fyij;
+										fzl[jj] -= fzij;
+									}
+								}
+								else if (iChargeType==ELECTROSTATIC_WOLF) // Wolf method
+								{
+									if (rijsq<rcutoffelecsq)
+									{
+										wolf_real_frc(rijsq, chargeij, &uij,
+												&fij);
+										ureal += uij;
+										virial_inter += fij*rijsq;
+										fxij = fij*rxij;
+										fyij = fij*ryij;
+										fzij = fij*rzij;
+										// forces on atom ii
+										fxi += fxij;
+										fyi += fyij;
+										fzi += fzij;
+										// forces on atom jj
+										fxl[jj] -= fxij;
+										fyl[jj] -= fyij;
+										fzl[jj] -= fzij;
+									}
+								}
+							}
+
+						} // End of nn atom (jj)
+						fxl[ii] = fxi;
+						fyl[ii] = fyi;
+						fzl[ii] = fzi;
+					} // End of mm atom (ii)
 					// ---------------------- End of Atoms ----------------------------------------------------------------------------------
 					// printf("%d || %d\n",iMole, jMole);
+					if (iChargeType==ELECTROSTATIC_SIMPLE_COULOMB)
+					{
+						xmole_coulomb_frc(iSpecie, iMole, iabs, iAtom, jSpecie,
+								jMole, jabs, jAtom);
+					}
 					jabs += jAtom;
 				} // End of jMole 
 				iabs += iAtom;
@@ -142,75 +228,16 @@ int frclong()
 		isum_mole += nmole_per_specie[iSpecie]; // Count molecule for iSpecie
 	} // End of iSpecie
 	// ---------------------- End of Species --------------------------------------------------------------------------------
+	// End of inter-molecule interactions ----------------------------------------------------------------------------------------
 
+	// Start of inter-molecule interactions ----------------------------------------------------------------------------------------
+	
+	
+	
+	printf("uvdw = %lf, %lf, %lf\n", uvdw*epsilon_base*RGAS, epsilon_base, RGAS);
+	printf("ureal = %lf\n", ureal*epsilon_base*RGAS);
+	printf("ucoulomb = %lf\n",ucoulomb*epsilon_base*RGAS);
 	exit(1);
 
 }
-
-
-int ljfrc(double rijsq, double sigmaij, double epsilonij, double *uij, double *fij)
-{
-	double LJswitch;
-	double r_rijsq, r_r6, r_r12, r_r12_minus_r_r6;
-	double uij_vdw_temp, uij_vdw;
-	double sigmaij6;
-	
-	// if switch potential for LJ is on, then calculate the switch
-	if (isLJswitchOn)
-	{
-		if (rijsq<rcutonsq)
-		{
-			LJswitch = 1.0;
-		}
-		else
-		{
-			LJswitch = (rcutoffsq-rijsq)*(rcutoffsq-rijsq)
-					*(rcutoffsq+2.0*rijsq-3.0*rcutonsq)
-					/roff2_minus_ron2_cube;
-		}
-	}
-	r_rijsq = sigmaij*sigmaij/rijsq;
-	r_r6 = r_rijsq*r_rijsq*r_rijsq;
-	r_r12 = r_r6*r_r6;
-	r_r12_minus_r_r6 = r_r12 - r_r6;
-	uij_vdw_temp = epsilonij*r_r12_minus_r_r6; // still need *4.0
-	if (isLJswitchOn) // if switch is used
-	{
-		uij_vdw += uij_vdw_temp*LJswitch; // still need 4.0
-	}
-	else
-	{
-		uij_vdw += uij_vdw_temp; // still need *4.0
-	}
-	// force calculations
-	if (isLJswitchOn)
-	{
-		if (rijsq<rcutonsq)
-		{
-			*fij = 24.0*epsilonij*(r_r12_minus_r_r6+r_r12)/rijsq;
-		}
-		else
-		{
-			*fij = 24.0*epsilonij*(r_r12_minus_r_r6+r_r12)/rijsq
-					*LJswitch // 4.0 for the real energy
-					-4.0*uij_vdw_temp*12.0*(rcutoffsq-rijsq)
-							*(rcutonsq-rijsq)
-							/roff2_minus_ron2_cube;
-		}
-	}
-	else
-	{
-		*fij = 24.0*epsilonij*(r_r12_minus_r_r6+r_r12)/rijsq;
-
-		// only when LJ swith is not used, we calculate shift energies
-		// shift energies
-		sigmaij6 = sigmaij*sigmaij*sigmaij*sigmaij*sigmaij*sigmaij;
-		gUShiftSession += epsilonij*sigmaij6*(sigmaij6*shift1 -1.0); // still need constant
-	}
-	
-	return 0;
-}
-
-
-
 
