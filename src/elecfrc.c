@@ -36,13 +36,13 @@ int ewald_real_frc(double rijsq, double chargeij, double *uij, double *fij)
 int ewald_excl_frc(double rijsq, double chargeij, double *uij, double *fij)
 {
 	double rij;
-	
+
 	rij = sqrt(rijsq);
 	*uij = coulomb_prefactor*chargeij/rij;
 	// The negative sign for the fij is because these forces are meant to be
 	// substracted from the total forces!
 	*fij = -*uij/rijsq; ///< NOTE: negative sign
-	
+
 	return 0;
 }
 
@@ -64,8 +64,8 @@ int wolf_real_frc(double rijsq, double chargeij, double *uij, double *fij)
  * The coulomb interactions between 2 molecules (cross molecules).
  * The coulomb interactions intra-molecular is calculated elsewhere.
  */
-int xmole_coulomb_frc(int iSpecie, int iMole, int iabs, int iAtom,
-		int jSpecie, int jMole, int jabs, int jAtom)
+int xmole_coulomb_frc(int iSpecie, int iMole, int iabs, int iAtom, int jSpecie,
+		int jMole, int jabs, int jAtom)
 {
 	int ii, jj;
 	int mm, nn;
@@ -130,7 +130,8 @@ int xmole_coulomb_frc(int iSpecie, int iMole, int iabs, int iAtom,
 				rzij = gz[ii] + rzcm - gz[jj];
 				rijsq = rxij*rxij + ryij*ryij + rzij*rzij;
 				rij = sqrt(rijsq);
-				uij = coulomb_prefactor*pSampleMole_i->charge[mm]*pSampleMole_j->charge[nn]/rij; 
+				uij = coulomb_prefactor*pSampleMole_i->charge[mm]
+						*pSampleMole_j->charge[nn]/rij;
 				ucoulomb += uij;
 				virial_inter += uij; // Coulomb virial equal to the energy
 				fij = uij/rijsq;
@@ -148,7 +149,23 @@ int xmole_coulomb_frc(int iSpecie, int iMole, int iabs, int iAtom,
 			} // second atom nn
 		} // first atom mm
 	} // cut off check
-	
+
+	return 0;
+}
+
+/**
+ * The coulomb interactions between 2 atoms (cross atoms).
+ */
+int xatom_coulomb_frc(double rijsq, double chargeij, double *uij, double *fij)
+{
+	int ii, jj;
+	double rij;
+
+	rij = sqrt(rijsq);
+
+	*uij = coulomb_prefactor*chargeij/rij;
+	*fij = *uij/rijsq;
+
 	return 0;
 }
 

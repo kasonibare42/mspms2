@@ -240,18 +240,21 @@ int frclong()
 		pSampleMole_i = sample_mole + iSpecie; // Get the sample molecule
 		for (iMole=0; iMole<nmole_per_specie[iSpecie]; iMole++) // molecule loop
 		{
+			// Start of Bond ----------------------------------------------------------------------------
 			for (iBond=0; iBond<pSampleMole_i->nbond; iBond++) // Bond loop
 			{
 				mm = pSampleMole_i->bnd_idx[iBond][0]; // relative atom id 1
 				nn = pSampleMole_i->bnd_idx[iBond][1]; // relative atom id 2
-				ii = isum_atom + mm; // absolute atom id 1
-				jj = isum_atom + nn; // absolute atom id 2
 				// If full ghost atom, skip it.
 				if (pSampleMole_i->ghost_type[mm]==GHOST_FULL
 						|| pSampleMole_i->ghost_type[nn]==GHOST_FULL)
 				{
 					continue;
 				}
+				// Calculate absolute atom id
+				ii = isum_atom + mm; // absolute atom id 1
+				jj = isum_atom + nn; // absolute atom id 2
+				// Calculate separation
 				rxij = xx[ii] - xx[jj];
 				ryij = yy[ii] - yy[jj];
 				rzij = zz[ii] - zz[jj];
@@ -393,11 +396,329 @@ int frclong()
 					}
 				} // End of electrostatic interaction type check
 			} // End of bond loop
+			// End of Bond ------------------------------------------------------------------------------
 
+			// Start of Angle ---------------------------------------------------------------------------
 			for (iAngle=0; iAngle<pSampleMole_i->nangle; iAngle++) // Angle loop
 			{
+				if (pSampleMole_i->isAngle_unique[iAngle]==false) // Only calculate the unique 1,3 pair
+				{
+					continue;
+				}
+				mm = pSampleMole_i->bnd_idx[iAngle][0]; // relative atom id 1
+				nn = pSampleMole_i->bnd_idx[iAngle][1]; // relative atom id 2
+				// If full ghost atom, skip it.
+				if (pSampleMole_i->ghost_type[mm]==GHOST_FULL
+						|| pSampleMole_i->ghost_type[nn]==GHOST_FULL)
+				{
+					continue;
+				}
+				// Calculate absolute atom id
+				ii = isum_atom + mm; // absolute atom id 1
+				jj = isum_atom + nn; // absolute atom id 2
+				// Calculate separation
+				rxij = xx[ii] - xx[jj];
+				ryij = yy[ii] - yy[jj];
+				rzij = zz[ii] - zz[jj];
+				// Lennard-Jones interactions
+				// Check if 1,3 distance < 1,3' distance. If it is true, no LJ needed.
+				// Otherwise, calculate LJ between 1 and 3'.
+				if (fabs(rxij)>boxlx*0.5 || fabs(ryij)>boxly*0.5 || fabs(rzij)
+						>boxlz*0.5)
+				{
+					fprintf(stderr,"Warning: long 1,3 angle ending pair %d-%d found...\n",ii,jj);
+					fprintf(
+							fpouts,
+							"Warning: long 1,3 angle ending pair %d-%d found...\n",
+							ii, jj);
+					// Save the values before MIC
+					rxij_old = rxij;
+					ryij_old = ryij;
+					rzij_old = rzij;
+					// Minimum image connvention
+					rxij = rxij - boxlx*rint(rxij/boxlx);
+					ryij = ryij - boxly*rint(ryij/boxly);
+					rzij = rzij - boxlz*rint(rzij/boxlz);
+					rijsq = rxij*rxij + ryij*ryij + rzij*rzij;
+					if (pSampleMole_i->ghost_type[mm]!=GHOST_LJ
+							&& pSampleMole_i->ghost_type[nn]!=GHOST_LJ && rijsq
+							<rcutoffsq)
+					{
+						sigmaij = 0.5*(pSampleMole_i->sigma[mm]
+								+pSampleMole_i->sigma[nn]);
+						epsilonij = sqrt(pSampleMole_i->epsilon[mm]
+								*pSampleMole_i->epsilon[nn]);
+						ljfrc(rijsq, sigmaij, epsilonij, &uij, &fij, &uijshift);
+						uvdw += uij;
+						virial_inter += fij*rijsq;
+						fxij = fij*rxij;
+						fyij = fij*ryij;
+						fzij = fij*rzij;
+						// forces on atom ii
+						fxl[ii] += fxij;
+						fyl[ii] += fyij;
+						fzl[ii] += fzij;
+						// forces on atom jj
+						fxl[jj] -= fxij;
+						fyl[jj] -= fyij;
+						fzl[jj] -= fzij;
+					} // End of ghost atom and rijsq cutoff check
+					// Restore the old values for future Ewald interactions
+					rxij = rxij_old;
+					ryij = ryij_old;
+					rzij = rzij_old;
+				} // End LJ of 1-3, 1-3' check
 
-			}
+				// Electrostatic interactions
+				if (iChargeType!=ELECTROSTATIC_NONE)
+				{
+					chargeij = pSampleMole_i->charge[mm]
+							*pSampleMole_i->charge[nn];
+					if (iChargeType==ELECTROSTATIC_EWALD) // Ewald summation
+					{
+						// Excluding part of ewald summation
+						rijsq = rxij*rxij + ryij*ryij + rzij*rzij;
+						ewald_excl_frc(rijsq, chargeij, &uij, &fij);
+						uexcl += uij;
+						virial_inter += fij*rijsq;
+						fxij = fij*rxij;
+						fyij = fij*ryij;
+						fzij = fij*rzij;
+						// forces on atom ii
+						fxl[ii] += fxij;
+						fyl[ii] += fyij;
+						fzl[ii] += fzij;
+						// forces on atom jj
+						fxl[jj] -= fxij;
+						fyl[jj] -= fyij;
+						fzl[jj] -= fzij;
+						// Real part of Ewald summation
+						rxij = rxij - boxlx*rint(rxij/boxlx);
+						ryij = ryij - boxly*rint(ryij/boxly);
+						rzij = rzij - boxlz*rint(rzij/boxlz);
+						rijsq = rxij*rxij + ryij*ryij + rzij*rzij;
+						if (rijsq<rcutoffelecsq)
+						{
+							ewald_real_frc(rijsq, chargeij, &uij, &fij);
+							ureal += uij;
+							virial_inter += fij*rijsq;
+							fxij = fij*rxij;
+							fyij = fij*ryij;
+							fzij = fij*rzij;
+							// forces on atom ii
+							fxl[ii] += fxij;
+							fyl[ii] += fyij;
+							fzl[ii] += fzij;
+							// forces on atom jj
+							fxl[jj] -= fxij;
+							fyl[jj] -= fyij;
+							fzl[jj] -= fzij;
+						} // Cutoff check
+					}
+					else if (iChargeType==ELECTROSTATIC_WOLF) // Wolf method
+					{
+						// Excluding part of Wolf method
+						rijsq = rxij*rxij + ryij*ryij + rzij*rzij;
+						ewald_excl_frc(rijsq, chargeij, &uij, &fij);
+						uexcl += uij;
+						virial_inter += fij*rijsq;
+						fxij = fij*rxij;
+						fyij = fij*ryij;
+						fzij = fij*rzij;
+						// forces on atom ii
+						fxl[ii] += fxij;
+						fyl[ii] += fyij;
+						fzl[ii] += fzij;
+						// forces on atom jj
+						fxl[jj] -= fxij;
+						fyl[jj] -= fyij;
+						fzl[jj] -= fzij;
+						// Real part of Wolf method
+						rxij = rxij - boxlx*rint(rxij/boxlx);
+						ryij = ryij - boxly*rint(ryij/boxly);
+						rzij = rzij - boxlz*rint(rzij/boxlz);
+						rijsq = rxij*rxij + ryij*ryij + rzij*rzij;
+						if (rijsq<rcutoffelecsq)
+						{
+							wolf_real_frc(rijsq, chargeij, &uij, &fij);
+							ureal += uij;
+							virial_inter += fij*rijsq;
+							fxij = fij*rxij;
+							fyij = fij*ryij;
+							fzij = fij*rzij;
+							// forces on atom ii
+							fxl[ii] += fxij;
+							fyl[ii] += fyij;
+							fzl[ii] += fzij;
+							// forces on atom jj
+							fxl[jj] -= fxij;
+							fyl[jj] -= fyij;
+							fzl[jj] -= fzij;
+						} // Cutoff check
+					}
+				} // End of electrostatic interaction type check
+			} // End of Angle loop
+			// End of Angle ----------------------------------------------------------------------------
+
+			// Start of Dihedral ------------------------------------------------------------------------
+			for (iDih=0; iDih<pSampleMole_i->ndih; iDih++)
+			{
+				if (pSampleMole_i->isDih_unique[iDih]==false) // Skip it if it is NOT unique
+				{
+					continue;
+				}
+				mm = pSampleMole_i->bnd_idx[iDih][0]; // relative atom id 1
+				nn = pSampleMole_i->bnd_idx[iDih][1]; // relative atom id 2
+				// If full ghost atom, skip it.
+				if (pSampleMole_i->ghost_type[mm]==GHOST_FULL
+						|| pSampleMole_i->ghost_type[nn]==GHOST_FULL)
+				{
+					continue;
+				}
+				ii = isum_atom + mm; // absolute atom id 1
+				jj = isum_atom + nn; // absolute atom id 2
+				// Calculate separation
+				rxij = xx[ii] - xx[jj];
+				ryij = yy[ii] - yy[jj];
+				rzij = zz[ii] - zz[jj];
+				// Lennard-Jones interactions
+				// Check if 1,4 distance < 1,4' distance. If it is true, no LJ needed.
+				// Otherwise, calculate LJ between 1 and 4'.
+				if (fabs(rxij)>boxlx*0.5 || fabs(ryij)>boxly*0.5 || fabs(rzij)
+						>boxlz*0.5)
+				{
+					fprintf(stderr,"Warning: long 1,4 dihedral ending pair %d-%d found...\n",ii,jj);
+					fprintf(
+							fpouts,
+							"Warning: long 1,4 dihedral ending pair %d-%d found...\n",
+							ii, jj);
+					// Save the values before MIC
+					rxij_old = rxij;
+					ryij_old = ryij;
+					rzij_old = rzij;
+					// Minimum image connvention
+					rxij = rxij - boxlx*rint(rxij/boxlx);
+					ryij = ryij - boxly*rint(ryij/boxly);
+					rzij = rzij - boxlz*rint(rzij/boxlz);
+					rijsq = rxij*rxij + ryij*ryij + rzij*rzij;
+					if (pSampleMole_i->ghost_type[mm]!=GHOST_LJ
+							&& pSampleMole_i->ghost_type[nn]!=GHOST_LJ && rijsq
+							<rcutoffsq)
+					{
+						sigmaij = 0.5*(pSampleMole_i->sigma[mm]
+								+pSampleMole_i->sigma[nn]);
+						epsilonij = sqrt(pSampleMole_i->epsilon[mm]
+								*pSampleMole_i->epsilon[nn]);
+						ljfrc(rijsq, sigmaij, epsilonij, &uij, &fij, &uijshift);
+						uvdw += uij;
+						virial_inter += fij*rijsq;
+						fxij = fij*rxij;
+						fyij = fij*ryij;
+						fzij = fij*rzij;
+						// forces on atom ii
+						fxl[ii] += fxij;
+						fyl[ii] += fyij;
+						fzl[ii] += fzij;
+						// forces on atom jj
+						fxl[jj] -= fxij;
+						fyl[jj] -= fyij;
+						fzl[jj] -= fzij;
+					} // End of ghost atom and rijsq cutoff check
+					// Restore the old values for future Ewald interactions
+					rxij = rxij_old;
+					ryij = ryij_old;
+					rzij = rzij_old;
+				} // End LJ of 1-4, 1-4' check
+
+				// Electrostatic interactions
+				if (iChargeType!=ELECTROSTATIC_NONE)
+				{
+					chargeij = pSampleMole_i->charge[mm]
+							*pSampleMole_i->charge[nn];
+					if (iChargeType==ELECTROSTATIC_EWALD) // Ewald summation
+					{
+						// Real part of Ewald summation
+						rxij = rxij - boxlx*rint(rxij/boxlx);
+						ryij = ryij - boxly*rint(ryij/boxly);
+						rzij = rzij - boxlz*rint(rzij/boxlz);
+						rijsq = rxij*rxij + ryij*ryij + rzij*rzij;
+						if (rijsq<rcutoffelecsq)
+						{
+							ewald_real_frc(rijsq, chargeij, &uij, &fij);
+							ureal += uij;
+							virial_inter += fij*rijsq;
+							fxij = fij*rxij;
+							fyij = fij*ryij;
+							fzij = fij*rzij;
+							// forces on atom ii
+							fxl[ii] += fxij;
+							fyl[ii] += fyij;
+							fzl[ii] += fzij;
+							// forces on atom jj
+							fxl[jj] -= fxij;
+							fyl[jj] -= fyij;
+							fzl[jj] -= fzij;
+						} // Cutoff check
+					}
+					else if (iChargeType==ELECTROSTATIC_WOLF) // Wolf method
+					{
+						// Real part of Wolf method
+						rxij = rxij - boxlx*rint(rxij/boxlx);
+						ryij = ryij - boxly*rint(ryij/boxly);
+						rzij = rzij - boxlz*rint(rzij/boxlz);
+						rijsq = rxij*rxij + ryij*ryij + rzij*rzij;
+						if (rijsq<rcutoffelecsq)
+						{
+							wolf_real_frc(rijsq, chargeij, &uij, &fij);
+							ureal += uij;
+							virial_inter += fij*rijsq;
+							fxij = fij*rxij;
+							fyij = fij*ryij;
+							fzij = fij*rzij;
+							// forces on atom ii
+							fxl[ii] += fxij;
+							fyl[ii] += fyij;
+							fzl[ii] += fzij;
+							// forces on atom jj
+							fxl[jj] -= fxij;
+							fyl[jj] -= fyij;
+							fzl[jj] -= fzij;
+						} // Cutoff check
+					}
+					else if (iChargeType==ELECTROSTATIC_SIMPLE_COULOMB) // Simple coulomb
+					{
+						rxij = rxij - boxlx*rint(rxij/boxlx);
+						ryij = ryij - boxly*rint(ryij/boxly);
+						rzij = rzij - boxlz*rint(rzij/boxlz);
+						rijsq = rxij*rxij + ryij*ryij + rzij*rzij;
+						if (rijsq<rcutoffelecsq)
+						{
+							xatom_coulomb_frc(rijsq, chargeij, &uij, &fij);
+							ucoulomb += uij;
+							virial_inter += fij*rijsq;
+							fxij = fij*rxij;
+							fyij = fij*ryij;
+							fzij = fij*rzij;
+							// forces on atom ii
+							fxl[ii] += fxij;
+							fyl[ii] += fyij;
+							fzl[ii] += fzij;
+							// forces on atom jj
+							fxl[jj] -= fxij;
+							fyl[jj] -= fyij;
+							fzl[jj] -= fzij;
+						}// End of cutoff check
+					}
+				} // End of electrostatic interaction type check
+			} // End of dihedral loop
+			// End of Dihedral --------------------------------------------------------------------------
+			
+			// Start of non-bonded --------------------------------------------------------------------------
+			for (iNbp=0;iNbp<pSampleMole_i->nnbp;iNbp++)
+			{
+				
+			} // End of non-bonded pair loop
+			// End of non-bonded ----------------------------------------------------------------------------			
 
 			isum_atom += pSampleMole_i->natom;
 			isum_mole++;

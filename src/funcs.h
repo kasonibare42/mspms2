@@ -23,6 +23,7 @@ int ewald_real_frc(double rijsq, double chargeij, double *uij, double *fij);
 int wolf_real_frc(double rijsq, double chargeij, double *uij, double *fij);
 int xmole_coulomb_frc(int iSpecie, int iMole, int iabs, int iAtom, int jSpecie,
 		int jMole, int jabs, int jAtom);
+int xatom_coulomb_frc(double rijsq, double chargeij, double *uij, double *fij);
 int cal_com_and_efg(int iSpecie, int iMole, int iabs, int iAtom);
 
 int fnSffrcSession();
