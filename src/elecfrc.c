@@ -33,6 +33,19 @@ int ewald_real_frc(double rijsq, double chargeij, double *uij, double *fij)
 	return 0;
 }
 
+int ewald_excl_frc(double rijsq, double chargeij, double *uij, double *fij)
+{
+	double rij;
+	
+	rij = sqrt(rijsq);
+	*uij = coulomb_prefactor*chargeij/rij;
+	// The negative sign for the fij is because these forces are meant to be
+	// substracted from the total forces!
+	*fij = -*uij/rijsq; ///< NOTE: negative sign
+	
+	return 0;
+}
+
 int wolf_real_frc(double rijsq, double chargeij, double *uij, double *fij)
 {
 	double rij;
