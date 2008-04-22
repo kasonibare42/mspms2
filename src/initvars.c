@@ -475,7 +475,7 @@ int init_sf_atom_explicit()
 
 
 /// Read in electrostatic parametes and initialize related variables
-int fnInitCharge()
+int init_charge()
 {
 	int ii;
 	char buffer[LONG_STRING_LENGTH];
@@ -726,7 +726,7 @@ int init_vars()
 	// Read in electrostatic parametes and initialize if needed
 	if (iChargeType != ELECTROSTATIC_NONE)
 	{
-		fnInitCharge();
+		init_charge();
 	}
 
 	// Initialize the common terms and calculate LJ lrc if it is requested.

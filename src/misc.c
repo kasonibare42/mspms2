@@ -19,7 +19,7 @@
 
 void get_specie_and_relative_atom_id(int abs_atom_id, int *specie_id, int *sample_atom_id)
 {
-	int ii, iAtom, iSampleAtom;
+	int ii, iAtom;
 	
 	iAtom = 0;
 	for (ii=0; ii<nspecie; ii++)
