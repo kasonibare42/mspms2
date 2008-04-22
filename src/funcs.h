@@ -29,6 +29,8 @@ int reconstruct_from_com_one(int iMole, int iabs, int iAtom);
 int frcshort();
 int bndfrc(int iSpecie, int iBond, int iabs, double *uij, double *virial_ij);
 int aglfrc(int iSpecie, int iAngle, int iabs, double *uij, double *virial_ij);
+int dihfrc(int iSpecie, int iDih, int iabs, double *uij, double *virial_ij);
+int impfrc(int iSpecie, int iImp, int iabs, double *uij, double *virial_ij);
 
 int fnSffrcSession();
 int fnErfrcSession(int iStartMole, int iEndMole);

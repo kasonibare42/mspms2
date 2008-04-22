@@ -64,30 +64,33 @@ int frcshort()
 			// Start of Dihedral ------------------------------------------------------------------------
 			for (iDih=0;iDih<pSampleMole->ndih;iDih++)
 			{
-				
+				dihfrc(iSpecie, iDih, isum_atom, &uij, &virial_ij);
+				udih += uij;
+				virial_intra += virial_ij;
 			}
 			// End of Dihedral --------------------------------------------------------------------------
 			
 			// Start of improper ---------------------------------------------------------------------------
 			for (iImp=0;iImp<pSampleMole->nimp;iImp++)
 			{
-				
+				impfrc(iSpecie, iImp, isum_atom, &uij, &virial_ij);
+				uimp += uij;
+				virial_intra += virial_ij;
 			}
 			// End of improper ----------------------------------------------------------------------------
-			
-			
-			
-			
-			
 			isum_atom += pSampleMole->natom;
 		} // End of molecule loop
 		isum_mole += nmole_per_specie[iSpecie];
 	} // End of specie loop
 	
+	// Set the intra-molecular energy
+	uintra = ubond + uangle + udih + uimp;
 	
 	
 	printf("ubond=%lf\n",ubond*epsilon_base*RGAS);
 	printf("uangle=%lf\n",uangle*epsilon_base*RGAS);
+	printf("udih=%lf\n",udih*epsilon_base*RGAS);
+	printf("uimp=%lf\n",uimp*epsilon_base*RGAS);
 	
 	return 0;
 }

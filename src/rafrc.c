@@ -363,7 +363,7 @@ int aglfrc_old(int iMole)
 	return 0;
 }
 
-int dihfrc(int iMole)
+int dihfrc_old(int iMole)
 {
 	int ii;
 	int iia, iib, iic, iid;
@@ -657,7 +657,7 @@ int dihfrc(int iMole)
 	return 0;
 }
 
-int impfrc(int iMole) // improper energy/force calculations
+int impfrc_old(int iMole) // improper energy/force calculations
 {
 	int ii;
 	int ii1, ii2, ii3, ii4;
@@ -894,13 +894,13 @@ int fnRafrcSession(int iMole)
 
 	if (ndih > 0)
 	{
-		dihfrc(iMole);
+		// dihfrc(iMole);
 		gUintraSession += gUdihSession;
 	}
 
 	if (nimp > 0)
 	{
-		impfrc(iMole);
+		// impfrc(iMole);
 		gUintraSession += gUimpSession;
 	}
 

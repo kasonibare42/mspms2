@@ -13,7 +13,6 @@
  * 
  * Written by Yang Wang 2007
  */
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -85,12 +84,9 @@ int main(int argc, char *argv[])
 	frclong();
 	frcshort();
 	
-	exit(1);
-	
-	erfrc();
-	rafrc();
 	echo();
 	printit();
+	exit(1);
 	
 	if (nstep_trj>0)
 	{

@@ -37,6 +37,7 @@ int frclong()
 	double fxij, fyij, fzij;
 
 	uvdw = 0.0;
+	uelec = 0.0;
 	ureal = 0.0;
 	uexcl = 0.0;
 	ucoulomb = 0.0;
@@ -1132,6 +1133,8 @@ int frclong()
 		uwolf = ureal - uself - uexcl;
 	}
 
+	// Set the inter-molecular energy
+	uinter = uvdw + uelec;
 
 
 	printf("uvdw = %lf, %lf, %lf\n", uvdw*epsilon_base*RGAS, epsilon_base, RGAS);
