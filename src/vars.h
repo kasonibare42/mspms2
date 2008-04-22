@@ -84,8 +84,6 @@ int whichNH; ///< which nose hoover subroutine to use? usually 3 for molecule, 2
 double TWOPI_LX, TWOPI_LY, TWOPI_LZ; ///< ewald
 double Bfactor_ewald, Vfactor_ewald;
 double twopi_over_3v; ///< constant for vacuum boundary
-/// variables for wolf method
-double uwolf, uwolf_real, uwolf_con, wolfvcon1, wolfvcon2, wolffcon1, wolffcon2;
 
 
 /// variables for nose hoover method
@@ -124,16 +122,21 @@ double uvdw; ///< van der wall energy, LJ energy, include unbp
 double usg; ///< Silvera-Goldman potential
 double unbp_vdw; ///< nonbonded pair energy
 double ubond, uangle, udih, uimp;
-double uewald; ///< total ewald energy, refer to Frenkel and Smit, eq. 12.1.25
+double uelec; ///< Electrostatic interaction energy. This can be either uewald, uwolf, ucoulomb.
+#define uewald 		uelec ///< total ewald energy, refer to Frenkel and Smit, eq. 12.1.25
+#define uwolf 		uelec ///< total wolf energy.
+#define ucoulomb 	uelec ///< direct coulomb energy
 double ureal; ///< real part of ewald, term 3 in 12.1.25
 double ufourier; ///< fourier part of ewald, term 1 in 12.1.25
 double uself; ///< self interaction correction part of ewald, term 2 in 12.1.25
 double uexcl; ///< excluding energy for ewald summation
 double uvacuum; ///< vacuum boundary for ewald
 double uGz0; ///< 1D ewald Gz=0 term
+/// variables for wolf method
+double uwolf_real, uwolf_con; 
+double wolfvcon1, wolfvcon2, wolfvcon3, wolffcon1, wolffcon2;
 double LJswitch; ///< switch factor for LJ
 double usflj; ///< solid-fluid LJ energy
-double ucoulomb; ///< direct coulomb energy
 double udftmcff; ///< DFT metal cluster FF energy
 double virial; ///< calculated in printit()
 double virial_inter;

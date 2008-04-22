@@ -17,20 +17,6 @@
 #include "mspms2.h"
 
 /// Calcualte soft force interactions, including LJ and electrostatic forces.
-/**
- * @param iStartSpecie is the starting specie for the loop.
- * @param iStartMole is the starting molecule for the loop.
- * @param jStartSpecie is the ending specie for the loop.
- * @param jStartMole is the ending molecule for the loop.\n
- * 
- * These four parameters are used to decide what are the lower and upper limits for ii, jj loop.
- * The value of -1 means all possible values for this parameter. A -1 of the specie overides
- * whatever value for the molecule parameter. \n
- * There are only server possible combination of the parameters.\n
- * 1) (-1,X, -1,X) means loop through all molecules.\n
- * 2) (X,X, -1,X) means loop for a specific molecule and all other molecules.\n
- * 3) (X,X, Y,Y) means calculations between two molecules.\n
- */
 int frclong()
 {
 	int isum_atom, jsum_atom;
@@ -53,8 +39,6 @@ int frclong()
 	uvdw = 0.0;
 	ureal = 0.0;
 	uexcl = 0.0;
-	ufourier = 0.0;
-	uself = 0.0;
 	ucoulomb = 0.0;
 	virial_inter = 0.0;
 	for (ii=0; ii<natom; ii++)
@@ -211,7 +195,6 @@ int frclong()
 						fzl[ii] = fzi;
 					} // End of mm atom (ii)
 					// ---------------------- End of Atoms ----------------------------------------------------------------------------------
-					// printf("%d || %d\n",iMole, jMole);
 					if (iChargeType==ELECTROSTATIC_SIMPLE_COULOMB)
 					{
 						xmole_coulomb_frc(iSpecie, iMole, iabs, iAtom, jSpecie,
@@ -236,7 +219,7 @@ int frclong()
 	bool isSameMole;
 	isum_atom = 0;
 	isum_mole = 0;
-	// Start of inter-molecule interactions ----------------------------------------------------------------------------------------
+	// Start of intra-molecule interactions ----------------------------------------------------------------------------------------
 	for (iSpecie=0; iSpecie<nspecie; iSpecie++) // specie loop
 	{
 		pSampleMole_i = sample_mole + iSpecie; // Get the sample molecule
@@ -995,11 +978,13 @@ int frclong()
 	} // End of specie loop
 
 	// More Ewald and Wolf calculations
-	int kx, ky, kz, ksq;
-	double rkx, rky, rkz, rksq;
-	double kvec, sr, si, t, chargei;
 	if (iChargeType==ELECTROSTATIC_EWALD)
-	{
+	{ 
+		int kx, ky, kz, ksq; 
+		double rkx, rky, rkz, rksq; 
+		double kvec, sr, si, t, chargei;
+		ufourier = 0.0;
+		uself = 0.0;
 		// Fourier summation of energy
 		for (kx=-KMAXX; kx<=KMAXX; kx++) // NOTE: <=
 		{
@@ -1066,19 +1051,95 @@ int frclong()
 		// Total 3D ewald energy with tinfoil boundary condition
 		uewald = ureal + ufourier -uself - uexcl;
 
+		// Calculate additional energy and forces for vaccum boundary condition
+		// for ewald summation.
+		if (fEwald_BC==EWALD_BC_VACUUM)
+		{ 
+			double xxpri, yypri, zzpri; // PBC coords into primal box 
+			double qrx, qry, qrz;
+			// the atoms have to be grouped adjacent to their respective molecular
+			// centers of mass before performing this sum
+			// Because any molecules straddling a periodic boundary will cause
+			// the total dipole moment of the cell to be greatly exaggerated.
+			// -------------------------
+			isum_atom = 0;
+			isum_mole = 0;
+			for (iSpecie=0;iSpecie<nspecie;iSpecie++)
+			{
+				pSampleMole_i = sample_mole + iSpecie;
+				iAtom = pSampleMole_i->natom;
+				for (iMole=isum_mole;iMole<isum_mole+nmole_per_specie[iSpecie];iMole++)
+				{ 
+					// calculate the center of mass and relative positions
+					cal_com_and_efg_one(iSpecie, iMole, isum_atom, iAtom);
+					// calcuate the new molecular center of mass using PBC
+					mole_xx[iMole] -= boxlx*rint(mole_xx[iMole]/boxlx);
+					mole_yy[iMole] -= boxly*rint(mole_yy[iMole]/boxly);
+					mole_zz[iMole] -= boxlz*rint(mole_zz[iMole]/boxlz); 
+					// calculate the new positions to the PBC'd center of mass
+					reconstruct_from_com_one(iMole, isum_atom, iAtom);
+					isum_atom += iAtom; 
+				}
+				isum_mole += nmole_per_specie[iSpecie];
+			}
+			qrx = qry = qrz = 0.0;
+			for (ii=0; ii<natom; ii++)
+			{
+				get_specie_and_relative_atom_id(ii, &iSpecie, &iAtom);
+				// use the reconstructed coordinates for this calculations
+				// the reconstructed coordinates make sure that the
+				// molecular center of mass are in the primal simulation
+				// box and the atoms in one molecule are grouped together
+				xxpri = ex[ii];
+				yypri = fy[ii];
+				zzpri = gz[ii];
+				chargei = sample_mole[iSpecie].charge[iAtom];
+				qrx = qrx + chargei*xxpri;
+				qry = qry + chargei*yypri;
+				qrz = qrz + chargei*zzpri;
+			}
+			// energy
+			uvacuum = qrx*qrx + qry*qry + qrz*qrz; // still need constant
+			uvacuum *= twopi_over_3v*coulomb_prefactor;
+			// forces
+			for (ii=0; ii<natom; ii++)
+			{
+				get_specie_and_relative_atom_id(ii, &iSpecie, &iAtom);
+				chargei = sample_mole[iSpecie].charge[iAtom];
+				fij = -2.0*twopi_over_3v*chargei*coulomb_prefactor;
+				fxl[ii] += fij*qrx;
+				fyl[ii] += fij*qry;
+				fzl[ii] += fij*qrz;
+			}
+			// TODO: Does this term have additional contribution to the pressure?
+			// Or is it already included in the ewald??
+			uewald += uvacuum;
+		}
 		// The virial contribution from ewald summation is the same as its energy
 		virial_inter += uewald;
 	}
 	else if (iChargeType==ELECTROSTATIC_WOLF)
-	{}
+	{
+		double chargei;
+		uself = 0.0;
+		for (ii=0;ii<natom;ii++)
+		{
+			get_specie_and_relative_atom_id(ii, &iSpecie, &iAtom);
+			chargei = sample_mole[iSpecie].charge[iAtom];
+			uself += chargei*chargei;
+		}
+		uself *= coulomb_prefactor*wolfvcon3;
+		// Total Wolf energy
+		uwolf = ureal - uself - uexcl;
+	}
 
 
 
 	printf("uvdw = %lf, %lf, %lf\n", uvdw*epsilon_base*RGAS, epsilon_base, RGAS);
 	printf("ureal=%lf, uexcl=%lf\n", ureal*epsilon_base*RGAS, uexcl*epsilon_base*RGAS);
 	printf("ufourier=%lf, uself=%lf\n",ufourier*epsilon_base*RGAS, uself*epsilon_base*RGAS);
-	printf("uewald=%lf\n", uewald*epsilon_base*RGAS);
-	printf("ucoulomb = %lf\n", ucoulomb*epsilon_base*RGAS);
+	printf("uvacuum=%lf\n", uvacuum*epsilon_base*RGAS);
+	printf("uelec=%lf\n",uelec*epsilon_base*RGAS);
 	printf("virial_inter=%lf\n",virial_inter*epsilon_base*RGAS);
 	exit(1);
 

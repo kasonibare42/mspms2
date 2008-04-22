@@ -63,6 +63,7 @@ int wolf_real_frc(double rijsq, double chargeij, double *uij, double *fij)
 /**
  * The coulomb interactions between 2 molecules (cross molecules).
  * The coulomb interactions intra-molecular is calculated elsewhere.
+ * @iMole is the absolute molecule ID
  */
 int xmole_coulomb_frc(int iSpecie, int iMole, int iabs, int iAtom, int jSpecie,
 		int jMole, int jabs, int jAtom)
@@ -78,8 +79,8 @@ int xmole_coulomb_frc(int iSpecie, int iMole, int iabs, int iAtom, int jSpecie,
 	pSampleMole_i = sample_mole + iSpecie;
 	pSampleMole_j = sample_mole + jSpecie;
 	// first calculate center of mass of the molecules
-	cal_com_and_efg(iSpecie, iAtom, iabs, iAtom);
-	cal_com_and_efg(jSpecie, jAtom, jabs, jAtom);
+	cal_com_and_efg_one(iSpecie, iMole, iabs, iAtom);
+	cal_com_and_efg_one(jSpecie, jMole, jabs, jAtom);
 
 	// calculate the distance between molecular center of mass
 	rxcm = mole_xx[iMole] - mole_xx[jMole];

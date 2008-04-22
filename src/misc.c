@@ -17,6 +17,8 @@
 #include <ctype.h>
 #include "mspms2.h"
 
+/// Give the absolute atom id, calculate its specie id and relative atom id in the sample
+/// molecule.
 void get_specie_and_relative_atom_id(int abs_atom_id, int *specie_id, int *sample_atom_id)
 {
 	int ii, iAtom;
@@ -35,12 +37,17 @@ void get_specie_and_relative_atom_id(int abs_atom_id, int *specie_id, int *sampl
 	}
 }
 
-int cal_com_and_efg(int iSpecie, int iMole, int iabs, int iAtom)
+/** 
+ * Give the molecule coordination, calculate its center of mass 
+ * and inner coordinates. iMole is the absolute molecule ID.
+ */
+int cal_com_and_efg_one(int iSpecie, int iMole, int iabs, int iAtom)
 {
 	int ii, jj;
 	PSAMPLE_MOLECULE pSampleMole;
 	
 	pSampleMole = sample_mole + iSpecie;
+	// Calculate the center of mass
 	mole_xx[iMole] = 0.0;
 	mole_yy[iMole] = 0.0;
 	mole_zz[iMole] = 0.0;
@@ -52,17 +59,37 @@ int cal_com_and_efg(int iSpecie, int iMole, int iabs, int iAtom)
 		mole_zz[iMole] += zz[jj]*pSampleMole->aw[ii];
 	}
 	mole_xx[iMole] /= pSampleMole->mw;
-	mole_xx[iMole] /= pSampleMole->mw;
-	mole_xx[iMole] /= pSampleMole->mw;
+	mole_yy[iMole] /= pSampleMole->mw;
+	mole_zz[iMole] /= pSampleMole->mw;
 	
+	// Calculate the inner coordinates
 	for (ii=0;ii<iAtom;ii++)
 	{
 		jj = iabs + ii;
-		ex[jj] = xx[jj] - mole_xx[ii];
-		fy[jj] = yy[jj] - mole_yy[ii];
-		gz[jj] = zz[jj] - mole_zz[ii];
+		ex[jj] = xx[jj] - mole_xx[iMole];
+		fy[jj] = yy[jj] - mole_yy[iMole];
+		gz[jj] = zz[jj] - mole_zz[iMole];
 	}
 	
+	return 0;
+}
+
+/**
+ * Reconstruct the molecule from the position of center of mass.
+ * The new coordinates are saved to ex, fy, gz. So, the inner
+ * coordinates are no longer kept after this calculation.
+ */
+int reconstruct_from_com_one(int iMole, int iabs, int iAtom)
+{
+	int ii;
+
+	for (ii=iabs;ii<iabs+iAtom;ii++)
+	{
+		ex[ii] = ex[ii] + mole_xx[iMole];
+		fy[ii] = fy[ii] + mole_yy[iMole];
+		gz[ii] = gz[ii] + mole_zz[iMole];
+	}
+
 	return 0;
 }
 

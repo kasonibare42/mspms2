@@ -536,6 +536,7 @@ int init_charge()
 				wolfvcon2 = erfc(kappa*rcutoffelec)/rcutoffelecsq + 2.0*kappa
 						*exp(-(kappa *rcutoffelec)*(kappa*rcutoffelec))
 						/(sqrt(pi) *rcutoffelec);
+				wolfvcon3 = kappa/sqrt(pi)+erfc(kappa*rcutoffelec)/(2.0*rcutoffelec);
 				wolffcon1 = 2.0*kappa/sqrt(pi);
 				wolffcon2 = -wolfvcon2;
 			}
