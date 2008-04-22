@@ -26,6 +26,9 @@ int xmole_coulomb_frc(int iSpecie, int iMole, int iabs, int iAtom, int jSpecie,
 int xatom_coulomb_frc(double rijsq, double chargeij, double *uij, double *fij);
 int cal_com_and_efg_one(int iSpecie, int iMole, int iabs, int iAtom);
 int reconstruct_from_com_one(int iMole, int iabs, int iAtom);
+int frcshort();
+int bndfrc(int iSpecie, int iBond, int iabs, double *uij, double *virial_ij);
+int aglfrc(int iSpecie, int iAngle, int iabs, double *uij, double *virial_ij);
 
 int fnSffrcSession();
 int fnErfrcSession(int iStartMole, int iEndMole);

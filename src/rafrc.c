@@ -7,7 +7,7 @@
 #include <assert.h>
 #include "mspms2.h"
 
-int bndfrc(int iMole)
+int bndfrc_old(int iMole)
 {
 	int ii;
 	int ii1, ii2;
@@ -152,7 +152,7 @@ int bndfrc(int iMole)
 	return 0;
 }
 
-int aglfrc(int iMole)
+int aglfrc_old(int iMole)
 {
 	int ii;
 	int iia, iib, iic;
@@ -882,13 +882,13 @@ int fnRafrcSession(int iMole)
 
 	if (nbond > 0)
 	{
-		bndfrc(iMole);
+		// bndfrc(iMole);
 		gUintraSession += gUbondSession;
 	}
 
 	if (nangle > 0)
 	{
-		aglfrc(iMole);
+		// aglfrc(iMole);
 		gUintraSession += gUangleSession;
 	}
 

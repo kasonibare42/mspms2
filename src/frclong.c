@@ -223,7 +223,7 @@ int frclong()
 	for (iSpecie=0; iSpecie<nspecie; iSpecie++) // specie loop
 	{
 		pSampleMole_i = sample_mole + iSpecie; // Get the sample molecule
-		for (iMole=0; iMole<nmole_per_specie[iSpecie]; iMole++) // molecule loop
+		for (iMole=isum_mole; iMole<isum_mole+nmole_per_specie[iSpecie]; iMole++) // molecule loop
 		{
 			// Start of Bond ----------------------------------------------------------------------------
 			for (iBond=0; iBond<pSampleMole_i->nbond; iBond++) // Bond loop
@@ -971,10 +971,9 @@ int frclong()
 				} // End of electrostatic interaction type check
 			} // End of non-bonded pair loop
 			// End of non-bonded ----------------------------------------------------------------------------			
-
 			isum_atom += pSampleMole_i->natom;
-			isum_mole++;
-		} // End of molecule loop
+		} // End of molecule loop 
+		isum_mole += nmole_per_specie[iSpecie];
 	} // End of specie loop
 
 	// More Ewald and Wolf calculations
@@ -1141,7 +1140,6 @@ int frclong()
 	printf("uvacuum=%lf\n", uvacuum*epsilon_base*RGAS);
 	printf("uelec=%lf\n",uelec*epsilon_base*RGAS);
 	printf("virial_inter=%lf\n",virial_inter*epsilon_base*RGAS);
-	exit(1);
 
 }
 

@@ -29,7 +29,7 @@ Title: This is just an Example!
 0                      Ensemble type (0-nve;1-nvt;2-npt)
 3                      Number of constraints
 0                      Inter-molecular potentials other than LJ (0-LJ;1-SG)
-1                      Electrostatic interaction type (0-no elec;1-ewald;2-wolf;3-simple coulomb)
+3                      Electrostatic interaction type (0-no elec;1-ewald;2-wolf;3-simple coulomb)
 0                      iSF_type (0-no sf;1-hypergeo;2-atomexplicit;3-tasos;4-my interp)
 0                      Other force fields (0-no other FF;1-metal cluster FF)
 
