@@ -19,6 +19,25 @@
 
 int collect_aves()
 {
+	// Calculate energies and pressures
+	upot = uinter + uintra;
+	utot = upot + ukin;
+	virial = virial_inter + virial_intra;
+	// Add energy of thermostat. 
+	// If nose hoover is not used, they will just be zero
+	utot = utot + unhts + unhtss + utsbs;
+	// calculate ideal pressure part, rho*K*T = rho(*)*T(*)
+	pideal=natom/(boxlx*boxly*boxlz)*tinst;
+	// Do not need to recalculate lrc here, it should be calculated
+	// elsewhere when variables changed.
+	pinst = pideal + (virial_inter+virial_intra)/(boxlx*boxly*boxlz);
+	// Add long range corrections into total energy and pressure if needed.
+	if (isLJlrcOn)
+	{
+		utot += uljlrc;
+		pinst += pljlrc;
+	}
+
 	// accumulators
 	accum[0][0] += utot;
 	accum[0][1] += utot*utot;

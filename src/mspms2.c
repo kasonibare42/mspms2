@@ -29,8 +29,8 @@ int printit()
 	virial = virial_inter + virial_intra;
 	// add energy of thermostat, if nose hoover is not used, they will just be zero
 	utot = utot + unhts + unhtss + utsbs;
-	// calculate ideal pressure part
-	pideal=natom/(boxlx*boxly*boxlz)*tinst*KB_OVER_1E30;
+	// calculate ideal pressure part, rho*K*T = rho(*)*T(*)
+	pideal=natom/(boxlx*boxly*boxlz)*tinst;
 	// do not need to recalculate lrc here, it should be calculated
 	// elsewhere when variables changed
 	pinst = pideal + (virial_inter+virial_intra)*VIRIAL_TO_PRESSURE/(boxlx
@@ -79,16 +79,15 @@ int main(int argc, char *argv[])
 	init_vars();
 	/// Validate the initialized variables.
 	fnValidateInit();
-	
-	// Calculate energy and forces
+	// Calculate energy and forces.
 	frclong();
 	frcshort();
-	
+	// Echo the input
 	echo();
+	// Print out the results from the zero step.
 	printit();
-	exit(1);
 	
-	if (nstep_trj>0)
+	if (nstep_trj!=0)
 	{
 		trajectory();
 	}
@@ -129,6 +128,7 @@ int main(int argc, char *argv[])
 		fprintf(stderr,"Error: Cannot determine the simulation type.");
 		exit(1);
 	}
+	exit(1);
 	
 	run = true;
 	while (run)

@@ -17,12 +17,10 @@ int calculate_ljlrc();
 int fnValidateInput();
 
 int frclong();
-int ljfrc(double rijsq, double sigmaij, double epsilonij, double *uij,
-		double *fij, double *uijshift);
+int ljfrc(double rijsq, double sigmaij, double epsilonij, double *uij, double *fij, double *uijshift);
 int ewald_real_frc(double rijsq, double chargeij, double *uij, double *fij);
 int wolf_real_frc(double rijsq, double chargeij, double *uij, double *fij);
-int xmole_coulomb_frc(int iSpecie, int iMole, int iabs, int iAtom, int jSpecie,
-		int jMole, int jabs, int jAtom);
+int xmole_coulomb_frc(int iSpecie, int iMole, int iabs, int iAtom, int jSpecie, int jMole, int jabs, int jAtom);
 int xatom_coulomb_frc(double rijsq, double chargeij, double *uij, double *fij);
 int cal_com_and_efg_one(int iSpecie, int iMole, int iabs, int iAtom);
 int reconstruct_from_com_one(int iMole, int iabs, int iAtom);
@@ -31,6 +29,8 @@ int bndfrc(int iSpecie, int iBond, int iabs, double *uij, double *virial_ij);
 int aglfrc(int iSpecie, int iAngle, int iabs, double *uij, double *virial_ij);
 int dihfrc(int iSpecie, int iDih, int iabs, double *uij, double *virial_ij);
 int impfrc(int iSpecie, int iImp, int iabs, double *uij, double *virial_ij);
+int cal_sf_hypergeo(int ii, int iSpecie, int iAtom, double *uij, double *fij);
+int cal_sf_atom_explicit(int ii, int iSpecie, int iAtom, double *uij, double *fij);
 
 int fnSffrcSession();
 int fnErfrcSession(int iStartMole, int iEndMole);

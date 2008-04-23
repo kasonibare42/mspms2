@@ -117,11 +117,15 @@ int istep; ///< counter of step, current step
 double utot; ///< calculated in printit()
 double upot; ///< calculated in printit()
 double ukin;
-double uinter, uintra; ///< inter and intra molecular energy
+double uinter; 
+double uintra; ///< inter and intra molecular energy
 double uvdw; ///< van der wall energy, LJ energy, include unbp
 double usg; ///< Silvera-Goldman potential
 double unbp_vdw; ///< nonbonded pair energy
-double ubond, uangle, udih, uimp;
+double ubond; 
+double uangle; 
+double udih; 
+double uimp;
 double uelec; ///< Electrostatic interaction energy. This can be either uewald, uwolf, ucoulomb.
 #define uewald 		uelec ///< total ewald energy, refer to Frenkel and Smit, eq. 12.1.25
 #define uwolf 		uelec ///< total wolf energy.
@@ -133,11 +137,17 @@ double uexcl; ///< excluding energy for ewald summation
 double uvacuum; ///< vacuum boundary for ewald
 double uGz0; ///< 1D ewald Gz=0 term
 /// variables for wolf method
-double uwolf_real, uwolf_con; 
-double wolfvcon1, wolfvcon2, wolfvcon3, wolffcon1, wolffcon2;
+double uwolf_real; 
+double uwolf_con; 
+double wolfvcon1; 
+double wolfvcon2; 
+double wolfvcon3; 
+double wolffcon1; 
+double wolffcon2;
 double LJswitch; ///< switch factor for LJ
 double usflj; ///< solid-fluid LJ energy
-double udftmcff; ///< DFT metal cluster FF energy
+double uotherff; ///< Other force field energy
+#define udftmcff		uotherff ///< DFT metal cluster FF energy
 double virial; ///< calculated in printit()
 double virial_inter;
 double virial_intra;

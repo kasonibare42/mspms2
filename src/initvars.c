@@ -395,6 +395,10 @@ int init_sf_hypergeo()
 			fprintf(stderr,"ntube=%d  sigma=%lf  epsilon=%lf\n",ntube,*solid_sigma,*solid_epsilon);
 			fprintf(fpouts, "ntube=%d  sigma=%lf  epsilon=%lf\n", ntube,*solid_sigma, *solid_epsilon);
 			
+			// Reduce them
+			*solid_sigma /= sigma_base;
+			*solid_epsilon /= epsilon_base;
+			
 			// allocate memories
 			hgntc_xx = calloc(ntube, sizeof(double));
 			hgntc_yy = calloc(ntube, sizeof(double));
@@ -447,9 +451,11 @@ int init_sf_atom_explicit()
 				solid_sigma = malloc(sizeof(double));
 				solid_epsilon = malloc(sizeof(double));
 				solid_charge = malloc(sizeof(double));
-				// epsilon must be J/mol!! important
+				// epsilon must be K!! important
 				sscanf(buffer, "%d %lf %lf %lf", &itmp, solid_sigma,
 						solid_epsilon, solid_charge);
+				*solid_sigma /= sigma_base;
+				*solid_epsilon /= epsilon_base;
 			}
 			solid_xx = calloc(solid_natom, sizeof(double));
 			solid_yy = calloc(solid_natom, sizeof(double));
@@ -462,6 +468,10 @@ int init_sf_atom_explicit()
 			{
 				fscanf(fpins, "%s %lf %lf %lf\n", buffer, &solid_xx[ii],
 						&solid_yy[ii], &solid_zz[ii]);
+				// Reduce them
+				solid_xx[ii] /= sigma_base;
+				solid_yy[ii] /= sigma_base;
+				solid_zz[ii] /= sigma_base;
 			}
 			fclose(fpins);
 			return 0;

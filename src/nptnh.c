@@ -12,17 +12,18 @@ void rezero_npt_ts()
 {
 	// thermo/barostat
 	utsbs = 0.0;
-	vts = sqrt((nfree+1.0)*RGAS/Qts);
-	vbs = sqrt((nfree+1.0)*RGAS/Qbs);
+	vts = sqrt((nfree+1.0)/Qts);
+	vbs = sqrt((nfree+1.0)/Qbs);
 	rts = 0.0;
 }
 
 int npt_nh_operator()
 {
-	int ii;
+	int ii, iSpecie, iAtom;
 	double mvsq, AA, BB, pdiff;
-	double N_plus1RT = (nfree+1)*RGAS*treq;
+	double N_plus1RT = (nfree+1)*treq;
 	double one_3N = 1.0+3.0/nfree;
+	double r_mass;
 	// G - force
 	// Q - Mass
 	// v - velocity
@@ -30,7 +31,13 @@ int npt_nh_operator()
 
 	mvsq = 0.0;
 	for (ii=0; ii<natom; ii++)
-		mvsq += aw[ii]*(vx[ii]*vx[ii]+vy[ii]*vy[ii]+vz[ii]*vz[ii]);
+	{
+		// Get specie ID and relative atom ID
+		get_specie_and_relative_atom_id(ii, &iSpecie, &iAtom);
+		r_mass = 1.0/sample_mole[iSpecie].aw[iAtom];
+
+		mvsq += (vx[ii]*vx[ii]+vy[ii]*vy[ii]+vz[ii]*vz[ii])/r_mass;
+	}
 
 	// the virial is 3.0*real_virial, unit is J/mol
 	// preq here should be just the external pressure?
@@ -84,7 +91,6 @@ int npt_nh_operator()
 	// rts = rts + deltby2*vts*1.0e-5; // deltby2 is dt_outer2
 	rts = rts + deltby2*vts; // deltby2 is dt_outer2
 
-
 	// dt_outer is fs, vts, vbs is m/s
 	// AA = exp(-dt_outer2*(vts+one_3N*vbs)*1.0e-15);
 	AA = exp(-dt_outer2*(vts+one_3N*vbs));
@@ -122,14 +128,14 @@ int npt_nh_operator()
 	// extra enery from the thermo/barostat for conserve energy
 	// utsbs = 0.5*Qbs*vbs*vbs + 0.5*Qts*vts*vts + (nfree+1)*RGAS*treq*rts*1.0e-10 + preq*boxv*PA_A3_TO_J_PER_MOL;
 
-	utsbs = 0.5*Qbs*vbs*vbs + 0.5*Qts*vts*vts + (nfree+1)*RGAS*treq*rts + preq
+	utsbs = 0.5*Qbs*vbs*vbs + 0.5*Qts*vts*vts + (nfree+1)*treq*rts + preq
 			*boxv*PA_A3_TO_J_PER_MOL;
 
 	// printf("3   utsbs=%lf Gts=%lf Gbs=%lf vts=%lf BB=%lf vbs=%lf\n",utsbs,Gts,Gbs,vts,BB,vbs);
 
 	// calcualte kinetic energy and temperature
 	ukin = mvsq/2.0;
-	tinst = 2.0*ukin*R_RGAS/nfree;
+	tinst = 2.0*ukin/nfree;
 
 	// calculate the total pressure
 	pideal=natom/boxv*tinst*KB_OVER_1E30;

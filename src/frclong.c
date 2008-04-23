@@ -147,7 +147,7 @@ int frclong()
 							if (iChargeType!=ELECTROSTATIC_NONE)
 							{
 								chargeij = pSampleMole_i->charge[mm]
-									*pSampleMole_j->charge[nn];
+										*pSampleMole_j->charge[nn];
 								if (iChargeType==ELECTROSTATIC_EWALD) // Ewald summation
 								{
 									if (rijsq<rcutoffelecsq)
@@ -312,7 +312,7 @@ int frclong()
 				if (iChargeType!=ELECTROSTATIC_NONE)
 				{
 					chargeij = pSampleMole_i->charge[mm]
-						*pSampleMole_i->charge[nn];
+							*pSampleMole_i->charge[nn];
 					if (iChargeType==ELECTROSTATIC_EWALD) // Ewald summation
 					{
 						// Excluding part of ewald summation.
@@ -496,7 +496,7 @@ int frclong()
 				if (iChargeType!=ELECTROSTATIC_NONE)
 				{
 					chargeij = pSampleMole_i->charge[mm]
-						*pSampleMole_i->charge[nn];
+							*pSampleMole_i->charge[nn];
 					if (iChargeType==ELECTROSTATIC_EWALD) // Ewald summation
 					{
 						// Excluding part of ewald summation.
@@ -705,7 +705,7 @@ int frclong()
 				if (iChargeType!=ELECTROSTATIC_NONE)
 				{
 					chargeij = pSampleMole_i->charge[mm]
-						*pSampleMole_i->charge[nn];
+							*pSampleMole_i->charge[nn];
 					if (iChargeType==ELECTROSTATIC_EWALD) // Ewald summation
 					{
 						// Real part of Ewald summation
@@ -895,7 +895,7 @@ int frclong()
 				if (iChargeType!=ELECTROSTATIC_NONE)
 				{
 					chargeij = pSampleMole_i->charge[mm]
-						*pSampleMole_i->charge[nn];
+							*pSampleMole_i->charge[nn];
 					if (iChargeType==ELECTROSTATIC_EWALD) // Ewald summation
 					{
 						// Real part of Ewald summation
@@ -979,9 +979,9 @@ int frclong()
 
 	// More Ewald and Wolf calculations
 	if (iChargeType==ELECTROSTATIC_EWALD)
-	{ 
-		int kx, ky, kz, ksq; 
-		double rkx, rky, rkz, rksq; 
+	{
+		int kx, ky, kz, ksq;
+		double rkx, rky, rkz, rksq;
 		double kvec, sr, si, t, chargei;
 		ufourier = 0.0;
 		uself = 0.0;
@@ -1012,7 +1012,8 @@ int frclong()
 							// with periodical system
 							t = rkx*xx[ii] + rky*yy[ii] + rkz*zz[ii];
 							// Get the relative atom id
-							get_specie_and_relative_atom_id(ii, &iSpecie, &iAtom);
+							get_specie_and_relative_atom_id(ii, &iSpecie,
+									&iAtom);
 							chargei = sample_mole[iSpecie].charge[iAtom];
 							sr = sr + chargei*cos(t);
 							si = si + chargei*sin(t);
@@ -1023,10 +1024,11 @@ int frclong()
 						{
 							t = rkx*xx[ii] + rky*yy[ii] + rkz*zz[ii];
 							// Get the relative atom id 
-							get_specie_and_relative_atom_id(ii, &iSpecie, &iAtom);
+							get_specie_and_relative_atom_id(ii, &iSpecie,
+									&iAtom);
 							chargei = sample_mole[iSpecie].charge[iAtom];
 							fij = 2.0*chargei*(sr*sin(t)-si*cos(t))
-								*Vfactor_ewald*kvec*coulomb_prefactor;
+									*Vfactor_ewald*kvec*coulomb_prefactor;
 							fxl[ii] += fij*rkx;
 							fyl[ii] += fij*rky;
 							fzl[ii] += fij*rkz;
@@ -1037,7 +1039,7 @@ int frclong()
 		} // KMAXX
 		// Total fourier energy part of ewald
 		ufourier *= Vfactor_ewald*coulomb_prefactor;
-		
+
 		// Self interaction corrections, it is constant, no forces.
 		for (ii=0; ii<natom; ii++)
 		{
@@ -1047,14 +1049,14 @@ int frclong()
 			uself += chargei*chargei;
 		}
 		uself *= coulomb_prefactor*sqrt(kappa*kappa/pi);
-		
+
 		// Total 3D ewald energy with tinfoil boundary condition
 		uewald = ureal + ufourier -uself - uexcl;
 
 		// Calculate additional energy and forces for vaccum boundary condition
 		// for ewald summation.
 		if (fEwald_BC==EWALD_BC_VACUUM)
-		{ 
+		{
 			double xxpri, yypri, zzpri; // PBC coords into primal box 
 			double qrx, qry, qrz;
 			// the atoms have to be grouped adjacent to their respective molecular
@@ -1064,21 +1066,21 @@ int frclong()
 			// -------------------------
 			isum_atom = 0;
 			isum_mole = 0;
-			for (iSpecie=0;iSpecie<nspecie;iSpecie++)
+			for (iSpecie=0; iSpecie<nspecie; iSpecie++)
 			{
 				pSampleMole_i = sample_mole + iSpecie;
 				iAtom = pSampleMole_i->natom;
-				for (iMole=isum_mole;iMole<isum_mole+nmole_per_specie[iSpecie];iMole++)
-				{ 
+				for (iMole=isum_mole; iMole<isum_mole+nmole_per_specie[iSpecie]; iMole++)
+				{
 					// calculate the center of mass and relative positions
 					cal_com_and_efg_one(iSpecie, iMole, isum_atom, iAtom);
 					// calcuate the new molecular center of mass using PBC
 					mole_xx[iMole] -= boxlx*rint(mole_xx[iMole]/boxlx);
 					mole_yy[iMole] -= boxly*rint(mole_yy[iMole]/boxly);
-					mole_zz[iMole] -= boxlz*rint(mole_zz[iMole]/boxlz); 
+					mole_zz[iMole] -= boxlz*rint(mole_zz[iMole]/boxlz);
 					// calculate the new positions to the PBC'd center of mass
 					reconstruct_from_com_one(iMole, isum_atom, iAtom);
-					isum_atom += iAtom; 
+					isum_atom += iAtom;
 				}
 				isum_mole += nmole_per_specie[iSpecie];
 			}
@@ -1122,7 +1124,7 @@ int frclong()
 	{
 		double chargei;
 		uself = 0.0;
-		for (ii=0;ii<natom;ii++)
+		for (ii=0; ii<natom; ii++)
 		{
 			get_specie_and_relative_atom_id(ii, &iSpecie, &iAtom);
 			chargei = sample_mole[iSpecie].charge[iAtom];
@@ -1133,16 +1135,101 @@ int frclong()
 		uwolf = ureal - uself - uexcl;
 	}
 
-	// Set the inter-molecular energy
-	uinter = uvdw + uelec;
+	// Start of Solid-Fluid interactions --------------------------------------------------
+	double usflj_tasos;
+	double tasos_force[3];
+	// reset energy
+	usflj = 0.0;
+	// Virial for solid-fluid with solid fixed is not well defined
+	if (iSF_type==SF_NANOTUBE_HYPERGEO)
+	{
+		for (ii=0; ii<natom; ii++)
+		{
+			// Get the specie ID and relative atom ID
+			get_specie_and_relative_atom_id(ii, &iSpecie, &iAtom);
+			if (sample_mole[iSpecie].ghost_type[iAtom]==GHOST_NONE) // If NOT ghost
+			{
+				cal_sf_hypergeo(ii, iSpecie, iAtom, &uij, &fij);
+				usflj += uij;
+			} // ghost check
+		} // Atom loop
+	}
+	else if (iSF_type==SF_NANOTUBE_ATOM_EXPLICIT)
+	{
+		for (ii=0; ii<natom; ii++)
+		{
+			// Get the specie ID and relative atom ID
+			get_specie_and_relative_atom_id(ii, &iSpecie, &iAtom);
+			if (sample_mole[iSpecie].ghost_type[iAtom]==GHOST_NONE) // If Not ghost atom
+			{
+				cal_sf_atom_explicit(ii, iSpecie, iAtom, &uij, &fij);
+				usflj += uij;
+			} // ghost check
+		} // Atom loop
+	}
+	else if (iSF_type==SF_NANOTUBE_TASOS)
+	{
+		for (ii=0; ii<natom; ii++)
+		{
+			// Get the specie ID and relative atom ID
+			get_specie_and_relative_atom_id(ii, &iSpecie, &iAtom);
+			if (sample_mole[iSpecie].ghost_type[iAtom]==GHOST_NONE) // If Not ghost atom
+			{
+				// call Tasos's code for force calculations
+				cforce_atom_(&sample_mole[iSpecie].tasos_type[iAtom], &xx[ii],
+						&yy[ii], &zz[ii], &usflj_tasos, tasos_force);
+				// The tasos energy has unit of K and the force has unit of K/Angstrom.
+				// Change them to reduced units.
+				usflj_tasos /= epsilon_base;
+				tasos_force[0] *= (sigma_base/epsilon_base);
+				tasos_force[1] *= (sigma_base/epsilon_base);
+				tasos_force[2] *= (sigma_base/epsilon_base);
+				usflj += usflj_tasos;
+				fxl[ii] += tasos_force[0];
+				fyl[ii] += tasos_force[1];
+				fzl[ii] += tasos_force[2];
+			} // ghost check
+		} // natom loop
+	}
+	else if (iSF_type==SF_NANOTUBE_MY_INTERP)
+	{
+		for (ii=0; ii<natom; ii++)
+		{
+			// Get the specie ID and relative atom ID
+			get_specie_and_relative_atom_id(ii, &iSpecie, &iAtom);
+			if (sample_mole[iSpecie].ghost_type[iAtom]==GHOST_NONE) // If Not ghost atom
+			{
+				get_values_from_grid(xx[ii], yy[ii], zz[ii],
+						sample_mole[iSpecie].tasos_type[iAtom], &usflj_tasos,
+						tasos_force);
+				usflj += usflj_tasos*R_RGAS/epsilon_base;
+				fxl[ii] += tasos_force[0]*R_RGAS*sigma_base/epsilon_base;
+				fyl[ii] += tasos_force[1]*R_RGAS*sigma_base/epsilon_base;
+				fzl[ii] += tasos_force[2]*R_RGAS*sigma_base/epsilon_base;
+			} // ghost check
+		} // Atom loop
+	}
+	// End of Solid-Fluid interactions ----------------------------------------------------
+	
+	uotherff = 0.0;
+	// Calculate metal cluster energy if necessary.
+	if (iExternal_FF_type == FF_DFT_METAL_CLUSTER)
+	{
+		fnMetalClusterFF(); // Currently, only for the whole system. No single calculation is allowed!
+	}
 
+	// Set the inter-molecular energy
+	uinter = uvdw + uelec + usflj;
 
 	printf("uvdw = %lf, %lf, %lf\n", uvdw*epsilon_base*RGAS, epsilon_base, RGAS);
-	printf("ureal=%lf, uexcl=%lf\n", ureal*epsilon_base*RGAS, uexcl*epsilon_base*RGAS);
-	printf("ufourier=%lf, uself=%lf\n",ufourier*epsilon_base*RGAS, uself*epsilon_base*RGAS);
+	printf("ureal=%lf, uexcl=%lf\n", ureal*epsilon_base*RGAS, uexcl
+			*epsilon_base*RGAS);
+	printf("ufourier=%lf, uself=%lf\n", ufourier*epsilon_base*RGAS, uself
+			*epsilon_base*RGAS);
 	printf("uvacuum=%lf\n", uvacuum*epsilon_base*RGAS);
-	printf("uelec=%lf\n",uelec*epsilon_base*RGAS);
-	printf("virial_inter=%lf\n",virial_inter*epsilon_base*RGAS);
+	printf("uelec=%lf\n", uelec*epsilon_base*RGAS);
+	printf("uinter=%lf\n",uinter*epsilon_base*RGAS);
+	printf("virial_inter=%lf\n", virial_inter*epsilon_base*RGAS);
 
 }
 

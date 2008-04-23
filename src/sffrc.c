@@ -42,10 +42,12 @@ int init_tasos_grid()
 			fprintf(stderr,"Data section for tasos grids found...\n");
 			fprintf(fpouts, "Data section for tasos grids found...\n");
 
-			sscanf(fgets(buffer, LONG_STRING_LENGTH, fpins), "%lf %lf %lf %lf", &auc,
-					&buc, &cuc, &nanotuberadius);
-			sscanf(fgets(buffer, LONG_STRING_LENGTH, fpins), "%d %d %d", &na, &nb, &nc);
-			sscanf(fgets(buffer, LONG_STRING_LENGTH, fpins), "%d", &nspecies_yang);
+			sscanf(fgets(buffer, LONG_STRING_LENGTH, fpins), "%lf %lf %lf %lf",
+					&auc, &buc, &cuc, &nanotuberadius);
+			sscanf(fgets(buffer, LONG_STRING_LENGTH, fpins), "%d %d %d", &na,
+					&nb, &nc);
+			sscanf(fgets(buffer, LONG_STRING_LENGTH, fpins), "%d",
+					&nspecies_yang);
 			sscanf(fgets(buffer, LONG_STRING_LENGTH, fpins), "%d", &tnuatoms);
 			fprintf(
 					fpouts,
@@ -56,7 +58,8 @@ int init_tasos_grid()
 					nspecies_yang, tnuatoms);
 			for (ii=0; ii<tnuatoms; ii++)
 			{
-				sscanf(fgets(buffer, LONG_STRING_LENGTH, fpins), "%s", szgrid+ii);
+				sscanf(fgets(buffer, LONG_STRING_LENGTH, fpins), "%s", szgrid
+						+ii);
 			}
 			initpotentialgrid_(&tnuatoms, &auc, &buc, &cuc, &na, &nb, &nc,
 					&nanotuberadius);
@@ -128,8 +131,9 @@ int init_my_interp()
 			fprintf(stderr,"Data section for myinterp found...\n");
 			fprintf(fpouts, "Data section for myinterp found...\n");
 
-			sscanf(fgets(buffer, LONG_STRING_LENGTH, fpins), "%lf %lf %lf %lf %lf %lf",
-					&uclx, &ucly, &uclz, &xcenter, &ycenter, &zcenter);
+			sscanf(fgets(buffer, LONG_STRING_LENGTH, fpins),
+					"%lf %lf %lf %lf %lf %lf", &uclx, &ucly, &uclz, &xcenter,
+					&ycenter, &zcenter);
 			xmax = xcenter + uclx/2.0;
 			xmin = xcenter - uclx/2.0;
 			ymax = ycenter + ucly/2.0;
@@ -143,7 +147,8 @@ int init_my_interp()
 			fprintf(fpouts, "xmin=%lf  xmax=%lf\n", xmin, xmax);
 			fprintf(fpouts, "ymin=%lf  ymax=%lf\n", ymin, ymax);
 			fprintf(fpouts, "zmin=%lf  zmax=%lf\n", zmin, zmax);
-			sscanf(fgets(buffer, LONG_STRING_LENGTH, fpins), "%d", &nunique_atom);
+			sscanf(fgets(buffer, LONG_STRING_LENGTH, fpins), "%d",
+					&nunique_atom);
 			for (ii=0; ii<nunique_atom; ii++)
 			{
 				sscanf(fgets(buffer, LONG_STRING_LENGTH, fpins), "%s", szgrid);
@@ -933,7 +938,6 @@ int get_values_from_grid(double fxx, double fyy, double fzz, int type,
 	return 0;
 }
 
-
 // calculate the hypergeo series
 int hypergeo(double a, double b, double c, double z, double rr, double *sumV,
 		double *sumF)
@@ -961,17 +965,17 @@ int hypergeo(double a, double b, double c, double z, double rr, double *sumV,
 	return 0;
 }
 
-// calculate the hypergeometric nanotube potentials
-// modified from Matt LaBrosse's code
-int cal_sf_hypergeo()
+// Calculate the hypergeometric nanotube potentials.
+// Modified from Matt LaBrosse's code
+int cal_sf_hypergeo(int ii, int iSpecie, int iAtom, double *uij, double *fij)
 {
-	int ii, jj;
+	PSAMPLE_MOLECULE pSampleMole;
+	int jj;
 	double xxi, yyi;
 	double fxi, fyi;
 	double sigmaij, epsilonij;
 	double rxij, ryij;
 	double rijsq, rij;
-
 	double tubeR, tubeRsq;
 	double kfac, kfacsq, kfac4, kfac10;
 	const double afac1 = -4.5, afac2 = -1.5; // -9.0/2.0 and -3.0/2.0
@@ -985,85 +989,81 @@ int cal_sf_hypergeo()
 	double attr1, attr2;
 	double ljc;
 	double uhyper;
-	double fij, fxij, fyij;
+	double fxij, fyij;
 
-	for (ii=0; ii<natom; ii++)
+	pSampleMole = sample_mole + iSpecie;
+	xxi = xx[ii];
+	yyi = yy[ii];
+	fxi = fxl[ii];
+	fyi = fyl[ii];
+	sigmaij = 0.5*(pSampleMole->sigma[iAtom]+(*solid_sigma));
+	epsilonij = sqrt(pSampleMole->epsilon[iAtom]*(*solid_epsilon));
+	for (jj=0; jj<ntube; jj++)
 	{
-		if (ghost_type[ii] == GHOST_FULL) // ghost atom check
-			continue;
-		xxi = xx[ii];
-		yyi = yy[ii];
-		fxi = fxl[ii];
-		fyi = fyl[ii];
-		sigmaij = 0.5*(sigma[ii]+(*solid_sigma));
-		epsilonij = sqrt(epsilon[ii]*(*solid_epsilon));
-		for (jj=0; jj<ntube; jj++)
+		rxij = xxi - hgntc_xx[jj];
+		ryij = yyi - hgntc_yy[jj];
+		// minimum image convention
+		rxij = rxij - boxlx*rint(rxij/boxlx);
+		ryij = ryij - boxly*rint(ryij/boxly);
+		rijsq = rxij*rxij + ryij*ryij;
+		rij = sqrt(rijsq);
+		tubeR = hgnt_radius[jj];
+		tubeRsq = tubeR*tubeR;
+		if (rij<tubeR) // if inside the tube
 		{
-			rxij = xxi - hgntc_xx[jj];
-			ryij = yyi - hgntc_yy[jj];
-			// minimum image convention
-			rxij = rxij - boxlx*rint(rxij/boxlx);
-			ryij = ryij - boxly*rint(ryij/boxly);
-			rijsq = rxij*rxij + ryij*ryij;
-			rij = sqrt(rijsq);
-			tubeR = hgnt_radius[jj];
-			tubeRsq = tubeR*tubeR;
-
-			if (rij<tubeR) // if inside the tube
-			{
-				ljc = C3_PI_SQ_THETA*epsilonij*sigmaij*sigmaij;
-				kfac = sigmaij*tubeR/(tubeRsq-rijsq);
-				zfac = rijsq/tubeRsq;
-				hypergeo(afac1, bfac1, cfac, zfac, rij, &hgrep, &hgfrep); // hypergeo series
-				kfacsq = kfac*kfac;
-				kfac4 = kfacsq*kfacsq;
-				kfac10 = kfac4*kfac4*kfacsq;
-				rep1 = c21_by_32*kfac10;
-				rep2 = -hgfrep + hgrep*(20.0*rij/(tubeRsq-rijsq));
-				hypergeo(afac2, bfac2, cfac, zfac, rij, &hgattr, &hgfattr); // calculate hypergeo series
-				attr1 = -kfac4;
-				attr2 = -hgfattr + hgattr*(8.0*rij/(tubeRsq-rijsq));
-				uhyper = ljc*(rep1*hgrep + attr1*hgattr);
-				fij = -ljc*(rep1*rep2 + attr1*attr2);
-				fxij = fij*rxij/rij;
-				fyij = fij*ryij/rij;
-			}
-			else // outside the tube
-			{
-				ljc = C3_PI_SQ_THETA*epsilonij*sigmaij*sigmaij*tubeR;
-				kfac = sigmaij*rij/(rijsq-tubeRsq);
-				zfac = tubeRsq/rijsq;
-				hypergeo(afac1, bfac1, cfac, zfac, rij, &hgrep, &hgfrep); // calculate the hypergeo series
-				kfacsq = kfac*kfac;
-				kfac4 = kfacsq*kfacsq;
-				kfac10 = kfac4*kfac4*kfacsq;
-				rep1 = c21_by_32*kfac10;
-				rep2 = hgfrep/rij + hgrep*(-20.0/(rijsq-tubeRsq)+9.0/rijsq);
-				hypergeo(afac2, bfac2, cfac, zfac, rij, &hgattr, &hgfattr); // calculate 
-				attr1 = -kfac4;
-				attr2 = hgfattr/rij + hgattr*(-8.0/(rijsq-tubeRsq)+3.0/rijsq);
-				uhyper = ljc*(rep1*hgrep + attr1*hgattr)/rij;
-				fij = -ljc*(rep1*rep2 + attr1*attr2);
-				fxij = fij*rxij/rij;
-				fyij = fij*ryij/rij;
-			} // outside tube
-			// energy and forces
-			gUsfljSession += uhyper;
-			fxi += fxij;
-			fyi += fyij;
-		} // loop through all tubes
-		fxl[ii] = fxi;
-		fyl[ii] = fyi;
-	} // loop through all fluid atoms
+			ljc = C3_PI_SQ_THETA*epsilonij*sigmaij*sigmaij;
+			kfac = sigmaij*tubeR/(tubeRsq-rijsq);
+			zfac = rijsq/tubeRsq;
+			hypergeo(afac1, bfac1, cfac, zfac, rij, &hgrep, &hgfrep); // hypergeo series
+			kfacsq = kfac*kfac;
+			kfac4 = kfacsq*kfacsq;
+			kfac10 = kfac4*kfac4*kfacsq;
+			rep1 = c21_by_32*kfac10;
+			rep2 = -hgfrep + hgrep*(20.0*rij/(tubeRsq-rijsq));
+			hypergeo(afac2, bfac2, cfac, zfac, rij, &hgattr, &hgfattr); // calculate hypergeo series
+			attr1 = -kfac4;
+			attr2 = -hgfattr + hgattr*(8.0*rij/(tubeRsq-rijsq));
+			uhyper = ljc*(rep1*hgrep + attr1*hgattr);
+			*fij = -ljc*(rep1*rep2 + attr1*attr2);
+			fxij = *fij*rxij/rij;
+			fyij = *fij*ryij/rij;
+		}
+		else // outside the tube
+		{
+			ljc = C3_PI_SQ_THETA*epsilonij*sigmaij*sigmaij*tubeR;
+			kfac = sigmaij*rij/(rijsq-tubeRsq);
+			zfac = tubeRsq/rijsq;
+			hypergeo(afac1, bfac1, cfac, zfac, rij, &hgrep, &hgfrep); // calculate the hypergeo series
+			kfacsq = kfac*kfac;
+			kfac4 = kfacsq*kfacsq;
+			kfac10 = kfac4*kfac4*kfacsq;
+			rep1 = c21_by_32*kfac10;
+			rep2 = hgfrep/rij + hgrep*(-20.0/(rijsq-tubeRsq)+9.0/rijsq);
+			hypergeo(afac2, bfac2, cfac, zfac, rij, &hgattr, &hgfattr); // calculate 
+			attr1 = -kfac4;
+			attr2 = hgfattr/rij + hgattr*(-8.0/(rijsq-tubeRsq)+3.0/rijsq);
+			uhyper = ljc*(rep1*hgrep + attr1*hgattr)/rij;
+			*fij = -ljc*(rep1*rep2 + attr1*attr2);
+			fxij = *fij*rxij/rij;
+			fyij = *fij*ryij/rij;
+		} // outside tube
+		// energy and forces
+		*uij = uhyper;
+		fxi += fxij;
+		fyi += fyij;
+	} // loop through all tubes
+	fxl[ii] = fxi;
+	fyl[ii] = fyi;
 
 	return 0;
 }
 
 // calcuate the interactions between solid and fluid
 // using atom explicit model
-int cal_sf_atom_explicit()
+int cal_sf_atom_explicit(int ii, int iSpecie, int iAtom, double *uij,
+		double *fij)
 {
-	int ii, jj;
+	int jj;
 	double xxi, yyi, zzi;
 	double fxi, fyi, fzi;
 	double rxij, ryij, rzij;
@@ -1071,86 +1071,94 @@ int cal_sf_atom_explicit()
 	double r_r6, r_r12, r_r12_minus_r_r6;
 	double epsilonij, sigmaij;
 	double usf_vdw_temp, usf_vdw;
-	double fij, fxij, fyij, fzij;
+	double fxij, fyij, fzij;
 
+	xxi = xx[ii];
+	yyi = yy[ii];
+	zzi = zz[ii];
+	fxi = fxl[ii];
+	fyi = fyl[ii];
+	fzi = fzl[ii];
+	// NOTE: Only uniform solid is considered now.
+	// So, calculate epsilonij and sigmaij here.
+	// Also assume solid has no charge.
+	sigmaij = 0.5*(sigma[ii]+(*solid_sigma));
+	epsilonij = sqrt(epsilon[ii]*(*solid_epsilon));
 	usf_vdw = 0.0;
-	for (ii=0; ii<natom; ii++)
+	for (jj=0; jj<solid_natom; jj++)
 	{
-		if (ghost_type[ii] == GHOST_FULL) // do not calculate ghost atoms
-			continue;
-		xxi = xx[ii];
-		yyi = yy[ii];
-		zzi = zz[ii];
-		fxi = fxl[ii];
-		fyi = fyl[ii];
-		fzi = fzl[ii];
-		// only uniform solid is considered now
-		// so, calculate epsilonij and sigmaij here
-		// Also assume solid has no charge
-		sigmaij = 0.5*(sigma[ii]+(*solid_sigma));
-		epsilonij = sqrt(epsilon[ii]*(*solid_epsilon));
-		for (jj=0; jj<solid_natom; jj++)
-		{
-			// assume no solid atom is ghost type
-			rxij = xxi - solid_xx[jj];
-			ryij = yyi - solid_yy[jj];
-			rzij = zzi - solid_zz[jj];
-			// minimum image convention
-			rxij = rxij - boxlx*rint(rxij/boxlx);
-			ryij = ryij - boxly*rint(ryij/boxly);
-			rzij = rzij - boxlz*rint(rzij/boxlz);
-			rijsq = rxij*rxij + ryij*ryij + rzij*rzij;
-			rij = sqrt(rijsq);
+		// assume no solid atom is ghost type
+		rxij = xxi - solid_xx[jj];
+		ryij = yyi - solid_yy[jj];
+		rzij = zzi - solid_zz[jj];
+		// minimum image convention
+		rxij = rxij - boxlx*rint(rxij/boxlx);
+		ryij = ryij - boxly*rint(ryij/boxly);
+		rzij = rzij - boxlz*rint(rzij/boxlz);
+		rijsq = rxij*rxij + ryij*ryij + rzij*rzij;
+		rij = sqrt(rijsq);
 
-			if (rijsq<rcutoffsq)
+		if (rijsq<rcutoffsq)
+		{
+			if (isLJswitchOn)
 			{
-				if (isLJswitchOn)
+				if (rijsq<rcutonsq)
 				{
-					if (rijsq<rcutonsq)
-						LJswitch = 1.0;
-					else
-						LJswitch = (rcutoffsq-rijsq)*(rcutoffsq-rijsq)
-								*(rcutoffsq+2.0*rijsq-3.0*rcutonsq)
-								/roff2_minus_ron2_cube;
-				}
-				r_rijsq = sigmaij*sigmaij/rijsq;
-				r_r6 = r_rijsq*r_rijsq*r_rijsq;
-				r_r12 = r_r6*r_r6;
-				r_r12_minus_r_r6 = r_r12 - r_r6;
-				usf_vdw_temp = epsilonij*r_r12_minus_r_r6; // still need *4.0
-				if (isLJswitchOn) // if switch is used
-					usf_vdw += usf_vdw_temp*LJswitch; // still need 4.0
-				else
-					usf_vdw += usf_vdw_temp; // still need *4.0
-				// force calculation
-				if (isLJswitchOn)
-				{
-					if (rijsq<rcutonsq)
-						fij = 24.0*epsilonij*(r_r12_minus_r_r6+r_r12)/rijsq;
-					else
-						fij = 24.0*epsilonij*(r_r12_minus_r_r6+r_r12)/rijsq
-								*LJswitch // 4.0 for the real energy
-								-4.0*usf_vdw_temp*12.0*(rcutoffsq-rijsq)
-										*(rcutonsq-rijsq)/roff2_minus_ron2_cube;
+					LJswitch = 1.0;
 				}
 				else
-					fij = 24.0*epsilonij*(r_r12_minus_r_r6+r_r12)/rijsq;
-				fxij = fij*rxij;
-				fyij = fij*ryij;
-				fzij = fij*rzij;
-				// force on fluid atom ii
-				fxi += fxij;
-				fyi += fyij;
-				fzi += fzij;
-			} // if with cutoff
-		} // solid atom jj loop
-		fxl[ii] = fxi;
-		fyl[ii] = fyi;
-		fzl[ii] = fzi;
-	} // fluid atom ii loop
+				{
+					LJswitch = (rcutoffsq-rijsq)*(rcutoffsq-rijsq) *(rcutoffsq
+							+2.0*rijsq-3.0*rcutonsq) /roff2_minus_ron2_cube;
+				}
+			}
+			r_rijsq = sigmaij*sigmaij/rijsq;
+			r_r6 = r_rijsq*r_rijsq*r_rijsq;
+			r_r12 = r_r6*r_r6;
+			r_r12_minus_r_r6 = r_r12 - r_r6;
+			usf_vdw_temp = epsilonij*r_r12_minus_r_r6; // still need *4.0
+			if (isLJswitchOn) // if switch is used
+			{
+				usf_vdw += usf_vdw_temp*LJswitch; // still need 4.0
+			}
+			else
+			{
+				usf_vdw += usf_vdw_temp; // still need *4.0
+			}
+			// force calculation
+			if (isLJswitchOn)
+			{
+				if (rijsq<rcutonsq)
+				{
+					*fij = 24.0*epsilonij*(r_r12_minus_r_r6+r_r12)/rijsq;
+				}
+				else
+				{
+					*fij = 24.0*epsilonij*(r_r12_minus_r_r6+r_r12)/rijsq
+							*LJswitch // 4.0 for the real energy
+							-4.0*usf_vdw_temp*12.0*(rcutoffsq-rijsq) *(rcutonsq
+									-rijsq)/roff2_minus_ron2_cube;
+				}
+			}
+			else
+			{
+				*fij = 24.0*epsilonij*(r_r12_minus_r_r6+r_r12)/rijsq;
+			}
+			fxij = *fij*rxij;
+			fyij = *fij*ryij;
+			fzij = *fij*rzij;
+			// force on fluid atom ii
+			fxi += fxij;
+			fyi += fyij;
+			fzi += fzij;
+		} // if with cutoff
+	} // solid atom jj loop
+	fxl[ii] = fxi;
+	fyl[ii] = fyi;
+	fzl[ii] = fzi;
 
 	// factor
-	gUsfljSession += usf_vdw*4.0;
+	*uij = usf_vdw*4.0;
 
 	return 0;
 }
@@ -1169,11 +1177,11 @@ int fnSffrcSession()
 
 	if (iSF_type==SF_NANOTUBE_HYPERGEO)
 	{
-		cal_sf_hypergeo();
+		// cal_sf_hypergeo();
 	}
 	else if (iSF_type==SF_NANOTUBE_ATOM_EXPLICIT)
 	{
-		cal_sf_atom_explicit();
+		// cal_sf_atom_explicit();
 	}
 	else if (iSF_type==SF_NANOTUBE_TASOS)
 	{

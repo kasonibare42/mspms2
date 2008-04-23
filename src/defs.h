@@ -90,10 +90,11 @@
 #define PLANCK_CONSTANT		6.6260693e-34		///< J*s or (kg*m^2/s)
 #define HBAR		1.05457168e-34		///< J*s or (kg*m^2/s)
 #define COULOMB_PREFACTOR	167100.80840  ///< unit is J.A, (1.602177e-19)^2/(4*pi*epsilon0)/kB*1e10 
-
-
 #define RGAS		8.314472 ///< J/mol/K 
 #define R_RGAS		0.120272219 ///< reciprocal of RGAS
+#define EV_TO_K		11604.5112770 /// ev to K. 1 ev = 1.6021773e-19 joule
+
+
 #define HBAR_AVOGADRO_SQ		4.03324050696405689198634513984e-21			///< (hbar*avogadro)^2
 #define COULOMB_CONSTANT	1389355.1051  ///< unit is J/mol. Na*(1.602177e-19)^2/4/PI/epsilon0/(1.0e-10)
 #define KB_OVER_1E30		1.3806505e7   ///< kb/1e-30  

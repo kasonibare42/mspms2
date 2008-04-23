@@ -56,7 +56,7 @@ double deriv_ffieldcu(double pos, void* params)
 		zz[ndata] = posold;
 	}
 
-	return energy*EV_TO_J_PER_MOLE*natom;
+	return energy*EV_TO_K*natom/epsilon_base;
 }
 
 int fnMetalClusterFF()
@@ -68,8 +68,8 @@ int fnMetalClusterFF()
 	// energy calculation
 	ffieldcu_(&natom, &ndata, xx, yy, zz, &energy);
 
-	gUMetalClusterSession = energy*EV_TO_J_PER_MOLE; // conver to J/mol
-	gUMetalClusterSession *= natom; // convert to total energy for the system, keep consistence with other energies
+	udftmcff = energy*EV_TO_K/epsilon_base; // conver to J/mol
+	udftmcff *= natom; // convert to total energy for the system, keep consistence with other energies
 
 	// numerical forces
 	DFTMCFFPARAM param;

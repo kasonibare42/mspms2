@@ -402,7 +402,8 @@ int vver_nh_1()
 int vver_nh_3()
 {
 	int ii, ll;
-
+	int iSpecie, iAtom;
+	double r_mass;
 	double delps;
 	double delpss;
 	double sumv2;
@@ -417,11 +418,12 @@ int vver_nh_3()
 
 	for (ii=0; ii<natom; ii++)
 	{
-		// the factor of 1.0e-5 is based on Angstrom (from the force)
-		// and femto second (from delt)
-		vx[ii] = vx[ii] + deltby2*(fxl[ii]/aw[ii]*1.0e-5 - ps*vx[ii]);
-		vy[ii] = vy[ii] + deltby2*(fyl[ii]/aw[ii]*1.0e-5 - ps*vy[ii]);
-		vz[ii] = vz[ii] + deltby2*(fzl[ii]/aw[ii]*1.0e-5 - ps*vz[ii]);
+		// Get specie ID and relative atom ID
+		get_specie_and_relative_atom_id(ii, &iSpecie, &iAtom);
+		r_mass = 1.0/sample_mole[iSpecie].aw[iAtom];
+		vx[ii] = vx[ii] + deltby2*(fxl[ii]*r_mass - ps*vx[ii]);
+		vy[ii] = vy[ii] + deltby2*(fyl[ii]*r_mass - ps*vy[ii]);
+		vz[ii] = vz[ii] + deltby2*(fzl[ii]*r_mass - ps*vz[ii]);
 	}
 
 	for (ll=0; ll<nstep_inner; ll++)
@@ -429,18 +431,19 @@ int vver_nh_3()
 		sumv2 = 0.0;
 		for (ii=0; ii<natom; ii++)
 		{
-			sumv2 = sumv2 + aw[ii]*(vx[ii]*vx[ii]+vy[ii]*vy[ii]+vz[ii]*vz[ii]);
-
-			vx[ii] = vx[ii] + deltsby2*(fxs[ii]/aw[ii]*1.0e-5 - pss*vx[ii]);
-			vy[ii] = vy[ii] + deltsby2*(fys[ii]/aw[ii]*1.0e-5 - pss*vy[ii]);
-			vz[ii] = vz[ii] + deltsby2*(fzs[ii]/aw[ii]*1.0e-5 - pss*vz[ii]);
-
-			xx[ii] = xx[ii] + delts*vx[ii]*1.0e-5;
-			yy[ii] = yy[ii] + delts*vy[ii]*1.0e-5;
-			zz[ii] = zz[ii] + delts*vz[ii]*1.0e-5;
+			// Get specie ID and relative atom ID
+			get_specie_and_relative_atom_id(ii, &iSpecie, &iAtom);
+			r_mass = 1.0/sample_mole[iSpecie].aw[iAtom];
+			sumv2 = sumv2 + (vx[ii]*vx[ii]+vy[ii]*vy[ii]+vz[ii]*vz[ii])/r_mass;
+			vx[ii] = vx[ii] + deltsby2*(fxs[ii]*r_mass - pss*vx[ii]);
+			vy[ii] = vy[ii] + deltsby2*(fys[ii]*r_mass - pss*vy[ii]);
+			vz[ii] = vz[ii] + deltsby2*(fzs[ii]*r_mass - pss*vz[ii]);
+			xx[ii] = xx[ii] + delts*vx[ii];
+			yy[ii] = yy[ii] + delts*vy[ii];
+			zz[ii] = zz[ii] + delts*vz[ii];
 		}
-		sss = sss + pss*delts + (sumv2-ggs*treq*RGAS)*delts_sqby2/qqs;
-		pss = pss + (sumv2-ggs*treq*RGAS)*deltsby2/qqs;
+		sss = sss + pss*delts + (sumv2-ggs*treq)*delts_sqby2/qqs;
+		pss = pss + (sumv2-ggs*treq)*deltsby2/qqs;
 
 		// intra forces, short ranged
 		rafrc();
@@ -448,16 +451,17 @@ int vver_nh_3()
 		sumv2 = 0.0;
 		for (ii=0; ii<natom; ii++)
 		{
+			// Get specie ID and relative atom ID
+			get_specie_and_relative_atom_id(ii, &iSpecie, &iAtom);
+			r_mass = 1.0/sample_mole[iSpecie].aw[iAtom];
 			vxn[ii] = vx[ii];
 			vyn[ii] = vy[ii];
 			vzn[ii] = vz[ii];
-			sumv2 = sumv2 + aw[ii]*(vxn[ii]*vxn[ii]+vyn[ii]*vyn[ii]+vzn[ii]
-					*vzn[ii]);
+			sumv2 = sumv2 + (vxn[ii]*vxn[ii]+vyn[ii]*vyn[ii]+vzn[ii]*vzn[ii])/r_mass;
 		}
 		pssn = pss;
 		ready = false;
 		iter = 0;
-
 		while (ready==false && iter<100)
 		{
 			iter++;
@@ -465,38 +469,43 @@ int vver_nh_3()
 			delpss = 0.0;
 			for (ii=0; ii<natom; ii++)
 			{
+				// Get specie ID and relative atom ID
+				get_specie_and_relative_atom_id(ii, &iSpecie, &iAtom);
+				r_mass = 1.0/sample_mole[iSpecie].aw[iAtom];
 				vxo[ii] = vxn[ii];
 				vyo[ii] = vyn[ii];
 				vzo[ii] = vzn[ii];
 
-				bx[ii] = -deltsby2*(fxs[ii]/aw[ii]*1.0e-5 - psso*vxo[ii])
+				bx[ii] = -deltsby2*(fxs[ii]*r_mass - psso*vxo[ii])
 						- (vx[ii]-vxo[ii]);
-				ri = aw[ii]*vxo[ii]*delts/qqs;
+				ri = vxo[ii]*delts/qqs/r_mass;
 				delpss = delpss + ri*bx[ii];
 
-				by[ii] = -deltsby2*(fys[ii]/aw[ii]*1.0e-5 - psso*vyo[ii])
+				by[ii] = -deltsby2*(fys[ii]*r_mass - psso*vyo[ii])
 						- (vy[ii]-vyo[ii]);
-				ri = aw[ii]*vyo[ii]*delts/qqs;
+				ri = vyo[ii]*delts/qqs/r_mass;
 				delpss = delpss + ri*by[ii];
 
-				bz[ii] = -deltsby2*(fzs[ii]/aw[ii]*1.0e-5 - psso*vzo[ii])
+				bz[ii] = -deltsby2*(fzs[ii]*r_mass - psso*vzo[ii])
 						- (vz[ii]-vzo[ii]);
-				ri = aw[ii]*vzo[ii]*delts/qqs;
+				ri = vzo[ii]*delts/qqs/r_mass;
 				delpss = delpss + ri*bz[ii];
 			}
 			di = -(psso*deltsby2 + 1.0);
-			delpss = delpss - di*((-sumv2+ggs*treq*RGAS)*deltsby2/qqs - (pss
+			delpss = delpss - di*((-sumv2+ggs*treq)*deltsby2/qqs - (pss
 					-psso));
 			delpss = delpss/(-delts*deltsby2*sumv2/qqs + di);
 
 			sumv2 = 0.0;
 			for (ii=0; ii<natom; ii++)
 			{
+				// Get specie ID and relative atom ID
+				get_specie_and_relative_atom_id(ii, &iSpecie, &iAtom);
+				r_mass = 1.0/sample_mole[iSpecie].aw[iAtom];
 				vxn[ii] = vxn[ii] + (bx[ii] + deltsby2*vxo[ii]*delpss)/di;
 				vyn[ii] = vyn[ii] + (by[ii] + deltsby2*vyo[ii]*delpss)/di;
 				vzn[ii] = vzn[ii] + (bz[ii] + deltsby2*vzo[ii]*delpss)/di;
-				sumv2 = sumv2 + aw[ii]*(vxn[ii]*vxn[ii]+vyn[ii]*vyn[ii]+vzn[ii]
-						*vzn[ii]);
+				sumv2 = sumv2 + (vxn[ii]*vxn[ii]+vyn[ii]*vyn[ii]+vzn[ii]*vzn[ii])/r_mass;
 			}
 			pssn = psso + delpss;
 			// test for convergence
@@ -508,14 +517,22 @@ int vver_nh_3()
 				if (ipart<=natom)
 				{
 					if (fabs((vxn[ii]-vxo[ii])/vxn[ii]) > err)
+					{
 						ready = false;
+					}
 					if (fabs((vyn[ii]-vyo[ii])/vyn[ii]) > err)
+					{
 						ready = false;
+					}
 					if (fabs((vzn[ii]-vzo[ii])/vzn[ii]) > err)
+					{
 						ready = false;
+					}
 				}
 				else if (fabs((pssn-psso)/pssn) > err)
+				{
 					ready = false;
+				}
 			}
 		} // end of while
 
@@ -528,13 +545,13 @@ int vver_nh_3()
 		pss = pssn;
 
 		// energy of inner thermostat
-		unhtss = (pss*pss*qqs)/2.0 + ggs*treq*RGAS*sss;
+		unhtss = (pss*pss*qqs)/2.0 + ggs*treq*sss;
 	}
 	// ps has unit of  1/(femto second) =  1/fs
 	// qq has unit of kg*m^2/mol*1.0*e-30
 	// ss has no unit
-	ss = ss + ps*delt + (sumv2-gg*treq*RGAS)*delt_sqby2/qq;
-	ps = ps + (sumv2-gg*treq*RGAS)*deltby2/qq;
+	ss = ss + ps*delt + (sumv2-gg*treq)*delt_sqby2/qq;
+	ps = ps + (sumv2-gg*treq)*deltby2/qq;
 
 	// inter forces, long ranged
 	erfrc();
@@ -542,11 +559,13 @@ int vver_nh_3()
 	sumv2 = 0.0;
 	for (ii=0; ii<natom; ii++)
 	{
+		// Get specie ID and relative atom ID
+		get_specie_and_relative_atom_id(ii, &iSpecie, &iAtom);
+		r_mass = 1.0/sample_mole[iSpecie].aw[iAtom];
 		vxn[ii] = vx[ii];
 		vyn[ii] = vy[ii];
 		vzn[ii] = vz[ii];
-		sumv2 = sumv2 + aw[ii]
-				*(vxn[ii]*vxn[ii]+vyn[ii]*vyn[ii]+vzn[ii]*vzn[ii]);
+		sumv2 = sumv2 + (vxn[ii]*vxn[ii]+vyn[ii]*vyn[ii]+vzn[ii]*vzn[ii])/r_mass;
 	}
 	psn = ps;
 	ready = false;
@@ -558,37 +577,41 @@ int vver_nh_3()
 		delps = 0.0;
 		for (ii=0; ii<natom; ii++)
 		{
+			// Get specie ID and relative atom ID
+			get_specie_and_relative_atom_id(ii, &iSpecie, &iAtom);
+			r_mass = 1.0/sample_mole[iSpecie].aw[iAtom];
+
 			vxo[ii] = vxn[ii];
 			vyo[ii] = vyn[ii];
 			vzo[ii] = vzn[ii];
 
-			bx[ii] = -deltby2*(fxl[ii]/aw[ii]*1.0e-5 - pso*vxo[ii]) - (vx[ii]
-					-vxo[ii]);
-			ri = aw[ii]*vxo[ii]*delt/qq;
+			bx[ii] = -deltby2*(fxl[ii]*r_mass - pso*vxo[ii]) - (vx[ii]-vxo[ii]);
+			ri = vxo[ii]*delt/qq/r_mass;
 			delps = delps + ri*bx[ii];
 
-			by[ii] = -deltby2*(fyl[ii]/aw[ii]*1.0e-5 - pso*vyo[ii]) - (vy[ii]
-					-vyo[ii]);
-			ri = aw[ii]*vyo[ii]*delt/qq;
+			by[ii] = -deltby2*(fyl[ii]*r_mass - pso*vyo[ii]) - (vy[ii]-vyo[ii]);
+			ri = vyo[ii]*delt/qq/r_mass;
 			delps = delps + ri*by[ii];
 
-			bz[ii] = -deltby2*(fzl[ii]/aw[ii]*1.0e-5 - pso*vzo[ii]) - (vz[ii]
-					-vzo[ii]);
-			ri = aw[ii]*vzo[ii]*delt/qq;
+			bz[ii] = -deltby2*(fzl[ii]*r_mass - pso*vzo[ii]) - (vz[ii]-vzo[ii]);
+			ri = vzo[ii]*delt/qq/r_mass;
 			delps = delps + ri*bz[ii];
 		}
 		di = -(pso*deltby2 + 1.0);
-		delps = delps - di*((-sumv2+gg*treq*RGAS)*deltby2/qq - (ps-pso));
+		delps = delps - di*((-sumv2+gg*treq)*deltby2/qq - (ps-pso));
 		delps = delps/(-delt*deltby2*sumv2/qq + di);
 
 		sumv2 = 0.0;
 		for (ii=0; ii<natom; ii++)
 		{
+			// Get specie ID and relative atom ID
+			get_specie_and_relative_atom_id(ii, &iSpecie, &iAtom);
+			r_mass = 1.0/sample_mole[iSpecie].aw[iAtom];
+
 			vxn[ii] = vxn[ii] + (bx[ii] + deltby2*vxo[ii]*delps)/di;
 			vyn[ii] = vyn[ii] + (by[ii] + deltby2*vyo[ii]*delps)/di;
 			vzn[ii] = vzn[ii] + (bz[ii] + deltby2*vzo[ii]*delps)/di;
-			sumv2 = sumv2 + aw[ii]*(vxn[ii]*vxn[ii]+vyn[ii]*vyn[ii]+vzn[ii]
-					*vzn[ii]);
+			sumv2 = sumv2 + (vxn[ii]*vxn[ii]+vyn[ii]*vyn[ii]+vzn[ii]*vzn[ii])/r_mass;
 		}
 		psn = pso + delps;
 		// test for convergence
@@ -600,14 +623,22 @@ int vver_nh_3()
 			if (ipart<=natom)
 			{
 				if (fabs((vxn[ii]-vxo[ii])/vxn[ii]) > err)
+				{
 					ready = false;
+				}
 				if (fabs((vyn[ii]-vyo[ii])/vyn[ii]) > err)
+				{
 					ready = false;
+				}
 				if (fabs((vzn[ii]-vzo[ii])/vzn[ii]) > err)
+				{
 					ready = false;
+				}
 			}
 			else if (fabs((psn-pso)/psn) > err)
+			{
 				ready = false;
+			}
 		}
 	} // end of first while
 
@@ -622,10 +653,10 @@ int vver_nh_3()
 	// H = ukin + upot + (ps*ps*qq)/2 + gg*treq*RGAS*ss;
 
 	// energy of thermostat
-	unhts = (ps*ps*qq)/2.0 + gg*treq*RGAS*ss;
+	unhts = (ps*ps*qq)/2.0 + gg*treq*ss;
 
 	// calculate instant temperature
-	tinst = 2.0*ukin*R_RGAS/nfree;
+	tinst = 2.0*ukin/nfree;
 
 	return 0;
 }

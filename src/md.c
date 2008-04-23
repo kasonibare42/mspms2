@@ -15,57 +15,63 @@
 /// Velocity verlet
 int vver()
 {
-	int ii, ll;
+	int ii, ll, iSpecie, iAtom;
+	double r_mass;
 
 	for (ii=0; ii<natom; ii++)
 	{
-		// the factor of 1.0e-5 is based on Angstrom (from the force)
-		// and femto second (from delt)
-		vx[ii] += (deltby2*fxl[ii]*1.0e-5/aw[ii]);
-		vy[ii] += (deltby2*fyl[ii]*1.0e-5/aw[ii]);
-		vz[ii] += (deltby2*fzl[ii]*1.0e-5/aw[ii]);
+		// Get specie ID and relative atom ID
+		get_specie_and_relative_atom_id(ii, &iSpecie, &iAtom);
+		r_mass = 1.0/sample_mole[iSpecie].aw[iAtom];
+		vx[ii] += (deltby2*fxl[ii]*r_mass);
+		vy[ii] += (deltby2*fyl[ii]*r_mass);
+		vz[ii] += (deltby2*fzl[ii]*r_mass);
 	}
 
 	for (ll=0; ll<nstep_inner; ll++)
 	{
 		for (ii=0; ii<natom; ii++)
 		{
-			vx[ii] += (deltsby2*fxs[ii]*1.0e-5/aw[ii]);
-			vy[ii] += (deltsby2*fys[ii]*1.0e-5/aw[ii]);
-			vz[ii] += (deltsby2*fzs[ii]*1.0e-5/aw[ii]);
-			xx[ii] = xx[ii] + delts*vx[ii]*1.0e-5;
-			yy[ii] = yy[ii] + delts*vy[ii]*1.0e-5;
-			zz[ii] = zz[ii] + delts*vz[ii]*1.0e-5;
+			// Get specie ID and relative atom ID
+			get_specie_and_relative_atom_id(ii, &iSpecie, &iAtom);
+			r_mass = 1.0/sample_mole[iSpecie].aw[iAtom];
+			vx[ii] += (deltsby2*fxs[ii]*r_mass);
+			vy[ii] += (deltsby2*fys[ii]*r_mass);
+			vz[ii] += (deltsby2*fzs[ii]*r_mass);
+			xx[ii] = xx[ii] + delts*vx[ii];
+			yy[ii] = yy[ii] + delts*vy[ii];
+			zz[ii] = zz[ii] + delts*vz[ii];
 		}
-
 		// intra forces, short ranged
-		rafrc();
-
+		frcshort();
 		// compute the pseudo velocity at delts
 		for (ii=0; ii<natom; ii++)
 		{
-			vx[ii] += (deltsby2*fxs[ii]*1.0e-5/aw[ii]);
-			vy[ii] += (deltsby2*fys[ii]*1.0e-5/aw[ii]);
-			vz[ii] += (deltsby2*fzs[ii]*1.0e-5/aw[ii]);
+			// Get specie ID and relative atom ID
+			get_specie_and_relative_atom_id(ii, &iSpecie, &iAtom);
+			r_mass = 1.0/sample_mole[iSpecie].aw[iAtom];
+			vx[ii] += (deltsby2*fxs[ii]*r_mass);
+			vy[ii] += (deltsby2*fys[ii]*r_mass);
+			vz[ii] += (deltsby2*fzs[ii]*r_mass);
 		}
-	}
-
+	} // Inner step loop
 	// inter forces, long ranged
-	erfrc();
-
+	frclong();
 	// use the new forces to calculate the new velocities at t+delt
 	ukin = 0.0;
 	for (ii=0; ii<natom; ii++)
 	{
-		vx[ii] += (deltby2*fxl[ii]*1.0e-5/aw[ii]);
-		vy[ii] += (deltby2*fyl[ii]*1.0e-5/aw[ii]);
-		vz[ii] += (deltby2*fzl[ii]*1.0e-5/aw[ii]);
-		ukin += aw[ii]*(vx[ii]*vx[ii]+vy[ii]*vy[ii]+vz[ii]*vz[ii]);
+		// Get specie ID and relative atom ID
+		get_specie_and_relative_atom_id(ii, &iSpecie, &iAtom);
+		r_mass = 1.0/sample_mole[iSpecie].aw[iAtom];
+		vx[ii] += (deltby2*fxl[ii]*r_mass);
+		vy[ii] += (deltby2*fyl[ii]*r_mass);
+		vz[ii] += (deltby2*fzl[ii]*r_mass);
+		ukin += (vx[ii]*vx[ii]+vy[ii]*vy[ii]+vz[ii]*vz[ii])/r_mass;
 	}
-	ukin = ukin/2.0;
-
-	// calculate instant temperature
-	tinst = 2.0*ukin*R_RGAS/nfree;
+	ukin = ukin*0.5;
+	// Calculate instant temperature
+	tinst = 2.0*ukin/nfree;
 
 	return 0;
 }
