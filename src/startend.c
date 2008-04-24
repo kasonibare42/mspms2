@@ -46,8 +46,6 @@ int ending()
 	int ii;
 	double fExecutionTime;
 
-	fprintf(stderr,"%d frames in the trajectory file.\n",nframe);
-	fprintf(fpouts, "%d frames in the trajectory file.\n", nframe);
 
 	fprintf(fpouts,
 			"=========================================================\n");
@@ -163,6 +161,7 @@ int ending()
 		}
 	}
 
+	fprintf(fpouts, "Number of frames            %15d\n", nframe);
 	fprintf(fpouts,
 			"=========================================================\n");
 

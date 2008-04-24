@@ -16,7 +16,7 @@ Title: This is just an Example!
 0                      isLJswitchOn
 1                      Starting option (1-new;2-continue;3-old config only)
 1000                   Number of total steps
-0                      Number of equilibrium steps
+500                    Number of equilibrium steps
 100                    Number of average steps
 1                      Number of print steps
 100                    Number of save steps
@@ -43,10 +43,10 @@ Title: This is just an Example!
 3                      Dimension(1,2,3 D)
 
    MDNVT
-1e14 1e9               qq qqs (outer and inner) Nose hoover thermostat mass, qq goes to infinity->NVE
+1.0e5 1.0e0            qq qqs (outer and inner) Nose hoover thermostat mass, qq goes to infinity->NVE
 
    MDNPT
-1.0e8 1.0e8            Qts Qbs (mass of thermostat, barostat), larger number = weaker coupling
+1.0e3 1.0e3            Qts Qbs (mass of thermostat, barostat), larger number = weaker coupling
 
    HyperGeo
 1                      Number of tubes
@@ -93,9 +93,3 @@ C    14.381768410313    10.229858825919     2.459512146748
   SimAn
 10  1						How many steps before move to next temperature; How many MD steps before use acceptance rule
 1000.0 300.0 1.01			Initial temperature; Minimal temperature; cooling parameter
-
-  SG
- 1.713 1.5671 0.00993     		alpha, beta, gama
- 12.14 215.2 143.1 4813.9		C6, C8, C9, C10
- 8.321								rc = 1.28 rmin
- 

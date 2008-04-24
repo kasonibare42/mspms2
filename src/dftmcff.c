@@ -64,11 +64,19 @@ int fnMetalClusterFF()
 	int ii;
 	int ndata; // no use at all, just for consistency with the FORTRAN code
 	double energy;
+	
+	// Convert to real units for Fortran subroutines
+	for (ii=0;ii<natom;ii++)
+	{
+		xx[ii] *= sigma_base;
+		yy[ii] *= sigma_base;
+		zz[ii] *= sigma_base;
+	}
 
 	// energy calculation
 	ffieldcu_(&natom, &ndata, xx, yy, zz, &energy);
 
-	udftmcff = energy*EV_TO_K/epsilon_base; // conver to J/mol
+	udftmcff = energy*EV_TO_K/epsilon_base; // conver to reduced unit
 	udftmcff *= natom; // convert to total energy for the system, keep consistence with other energies
 
 	// numerical forces
@@ -96,6 +104,14 @@ int fnMetalClusterFF()
 		gsl_deriv_central(&FF, zz[ii], STEP_SIZE, &value, &abserr);
 		fzl[ii] -= value;
 		// printf("dz = %lf (%lf)  \n", value, abserr);
+	}
+	
+	// Convert back to reduced units 
+	for (ii=0;ii<natom;ii++)
+	{
+		xx[ii] /= sigma_base;
+		yy[ii] /= sigma_base;
+		zz[ii] /= sigma_base;
 	}
 
 	return 0;

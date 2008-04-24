@@ -77,6 +77,7 @@ int main(int argc, char *argv[])
 	// Print out the results from the zero step.
 	printit();
 	
+	/*
 	int ii;
 	for (ii=0;ii<natom;ii++)
 	{
@@ -89,6 +90,7 @@ int main(int argc, char *argv[])
 		printf("%d, vx=%lf, vy=%lf, vz=%lf\n", 
 				ii, vx[ii]*velocity_base, vy[ii]*velocity_base, vz[ii]*velocity_base);
 	}
+	*/
 	
 	if (nstep_trj!=0)
 	{

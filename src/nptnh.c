@@ -31,9 +31,6 @@ int npt_nh_operator()
 	// the virial is 3.0*real_virial
 	// preq here should be just the external pressure?
 
-	// calculate the long range corrections
-	calculate_ljlrc();
-
 	// calculate the difference 3*V*(P_internal - P_external)
 	pdiff = virial_inter + virial_intra + pljlrc*boxv*3.0 - preq*boxv*3.0; 
 
@@ -187,16 +184,19 @@ int npt_respa()
 		boxly = boxly*expfactor;
 		boxlz = boxlz*expfactor;
 		boxv = boxlx*boxly*boxlz;
+ 
+		// Re-calculate the long range corrections due to box size changes
+		calculate_ljlrc();
 
-		// re-calculate box size related variables for ewald summation
+		// Re-calculate box size related variables for ewald summation
 		if (iChargeType == ELECTROSTATIC_EWALD)
 		{
-			Vfactor_ewald = 2.0*pi/(boxlx*boxly*boxlz);
+			Vfactor_ewald = 2.0*pi/boxv;
 			TWOPI_LX = 2.0*pi/boxlx;
 			TWOPI_LY = 2.0*pi/boxly;
 			TWOPI_LZ = 2.0*pi/boxlz;
 			// 1D ewald constant
-			twopi_over_3v = 2.0*pi/3.0/boxlx/boxly/boxlz;
+			twopi_over_3v = 2.0*pi/3.0/boxv;
 		}
 		
 		// intra forces, short ranged
