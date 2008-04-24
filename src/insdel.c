@@ -260,7 +260,7 @@ int InitInsertedMole(int iSpecieSelected, int iMoleSelected)
 		sigma[iAtom] = sample_sigma[kk];
 		charge[iAtom] = sample_charge[kk];
 		ghost_type[iAtom] = sample_ghost_type[kk];
-		tasos_type[iAtom] = sample_tasos_type[kk];
+		interp_type[iAtom] = sample_interp_type[kk];
 		iAtom++;
 	}
 	mole_last_atom_idx[iMole] = iAtom;
@@ -429,11 +429,11 @@ int fnInsDelMole()
 		BulidInsertedMole(iSpecieSelected, iMoleSelected);
 
 		// Calculate the inter-molecular potential energy of the inserted molecule
-		fnErfrcSession(iMoleSelected, ENTIRE_SYSTEM);
+		// fnErfrcSession(iMoleSelected, ENTIRE_SYSTEM);
 		del_u = gUinterSession;
 		// printf("gUinterSession = %lf\n",gUinterSession);
 		// Calculate the intra-molecular potential energy of the inserted molecule
-		fnRafrcSession(iMoleSelected);
+		// fnRafrcSession(iMoleSelected);
 		// printf("gUintraSession = %lf\n",gUintraSession);
 		del_u += gUintraSession;
 		// del_ucs = ?
@@ -552,10 +552,10 @@ int fnInsDelMole()
 
 			// calculate the energy for the deleted molecule
 			// Inter-molecular
-			fnErfrcSession(iMoleSelected, ENTIRE_SYSTEM);
+			// fnErfrcSession(iMoleSelected, ENTIRE_SYSTEM);
 			del_u = gUinterSession;
 			// Intra-molecular
-			fnRafrcSession(iMoleSelected);
+			// fnRafrcSession(iMoleSelected);
 			del_u += gUintraSession;
 
 			// del_ucs = ?

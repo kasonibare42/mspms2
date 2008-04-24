@@ -9,18 +9,10 @@
 /**
  * \brief MD moves for HMC etc.
  */
-int fnMDmove(int nStepMD, void(*pfnRezero)(), int (*pfnAlgorithm)())
+bool md_move(int nStepMD)
 {
 	int ii;
-
-	// rezero thermostat
-	if (pfnRezero)
-	{
-		pfnRezero();
-	}
-	
-	// initialize energy difference
-	fDeltaU = 0.0;
+	double du;
 
 	// save the old states
 	for (ii=0; ii<natom; ii++)
@@ -47,36 +39,34 @@ int fnMDmove(int nStepMD, void(*pfnRezero)(), int (*pfnAlgorithm)())
 	ushift_old = ushift;
 
 	// MD moves
-	// callback
 	for (ii=0; ii<nStepMD; ii++)
 	{
-		pfnAlgorithm();
+		vver();
 	}
 
 	// calculate the energy difference
-	fDeltaU = (uinter - uinter_old) + (uintra - uintra_old) + (ukin - ukin_old) + (ushift - ushift_old);  // kinetic energy should be included??
+	du = (uinter - uinter_old) + (uintra - uintra_old) + (ukin - ukin_old) + (ushift - ushift_old);  // kinetic energy should be included??
 
 	// Hamotonial difference
-	dH = fDeltaU*R_RGAS/treq;
+	dH = du/treq;
 
 	counts[20]++; // canonical moves
 
-	// check if the move is accepted
-	isAccept = 0;
+	// Check if the move is accepted
+	isAccept = false;
 	if (dH <= 0.0)
 	{
-		isAccept = 1;
+		isAccept = true;
 	}
 	else
 	{
 		ranmar(rndnum, 1); 
-		// printf("delta_U=%lf   dH=%lf   %lf < %lf ?\n",fDeltaU, dH, rndnum[0], exp(-dH));
 		if (rndnum[0] < exp(-dH))
 		{
-			isAccept = 1;
+			isAccept = true;
 		}
 	}
-	if (isAccept == 1)
+	if (isAccept == true)
 	{
 		counts[21]++; // accepted canonical moves
 	}

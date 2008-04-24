@@ -16,7 +16,6 @@
 #include <ctype.h>
 #include "mspms2.h"
 
-
 int collect_aves()
 {
 	// Calculate energies and pressures
@@ -25,12 +24,22 @@ int collect_aves()
 	virial = virial_inter + virial_intra;
 	// Add energy of thermostat. 
 	// If nose hoover is not used, they will just be zero
-	utot = utot + unhts + unhtss + utsbs;
-	// calculate ideal pressure part, rho*K*T = rho(*)*T(*)
-	pideal=natom/(boxlx*boxly*boxlz)*tinst;
-	// Do not need to recalculate lrc here, it should be calculated
+	if (what_simulation==MOLECULAR_DYNAMICS)
+	{
+		if (what_ensemble==NVT)
+		{
+			utot = utot + unhts + unhtss;
+		}
+		else if (what_ensemble==NPT)
+		{
+			utot = utot + utsbs;
+		}
+	}
+	// Calculate ideal pressure part, rho*K*T = rho(*)*T(*).
+	pideal = natom/boxv*tinst;
+	// Do not need to recalculate lrc here. It should be calculated
 	// elsewhere when variables changed.
-	pinst = pideal + (virial_inter+virial_intra)/(boxlx*boxly*boxlz);
+	pinst = pideal + virial/3.0/boxv;
 	// Add long range corrections into total energy and pressure if needed.
 	if (isLJlrcOn)
 	{

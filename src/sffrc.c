@@ -12,7 +12,140 @@ extern void initpotentialgrid_(int*, double*, double*, double*, int*, int*,
 extern void pass_grid_file_name_(char*, int*);
 extern void read_grids_(int* nspecies_yang);
 
-// initialize and reading the tasos grids
+/// Read and initialize parameters for hypergeo nanotubes.
+int init_sf_hypergeo()
+{
+	int ii;
+	char buffer[LONG_STRING_LENGTH];
+	char keyword[100];
+
+	fprintf(stderr,"Reading input data for hypergeometric nanotubes...\n");
+	fprintf(fpouts, "Reading input data for hypergeometric nanotubes...\n");
+
+	// re-open input file to read extra data section
+	fpins = fopen(INPUT,"r");
+
+	while (fgets(buffer, LONG_STRING_LENGTH, fpins)!=NULL)
+	{
+		sscanf(buffer, "%s", keyword);
+		for (ii=0; ii<strlen(keyword); ii++)
+		{
+			keyword[ii] = toupper(keyword[ii]);
+		}
+		if (!strcmp(keyword, "HYPERGEO"))
+		{
+			fprintf(stderr,"Data section for hypergeometric nanotoubes found...\n");
+			fprintf(fpouts, "Data section for hypergeometric nanotoubes found...\n");
+			// use solid sigma and epsilon for hypergeometric parameters
+			// assume all the tubes have the same parameters
+			solid_sigma = malloc(sizeof(double));
+			solid_epsilon = malloc(sizeof(double));
+			sscanf(fgets(buffer, LONG_STRING_LENGTH, fpins), "%d", &ntube);
+			sscanf(fgets(buffer, LONG_STRING_LENGTH, fpins), "%lf", solid_sigma);
+			sscanf(fgets(buffer, LONG_STRING_LENGTH, fpins), "%lf", solid_epsilon);
+			
+			fprintf(stderr,"ntube=%d  sigma=%lf  epsilon=%lf\n",ntube,*solid_sigma,*solid_epsilon);
+			fprintf(fpouts, "ntube=%d  sigma=%lf  epsilon=%lf\n", ntube,*solid_sigma, *solid_epsilon);
+			
+			// Reduce them
+			*solid_sigma /= sigma_base;
+			*solid_epsilon /= epsilon_base;
+			
+			// allocate memories
+			hgntc_xx = calloc(ntube, sizeof(double));
+			hgntc_yy = calloc(ntube, sizeof(double));
+			hgnt_radius = calloc(ntube, sizeof(double));
+			for (ii=0; ii<ntube; ii++)
+			{
+				sscanf(fgets(buffer, LONG_STRING_LENGTH, fpins), "%lf %lf %lf", &hgntc_xx[ii], &hgntc_yy[ii], &hgnt_radius[ii]);
+				fprintf(stderr,"tube %d: xx=%lf  y=%lf  radius=%lf\n",ii,hgntc_xx[ii],hgntc_yy[ii],hgnt_radius[ii]);
+				fprintf(fpouts, "tube %d: xx=%lf  y=%lf  radius=%lf\n", ii,hgntc_xx[ii], hgntc_yy[ii], hgnt_radius[ii]);
+				// Reduce them
+				hgntc_xx[ii] /= sigma_base;
+				hgntc_yy[ii] /= sigma_base;
+				hgnt_radius[ii] /= sigma_base;
+			}
+			// Reduce the constant
+			const_3pisq_theta = C3_PI_SQ_THETA*sigma_base*sigma_base;
+			fclose(fpins);
+			return 0;
+		} // if keyword found
+	} // read through the lines
+	fprintf(stderr,"Error: data for heypergeometric nanotubes not found.\n");
+	fprintf(fpouts, "Error: data for heypergeometric nanotubes not found.\n");
+	fclose(fpins);
+	exit(1);
+}
+
+/// Read and initialize parameters for atom explicit adsorbents.
+int init_sf_atom_explicit()
+{
+	int ii;
+	char buffer[LONG_STRING_LENGTH];
+	char keyword[100];
+	int itmp;
+
+	fprintf(stderr,"Reading input data for atom explicit sorbents...\n");
+	fprintf(fpouts, "Reading input data for atom explicit sorbents...\n");
+
+	// re-open input file to read extra data section
+	fpins = fopen(INPUT,"r");
+
+	while (fgets(buffer, LONG_STRING_LENGTH, fpins)!=NULL)
+	{
+		sscanf(buffer, "%s", keyword);
+		for (ii=0; ii<strlen(keyword); ii++)
+			keyword[ii] = toupper(keyword[ii]);
+		if (!strcmp(keyword, "ATOMEXPLICIT"))
+		{
+			fprintf(stderr,"Data section for atom explicit sorbents found...\n");
+			fprintf(fpouts,
+					"Data section for atom explicit sorbents found...\n");
+			sscanf(fgets(buffer, LONG_STRING_LENGTH, fpins), "%d", &solid_natom);
+			sscanf(fgets(buffer, LONG_STRING_LENGTH, fpins), "%d", &fSolid_type);
+			// fSolid_type not yet in used
+			// if (fSolid_type==SOLID_UNIFORM)
+			{
+				solid_sigma = malloc(sizeof(double));
+				solid_epsilon = malloc(sizeof(double));
+				solid_charge = malloc(sizeof(double));
+				// epsilon must be K!! important
+				sscanf(buffer, "%d %lf %lf %lf", &itmp, solid_sigma,
+						solid_epsilon, solid_charge);
+				*solid_sigma /= sigma_base;
+				*solid_epsilon /= epsilon_base;
+			}
+			solid_xx = calloc(solid_natom, sizeof(double));
+			solid_yy = calloc(solid_natom, sizeof(double));
+			solid_zz = calloc(solid_natom, sizeof(double));
+			assert(solid_xx!=NULL);
+			assert(solid_yy!=NULL);
+			assert(solid_zz!=NULL);
+			// readin solid coordinates
+			for (ii=0; ii<solid_natom; ii++)
+			{
+				fscanf(fpins, "%s %lf %lf %lf\n", buffer, &solid_xx[ii],
+						&solid_yy[ii], &solid_zz[ii]);
+				// Reduce them
+				solid_xx[ii] /= sigma_base;
+				solid_yy[ii] /= sigma_base;
+				solid_zz[ii] /= sigma_base;
+			}
+			fclose(fpins);
+			return 0;
+		} // if keyword found
+	} // read through the lines
+	fprintf(stderr,"Error: data for atom explicit sorbents not found.\n");
+	fprintf(fpouts, "Error: data for atom explicit sorbents not found.\n");
+	fclose(fpins);
+	exit(1);
+}
+
+/** 
+ * \brief Read and initialize and reading the tasos grids.
+ * 
+ * Note that this part does NOT use reduced units for historical reasons.
+ */
 int init_tasos_grid()
 {
 	int ii, jj;
@@ -88,6 +221,10 @@ int init_tasos_grid()
 	exit(1);
 }
 
+/**
+ * Read and initialize the parameters for my interpolation.
+ * Note that this part does NOT use reduced units for historical reasons.
+ */
 int init_my_interp()
 {
 	int ii;
@@ -112,7 +249,7 @@ int init_my_interp()
 	// myinterp type = tasos type - 1
 	for (ii=0; ii<natom; ii++)
 	{
-		tasos_type[ii] -= 1;
+		interp_type[ii] -= 1;
 	}
 
 	// set up the variable needed for interpolation
@@ -131,9 +268,8 @@ int init_my_interp()
 			fprintf(stderr,"Data section for myinterp found...\n");
 			fprintf(fpouts, "Data section for myinterp found...\n");
 
-			sscanf(fgets(buffer, LONG_STRING_LENGTH, fpins),
-					"%lf %lf %lf %lf %lf %lf", &uclx, &ucly, &uclz, &xcenter,
-					&ycenter, &zcenter);
+			sscanf(fgets(buffer, LONG_STRING_LENGTH, fpins), "%lf %lf %lf", &uclx, &ucly, &uclz);
+			sscanf(fgets(buffer, LONG_STRING_LENGTH, fpins), "%lf %lf %lf", &xcenter, &ycenter, &zcenter);
 			xmax = xcenter + uclx/2.0;
 			xmin = xcenter - uclx/2.0;
 			ymax = ycenter + ucly/2.0;
@@ -802,6 +938,11 @@ int Amatrix_ele_assign_dz(double *line, double x, double y, double z)
 	return 0;
 }
 
+/**
+ * This function accepts reduced parameters. However, they are converted
+ * to real units inside the function and the output has units of J/mol
+ * and J/mol/Angstrom.
+ */
 int get_values_from_grid(double fxx, double fyy, double fzz, int type,
 		double *usf, double *fsf)
 {
@@ -821,6 +962,10 @@ int get_values_from_grid(double fxx, double fyy, double fzz, int type,
 	int iAx, iAy, iAz;
 	// index of the interpolation cube
 	int cubeidx;
+	
+	fxx *= sigma_base;
+	fyy *= sigma_base;
+	fzz *= sigma_base;
 
 	// calculate the index of corner A
 	iAx = (int)((fxx-xmin)/grid_itvl_x);
@@ -1011,7 +1156,7 @@ int cal_sf_hypergeo(int ii, int iSpecie, int iAtom, double *uij, double *fij)
 		tubeRsq = tubeR*tubeR;
 		if (rij<tubeR) // if inside the tube
 		{
-			ljc = C3_PI_SQ_THETA*epsilonij*sigmaij*sigmaij;
+			ljc = const_3pisq_theta*epsilonij*sigmaij*sigmaij;
 			kfac = sigmaij*tubeR/(tubeRsq-rijsq);
 			zfac = rijsq/tubeRsq;
 			hypergeo(afac1, bfac1, cfac, zfac, rij, &hgrep, &hgfrep); // hypergeo series
@@ -1030,7 +1175,7 @@ int cal_sf_hypergeo(int ii, int iSpecie, int iAtom, double *uij, double *fij)
 		}
 		else // outside the tube
 		{
-			ljc = C3_PI_SQ_THETA*epsilonij*sigmaij*sigmaij*tubeR;
+			ljc = const_3pisq_theta*epsilonij*sigmaij*sigmaij*tubeR;
 			kfac = sigmaij*rij/(rijsq-tubeRsq);
 			zfac = tubeRsq/rijsq;
 			hypergeo(afac1, bfac1, cfac, zfac, rij, &hgrep, &hgfrep); // calculate the hypergeo series
@@ -1082,8 +1227,8 @@ int cal_sf_atom_explicit(int ii, int iSpecie, int iAtom, double *uij,
 	// NOTE: Only uniform solid is considered now.
 	// So, calculate epsilonij and sigmaij here.
 	// Also assume solid has no charge.
-	sigmaij = 0.5*(sigma[ii]+(*solid_sigma));
-	epsilonij = sqrt(epsilon[ii]*(*solid_epsilon));
+	sigmaij = 0.5*(sample_mole[iSpecie].sigma[iAtom]+(*solid_sigma));
+	epsilonij = sqrt(sample_mole[iSpecie].epsilon[iAtom]*(*solid_epsilon));
 	usf_vdw = 0.0;
 	for (jj=0; jj<solid_natom; jj++)
 	{
@@ -1163,63 +1308,27 @@ int cal_sf_atom_explicit(int ii, int iSpecie, int iAtom, double *uij,
 	return 0;
 }
 
-int fnSffrcSession()
-{
-	int ii;
-	double usflj_tasos;
-	double tasos_force[3];
-
-	// reset energy
-	gUsfljSession = 0.0;
-
-	// virial for solid-fluid with solid fixed
-	// is not well defined
-
-	if (iSF_type==SF_NANOTUBE_HYPERGEO)
-	{
-		// cal_sf_hypergeo();
-	}
-	else if (iSF_type==SF_NANOTUBE_ATOM_EXPLICIT)
-	{
-		// cal_sf_atom_explicit();
-	}
-	else if (iSF_type==SF_NANOTUBE_TASOS)
-	{
-		for (ii=0; ii<natom; ii++)
-		{
-			// call Tasos's code for force calculations
-			cforce_atom_(&tasos_type[ii], &xx[ii], &yy[ii], &zz[ii],
-					&usflj_tasos, tasos_force);
-
-			// the tasos energy has unit of K and the force has unit of K/Angstrom
-			// change them to J/mol and J/mol/Angstrom
-			usflj_tasos *= RGAS;
-			tasos_force[0] *= RGAS;
-			tasos_force[1] *= RGAS;
-			tasos_force[2] *= RGAS;
-
-			gUsfljSession += usflj_tasos;
-			fxl[ii] += tasos_force[0];
-			fyl[ii] += tasos_force[1];
-			fzl[ii] += tasos_force[2];
-		} // natom loop
-	}
-	else if (iSF_type==SF_NANOTUBE_MY_INTERP)
-	{
-		for (ii=0; ii<natom; ii++)
-		{
-			get_values_from_grid(xx[ii], yy[ii], zz[ii], tasos_type[ii],
-					&usflj_tasos, tasos_force);
-
-			gUsfljSession += usflj_tasos;
-
-			fxl[ii] += tasos_force[0];
-			fyl[ii] += tasos_force[1];
-			fzl[ii] += tasos_force[2];
-
-		}
-	}
-
+/**
+ * This function accepts reduced parameters. However, they are converted
+ * to real units inside the function to call tasos Fortran subroutines.
+ * The raw output has units of K and K/Angstrom. They are converted to reduced
+ * units and returned.
+ */
+int call_tasos_forces(int itype, double fxx, double fyy, double fzz, double *usflj_tasos, double *tasos_force)
+{ 
+	// The tasos energy has unit of K and the force has unit of K/Angstrom. 
+	// Change them to reduced units.
+	fxx *= sigma_base;
+	fyy *= sigma_base;
+	fzz *= sigma_base;
+	cforce_atom_(&itype, &fxx, &fyy, &fzz, usflj_tasos, tasos_force);
+	
+	*usflj_tasos /= epsilon_base;
+	tasos_force[0] *= (sigma_base/epsilon_base);
+	tasos_force[1] *= (sigma_base/epsilon_base);
+	tasos_force[2] *= (sigma_base/epsilon_base);
+	
 	return 0;
 }
+
 

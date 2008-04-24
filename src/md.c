@@ -1,8 +1,14 @@
-/*
- * Functions related to MD operation go here
- *
- * Written by Yang Wang 11-29-2007
- *
+/**
+ * Project: mspms2
+ * File: md.c
+ * 
+ * Copyright (C) 2008    Yang Wang <ywangd@gmail.com>
+ * Created @ Nov 29, 2007
+ * Modified @ Apr 24, 2008
+ * 
+ * Description:
+ *   Functions related to MD operation go here
+ * 
  */
 #include <stdio.h>
 #include <stdlib.h>

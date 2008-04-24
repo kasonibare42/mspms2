@@ -74,7 +74,7 @@
 #define sample_sigma	(sigma+NATOM_MAX)
 #define sample_charge	(charge+NATOM_MAX)
 #define sample_ghost_type	(ghost_type+NATOM_MAX)
-#define sample_tasos_type 	(tasos_type+NATOM_MAX)
+#define sample_interp_type 	(interp_type+NATOM_MAX)
 
 #define sample_bond_idx		(&bond_idx[NBOND_MAX])
 #define sample_bond_type	(bond_type+NBOND_MAX)
@@ -111,7 +111,7 @@ typedef struct _SAMPLE_MOLECULE
     // Atom related properties
 	char atom_name[SAMPLE_NATOM_MAX][SHORT_STRING_LENGTH];
 	int type[SAMPLE_NATOM_MAX], ghost_type[SAMPLE_NATOM_MAX], 
-		tasos_type[SAMPLE_NATOM_MAX];
+		interp_type[SAMPLE_NATOM_MAX];
 	double aw[SAMPLE_NATOM_MAX], epsilon[SAMPLE_NATOM_MAX], 
 	       sigma[SAMPLE_NATOM_MAX], charge[SAMPLE_NATOM_MAX];
 	double xx[SAMPLE_NATOM_MAX], yy[SAMPLE_NATOM_MAX], zz[SAMPLE_NATOM_MAX];
@@ -163,7 +163,7 @@ int natom_hist_max, nbond_hist_max, nangle_hist_max, ndih_hist_max,
 
 char atomname[ATOM_LIST_LENGTH][5];
 int ghost_type[ATOM_LIST_LENGTH]; ///< flag of ghost atom, including ghost LJ or ghost electrostatic
-int tasos_type[ATOM_LIST_LENGTH]; ///< atom type for tasos interpolation 
+int interp_type[ATOM_LIST_LENGTH]; ///< atom type for tasos interpolation 
 double aw[ATOM_LIST_LENGTH], epsilon[ATOM_LIST_LENGTH],
 		sigma[ATOM_LIST_LENGTH], charge[ATOM_LIST_LENGTH]; ///< atom weight etc. 
 double xx[ATOM_LIST_LENGTH], yy[ATOM_LIST_LENGTH], zz[ATOM_LIST_LENGTH]; ///< atom coordinates

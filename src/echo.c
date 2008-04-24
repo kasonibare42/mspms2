@@ -1,3 +1,14 @@
+/**
+ * Project: mspms2
+ * File: echo.c
+ * 
+ * Copyright (C) 2008    Yang Wang <ywangd@gmail.com>
+ * Created @ 2007
+ * Modified @ Apr 24, 2008
+ * 
+ * Description:
+ * 
+ */
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -398,17 +409,42 @@ int echo()
 			}
 		}
 	}
-
+	
+	// Calculate energies and pressures
+	upot = uinter + uintra;
+	utot = upot + ukin;
+	virial = virial_inter + virial_intra;
+	// Add energy of thermostat. 
+	// If nose hoover is not used, they will just be zero
+	if (what_simulation==MOLECULAR_DYNAMICS)
+	{
+		if (what_ensemble==NVT)
+		{
+			utot = utot + unhts + unhtss;
+		}
+		else if (what_ensemble==NPT)
+		{
+			utot = utot + utsbs;
+		}
+	}
+	// Calculate ideal pressure part, rho*K*T = rho(*)*T(*).
+	pideal = natom/boxv*tinst;
+	// Do not need to recalculate lrc here. It should be calculated
+	// elsewhere when variables changed.
+	pinst = pideal + virial/3.0/boxv;
+	// Add long range corrections into total energy and pressure if needed.
+	if (isLJlrcOn)
+	{
+		utot += uljlrc;
+		pinst += pljlrc;
+	}
 	fprintf(fpouts, "The initial energies etc.:\n");
-	fprintf(fpouts, "utot=%lf\n", uinter+uintra+ukin); // utot
-	fprintf(fpouts, "upot=%lf\n", uinter+uintra); // upot
+	fprintf(fpouts, "utot=%lf\n", utot); // utot
+	fprintf(fpouts, "upot=%lf\n", upot); // upot
 	fprintf(fpouts, "ukin=%lf\n", ukin);
 	fprintf(fpouts, "uinter=%lf\n", uinter);
 	fprintf(fpouts, "uintra=%lf\n", uintra);
 	fprintf(fpouts, "uvdw=%lf\n", uvdw);
-	fprintf(fpouts, "uer_vdw=%lf\n", uvdw-unbp_vdw);
-	fprintf(fpouts, "unbp_vdw=%lf\n", unbp_vdw);
-	fprintf(fpouts, "usg=%lf\n", usg);
 	fprintf(fpouts, "ubond=%lf\n", ubond);
 	fprintf(fpouts, "uangle=%lf\n", uangle);
 	fprintf(fpouts, "udih=%lf\n", udih);
@@ -429,19 +465,14 @@ int echo()
 	fprintf(fpouts, "udftmcff=%lf (%lf ev/atom)\n", udftmcff, udftmcff/EV_TO_J_PER_MOLE/natom);
 	fprintf(fpouts, "usg=%lf\n", usg);
 	fprintf(fpouts, "ushift=%lf\n", ushift);
-
 	fprintf(fpouts, "tinst=%lf\n", tinst);
-
-	fprintf(fpouts, "virial=%lf\n", virial_inter+virial_intra);
+	fprintf(fpouts, "virial=%lf\n", virial);
 	fprintf(fpouts, "virial_inter=%lf\n", virial_inter);
 	fprintf(fpouts, "virial_intra=%lf\n", virial_intra);
-	fprintf(fpouts, "pideal=%lf\n", pideal = natom/(boxlx*boxly*boxlz)*tinst);
+	fprintf(fpouts, "pideal=%lf\n", pideal);
 	// pljlrc already calculated in initialization part
-	pinst = pideal + (virial_inter+virial_intra)/3.0/(boxlx*boxly*boxlz) + pljlrc;
 	fprintf(fpouts, "pressure=%lf\n", pinst);
-
 	fprintf(fpouts, "uljlrc=%lf\npljlrc=%lf\n", uljlrc, pljlrc);
-
 	fflush(fpouts);
 
 	return 0;

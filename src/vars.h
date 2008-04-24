@@ -50,6 +50,8 @@ double pdisp, ///< canonical move probability
 double delv;
 double rreq_disp, ///< required canonical move accept ratio
 		rreq_volm; ///< required volume change accept ratio
+double rinst_disp; ///< Instantaneous ratio for displacement
+double rinst_volm; ///< Instantaneous ratio for volume change
 int nstep_md_per_hmc; ///< steps of md moves per hmc cycle
 int nstep_delt_adj_cycle; ///< steps between two delt adjustment
 int nstep_delv_adj_cycle; ///< steps between two delv adjustment
@@ -230,7 +232,7 @@ typedef struct _dftmcffparam
 	int index;
 } DFTMCFFPARAM;
 
-int isAccept;
+bool isAccept;
 double rndnum[3];
 double dH;
 double fDeltaU;
@@ -250,6 +252,7 @@ double *solid_sigma, *solid_epsilon, *solid_charge;
 ///< for hypergeometric nanotubes
 int ntube;
 double *hgntc_xx, *hgntc_yy, *hgnt_radius; ///< (h)yper(g)eometric (n)ano(t)ube (c)enter
+double const_3pisq_theta;
 
 // my interpolations
 // energy and forces interpolation parameters

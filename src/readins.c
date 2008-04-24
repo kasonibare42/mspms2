@@ -123,7 +123,7 @@ int readins()
 					&pSampleMole->yy[jj], &pSampleMole->zz[jj], &pSampleMole->ee[jj],
 					&pSampleMole->ff[jj], &pSampleMole->gg[jj], &pSampleMole->aw[jj],
 					&pSampleMole->epsilon[jj], &pSampleMole->sigma[jj], &pSampleMole->charge[jj],
-					&pSampleMole->ghost_type[jj], &pSampleMole->tasos_type[jj]);
+					&pSampleMole->ghost_type[jj], &pSampleMole->interp_type[jj]);
 			// Reduce units
 			pSampleMole->xx[jj] /=sigma_base;
 			pSampleMole->yy[jj] /=sigma_base;

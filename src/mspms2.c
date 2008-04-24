@@ -1,17 +1,23 @@
-/*
- * Maintainable Simplex Purpose Molecular Simulator 2
- * Rewritten with standard C language
- * The goal is simpler, quicker, easier, better.
- * No class and other complex data structures.
- * Use common names for input files. So the every job must
- * have its own working directory.
+/**
+ * Project: mspms2
+ * File: mspms2.c
+ * 
+ * Copyright (C) 2008    Yang Wang <ywangd@gmail.com>
+ * Created @ 2007
+ * Modified @ Apr 24, 2008
+ * 
+ * Description:
+ *   Maintainable Simplex Purpose Molecular Simulator 2
+ *   Rewritten with standard C language.
+ *   The goal is simpler, quicker, easier, better.
+ *   No class and other complex data structures.
+ *   Use common names for input files. So the every job must
+ *   have its own working directory.
  * 
  * NOTE:
  *      112607: Test move from CVS to SVN
  *      112707: Successfully imported the SVN repository to Google Code host
  * 
- * 
- * Written by Yang Wang 2007
  */
 #include <stdio.h>
 #include <stdlib.h>
@@ -24,22 +30,6 @@
 
 int printit()
 {
-	upot = uinter + uintra;
-	utot = upot + ukin;
-	virial = virial_inter + virial_intra;
-	// add energy of thermostat, if nose hoover is not used, they will just be zero
-	utot = utot + unhts + unhtss + utsbs;
-	// calculate ideal pressure part, rho*K*T = rho(*)*T(*)
-	pideal = natom/(boxlx*boxly*boxlz)*tinst;
-	// do not need to recalculate lrc here, it should be calculated
-	// elsewhere when variables changed
-	pinst = pideal + (virial_inter+virial_intra)/3.0/(boxlx*boxly*boxlz);
-	// add long range corrections into total energy and pressure if needed
-	if (isLJlrcOn)
-	{
-		utot += uljlrc;
-		pinst += pljlrc;
-	}
 	fprintf(stdout,"%10d %10.4le %10.4le %10.4le %10.4le %10.4le %10.4le\n",
 	istep,utot*epsilon_base*RGAS,upot*epsilon_base*RGAS,ukin*epsilon_base*RGAS,
 	tinst*epsilon_base,pinst*pressure_base*1.0e5,boxv*sigma_base*sigma_base*sigma_base);
@@ -125,20 +115,11 @@ int main(int argc, char *argv[])
 	else if (what_simulation == HYBRID_MONTE_CARLO)
 	{
 		pfnSimulation = &hmc;
-	}
-	else if (what_simulation == SIMULATED_ANNEALING)
-	{
-		pfnSimulation = &siman;
-		pfnSimulation();
-		snapshot();
-		calres();
-		ending();
-		exit(1);
-	}
+	} // End of simulation functtion assignment 
 	
 	if (pfnSimulation == NULL)
 	{
-		fprintf(stderr,"Error: Cannot determine the simulation type.");
+		fprintf(stderr,"Error: Unknown simulation type.\n");
 		exit(1);
 	}
 	
@@ -178,10 +159,8 @@ int main(int argc, char *argv[])
 			{
 				saveit();
 			}
-			// adjust delt?
-
-		}
-		if (bEquilibrium==true)
+		} // End of simulation step loop
+		if (bEquilibrium==true) // Reset for data taking run
 		{
 			nstep_start = 1;
 			nstep_end = nstep;
@@ -190,11 +169,11 @@ int main(int argc, char *argv[])
 			rezero();
 			bEquilibrium = false;
 		}
-		else
+		else // Stop the simulation after data taking run
 		{
 			run = false;
 		}
-	}
+	} // Simulation block
 
 	/// Take the last snapshot of the system.
 	snapshot();

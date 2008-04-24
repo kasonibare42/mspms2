@@ -7,16 +7,6 @@
 #include <ctype.h>
 #include "mspms2.h"
 
-
-void rezero_npt_ts()
-{
-	// thermo/barostat
-	utsbs = 0.0;
-	vts = sqrt((nfree+1.0)/Qts);
-	vbs = sqrt((nfree+1.0)/Qbs);
-	rts = 0.0;
-}
-
 int npt_nh_operator()
 {
 	int ii, iSpecie, iAtom;
@@ -35,19 +25,17 @@ int npt_nh_operator()
 		// Get specie ID and relative atom ID
 		get_specie_and_relative_atom_id(ii, &iSpecie, &iAtom);
 		r_mass = 1.0/sample_mole[iSpecie].aw[iAtom];
-
 		mvsq += (vx[ii]*vx[ii]+vy[ii]*vy[ii]+vz[ii]*vz[ii])/r_mass;
 	}
 
-	// the virial is 3.0*real_virial, unit is J/mol
+	// the virial is 3.0*real_virial
 	// preq here should be just the external pressure?
 
 	// calculate the long range corrections
 	calculate_ljlrc();
 
 	// calculate the difference 3*V*(P_internal - P_external)
-	pdiff = virial_inter + virial_intra + pljlrc*boxv*3.0*PA_A3_TO_J_PER_MOL // turn pascal to J/mol
-			- preq*boxv*3.0*PA_A3_TO_J_PER_MOL; //6.0221415e-7 is Na*1e-30 turn preq*boxv to J/mol
+	pdiff = virial_inter + virial_intra + pljlrc*boxv*3.0 - preq*boxv*3.0; 
 
 	// printf("0   pdiff=%lf Gts=%lf vts=%lf vbs=%lf\n",pdiff,Gts,vts,vbs);
 
@@ -126,10 +114,8 @@ int npt_nh_operator()
 	vts = vts + dt_outer4*Gts;
 
 	// extra enery from the thermo/barostat for conserve energy
-	// utsbs = 0.5*Qbs*vbs*vbs + 0.5*Qts*vts*vts + (nfree+1)*RGAS*treq*rts*1.0e-10 + preq*boxv*PA_A3_TO_J_PER_MOL;
 
-	utsbs = 0.5*Qbs*vbs*vbs + 0.5*Qts*vts*vts + (nfree+1)*treq*rts + preq
-			*boxv*PA_A3_TO_J_PER_MOL;
+	utsbs = 0.5*Qbs*vbs*vbs + 0.5*Qts*vts*vts + (nfree+1)*treq*rts + preq*boxv;
 
 	// printf("3   utsbs=%lf Gts=%lf Gbs=%lf vts=%lf BB=%lf vbs=%lf\n",utsbs,Gts,Gbs,vts,BB,vbs);
 
@@ -138,11 +124,10 @@ int npt_nh_operator()
 	tinst = 2.0*ukin/nfree;
 
 	// calculate the total pressure
-	pideal=natom/boxv*tinst*KB_OVER_1E30;
+	pideal = natom/boxv*tinst;
 	// pljlrc is calculated already at the beginning of this function
 	// and did not change during above calculations
-	pinst = pideal + (virial_inter+virial_intra)*VIRIAL_TO_PRESSURE/boxv
-			+ pljlrc;
+	pinst = pideal + (virial_inter+virial_intra)/3.0/boxv + pljlrc;
 
 	// printf("tinst=%lf  vts=%lf  vbs=%lf\n",tinst,vts,vbs);
 
@@ -151,19 +136,21 @@ int npt_nh_operator()
 
 int npt_respa()
 {
-	int ii, ll;
+	int ii, ll, iSpecie, iAtom;
 	double AA;
 	double expfactor;
+	double r_mass;
 
 	npt_nh_operator();
 
 	for (ii=0; ii<natom; ii++)
 	{
-		// the factor of 1.0e-5 is based on Angstrom (from the force)
-		// and femto second (from delt)
-		vx[ii] += (deltby2*fxl[ii]*1.0e-5/aw[ii]);
-		vy[ii] += (deltby2*fyl[ii]*1.0e-5/aw[ii]);
-		vz[ii] += (deltby2*fzl[ii]*1.0e-5/aw[ii]);
+		// Get specie ID and relative atom ID
+		get_specie_and_relative_atom_id(ii, &iSpecie, &iAtom);
+		r_mass = 1.0/sample_mole[iSpecie].aw[iAtom];
+		vx[ii] += (deltby2*fxl[ii]*r_mass);
+		vy[ii] += (deltby2*fyl[ii]*r_mass);
+		vz[ii] += (deltby2*fzl[ii]*r_mass);
 	}
 
 	for (ll=0; ll<nstep_inner; ll++)
@@ -173,17 +160,20 @@ int npt_respa()
 
 		for (ii=0; ii<natom; ii++)
 		{
-			vx[ii] += (deltsby2*fxs[ii]*1.0e-5/aw[ii]);
-			vy[ii] += (deltsby2*fys[ii]*1.0e-5/aw[ii]);
-			vz[ii] += (deltsby2*fzs[ii]*1.0e-5/aw[ii]);
+			// Get specie ID and relative atom ID
+			get_specie_and_relative_atom_id(ii, &iSpecie, &iAtom);
+			r_mass = 1.0/sample_mole[iSpecie].aw[iAtom];
+			vx[ii] += (deltsby2*fxs[ii]*r_mass);
+			vy[ii] += (deltsby2*fys[ii]*r_mass);
+			vz[ii] += (deltsby2*fzs[ii]*r_mass);
 
 			xx[ii] = xx[ii]*AA;
 			yy[ii] = yy[ii]*AA;
 			zz[ii] = zz[ii]*AA;
 
-			xx[ii] = xx[ii] + delts*vx[ii]*1.0e-5;
-			yy[ii] = yy[ii] + delts*vy[ii]*1.0e-5;
-			zz[ii] = zz[ii] + delts*vz[ii]*1.0e-5;
+			xx[ii] = xx[ii] + delts*vx[ii];
+			yy[ii] = yy[ii] + delts*vy[ii];
+			zz[ii] = zz[ii] + delts*vz[ii];
 
 			xx[ii] = xx[ii]*AA;
 			yy[ii] = yy[ii]*AA;
@@ -210,33 +200,33 @@ int npt_respa()
 		}
 		
 		// intra forces, short ranged
-		rafrc();
+		frcshort();
 
 		// compute the pseudo velocity at delts
 		for (ii=0; ii<natom; ii++)
 		{
-			vx[ii] += (deltsby2*fxs[ii]*1.0e-5/aw[ii]);
-			vy[ii] += (deltsby2*fys[ii]*1.0e-5/aw[ii]);
-			vz[ii] += (deltsby2*fzs[ii]*1.0e-5/aw[ii]);
+			// Get specie ID and relative atom ID
+			get_specie_and_relative_atom_id(ii, &iSpecie, &iAtom);
+			r_mass = 1.0/sample_mole[iSpecie].aw[iAtom];
+			vx[ii] += (deltsby2*fxs[ii]*r_mass);
+			vy[ii] += (deltsby2*fys[ii]*r_mass);
+			vz[ii] += (deltsby2*fzs[ii]*r_mass);
 		}
 	}
 
 	// inter forces, long ranged
-	erfrc();
+	frclong();
 
 	// use the new forces to calculate the new velocities at t+delt
-	// ukin = 0.0;
 	for (ii=0; ii<natom; ii++)
 	{
-		vx[ii] += (deltby2*fxl[ii]*1.0e-5/aw[ii]);
-		vy[ii] += (deltby2*fyl[ii]*1.0e-5/aw[ii]);
-		vz[ii] += (deltby2*fzl[ii]*1.0e-5/aw[ii]);
-		// ukin += aw[ii]*(vx[ii]*vx[ii]+vy[ii]*vy[ii]+vz[ii]*vz[ii]);
+		// Get specie ID and relative atom ID
+		get_specie_and_relative_atom_id(ii, &iSpecie, &iAtom);
+		r_mass = 1.0/sample_mole[iSpecie].aw[iAtom];
+		vx[ii] += (deltby2*fxl[ii]*r_mass);
+		vy[ii] += (deltby2*fyl[ii]*r_mass);
+		vz[ii] += (deltby2*fzl[ii]*r_mass);
 	}
-	// ukin = ukin/2.0;
-
-	// calculate instant temperature
-	// tinst = 2.0*ukin*R_RGAS/nfree;
 
 	npt_nh_operator();
 

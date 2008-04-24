@@ -5,6 +5,7 @@
 #include <assert.h>
 #include "mspms2.h"
 
+/*
 int init_siman()
 {
 	int ii;
@@ -55,7 +56,9 @@ int init_siman()
 	fclose(fpins);
 	exit(1);
 }
+*/
 
+/*
 int siman()
 {
 	int ii, done;
@@ -89,8 +92,8 @@ int siman()
 	}
 
 	// calculate total energies
-	erfrc();
-	rafrc();
+	frclong();
+	frcshort();
 
 	// print out initial values
 	echo();
@@ -118,10 +121,10 @@ int siman()
 			{
 				treq = T;
 				velinit();
-				erfrc();
-				rafrc(); // we may not need rafrc here??
+				frclong();
+				frcshort(); // we may not need rafrc here??
 			}
-			if (fnMDmove(iters_fixed_t, pfnRezero, pfnMDtype) == 1) // if accepted
+			if (md_move(iters_fixed_t) == 1) // if accepted
 			{
 				++n_accepts;
 			}
@@ -173,7 +176,7 @@ int siman()
 			averages();
 		}
 		
-		/* apply the cooling schedule to the temperature */
+		// apply the cooling schedule to the temperature 
 		T /= mu_t;
 	}
 
@@ -181,3 +184,4 @@ int siman()
 	
 	return 0;
 }
+*/

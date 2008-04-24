@@ -4,8 +4,7 @@
 int init_vars();
 int velinit();
 int rezero();
-void get_specie_and_relative_atom_id(int abs_atom_id, int *specie_id,
-		int *sample_atom_id);
+void get_specie_and_relative_atom_id(int abs_atom_id, int *specie_id, int *sample_atom_id);
 int init_sf_hypergeo();
 int init_sf_atom_explicit();
 int init_tasos_grid();
@@ -31,13 +30,12 @@ int dihfrc(int iSpecie, int iDih, int iabs, double *uij, double *virial_ij);
 int impfrc(int iSpecie, int iImp, int iabs, double *uij, double *virial_ij);
 int cal_sf_hypergeo(int ii, int iSpecie, int iAtom, double *uij, double *fij);
 int cal_sf_atom_explicit(int ii, int iSpecie, int iAtom, double *uij, double *fij);
+int get_values_from_grid(double fxx, double fyy, double fzz, int type, double *usf, double *fsf);
+int call_tasos_forces(int itype, double fxx, double fyy, double fzz, double *usflj_tasos, double *tasos_force);
 
-int fnSffrcSession();
-int fnErfrcSession(int iStartMole, int iEndMole);
-int fnRafrcSession(int iMole);
+bool md_move(int nStepMD);
+
 int vver();
-int erfrc();
-int rafrc();
 int averages();
 int calres();
 int loadit();
@@ -50,9 +48,6 @@ int vver_nh_3();
 int npt_respa();
 int hmc();
 int fnValidateInit();
-void rezero_nvt_ts();
-void rezero_npt_ts();
-int fnMDmove(int nStepMD, void (*pfnRezero)(), int (*pfnAlgorithm)());
 int fnVolumeChange();
 int collect_aves();
 int fnMetalClusterFF();
@@ -60,6 +55,5 @@ int fnInsDelMole();
 int opening();
 int ending();
 int readins();
-int siman();
 
 #endif /*FUNCS_H_*/

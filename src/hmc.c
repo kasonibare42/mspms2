@@ -1,8 +1,13 @@
-/*
- * Functions related to HMC operation go here
- *
- * Written by Yang Wang 12-07-2007
- *
+/**
+ * Project: mspms2
+ * File: hmc.c
+ * 
+ * Copyright (C) 2008    Yang Wang <ywangd@gmail.com>
+ * Created @ Dec 07, 2007
+ * 
+ * Description:
+ *   Functions related to HMC operation go here.
+ * 
  */
 #include <stdio.h>
 #include <stdlib.h>
@@ -17,26 +22,6 @@
  */
 int hmc()
 {
-	static double ratio;
-	static void (*pfnRezero)();
-	static int (*pfnMDtype)();
-
-	if (what_ensemble == NVT)
-	{
-		pfnRezero = &rezero_nvt_ts;
-		pfnMDtype = &vver_nh_3;
-	}
-	else if (what_ensemble == NVE)
-	{
-		pfnRezero = NULL;
-		pfnMDtype = &vver;
-	}
-	else if (what_ensemble == NPT)
-	{
-		pfnRezero = &rezero_npt_ts;
-		pfnMDtype = &npt_respa;
-	}
-
 	ranmar(rndnum, 1);
 
 	if (rndnum[0] <= pdisp) // canonical moves
@@ -45,10 +30,10 @@ int hmc()
 		if (istep!=nstep_start)
 		{
 			velinit();
-			erfrc();
-			rafrc(); // we may not need rafrc here??
+			frclong();
+			frcshort();
 		}
-		fnMDmove(nstep_md_per_hmc, pfnRezero, pfnMDtype);
+		md_move(nstep_md_per_hmc);
 	}
 	else if (rndnum[0]<=pvolm_upper) // volume change moves
 	{
@@ -59,12 +44,12 @@ int hmc()
 		fnInsDelMole();
 	}
 
-	if (bEquilibrium==true)
+	if (bEquilibrium==true) // Only adjust delt and delv while it is still in equilibrium
 	{
 		if (counts[20]==nstep_delt_adj_cycle) // delt adjustment
 		{
-			ratio = counts[21]*1.0/nstep_delt_adj_cycle;
-			delt = delt*(1.0 - rreq_disp + ratio);
+			rinst_disp = counts[21]*1.0/nstep_delt_adj_cycle;
+			delt = delt*(1.0 - rreq_disp + rinst_disp);
 			counts[20] = 0;
 			counts[21] = 0;
 			// delt update
@@ -74,12 +59,12 @@ int hmc()
 		}
 		if (counts[23]==nstep_delv_adj_cycle) // delv adjustment
 		{
-			ratio = counts[24]*1.0/nstep_delv_adj_cycle;
-			delv = delv*(1.0 - rreq_volm + ratio);
+			rinst_volm = counts[24]*1.0/nstep_delv_adj_cycle;
+			delv = delv*(1.0 - rreq_volm + rinst_volm);
 			counts[23] = 0;
 			counts[24] = 0;
 		}
-	}
+	} // End of equilibrium check
 
 	return 0;
 }

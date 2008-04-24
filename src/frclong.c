@@ -1142,8 +1142,7 @@ int frclong()
 	}
 
 	// Start of Solid-Fluid interactions --------------------------------------------------
-	double usflj_tasos;
-	double tasos_force[3];
+	double tforce[3];
 	// reset energy
 	usflj = 0.0;
 	// Virial for solid-fluid with solid fixed is not well defined
@@ -1182,18 +1181,11 @@ int frclong()
 			if (sample_mole[iSpecie].ghost_type[iAtom]==GHOST_NONE) // If Not ghost atom
 			{
 				// call Tasos's code for force calculations
-				cforce_atom_(&sample_mole[iSpecie].tasos_type[iAtom], &xx[ii],
-						&yy[ii], &zz[ii], &usflj_tasos, tasos_force);
-				// The tasos energy has unit of K and the force has unit of K/Angstrom.
-				// Change them to reduced units.
-				usflj_tasos /= epsilon_base;
-				tasos_force[0] *= (sigma_base/epsilon_base);
-				tasos_force[1] *= (sigma_base/epsilon_base);
-				tasos_force[2] *= (sigma_base/epsilon_base);
-				usflj += usflj_tasos;
-				fxl[ii] += tasos_force[0];
-				fyl[ii] += tasos_force[1];
-				fzl[ii] += tasos_force[2];
+				call_tasos_forces(sample_mole[iSpecie].interp_type[iAtom], xx[ii], yy[ii], zz[ii], &uij, tforce);
+				usflj += uij;
+				fxl[ii] += tforce[0];
+				fyl[ii] += tforce[1];
+				fzl[ii] += tforce[2];
 			} // ghost check
 		} // natom loop
 	}
@@ -1205,13 +1197,11 @@ int frclong()
 			get_specie_and_relative_atom_id(ii, &iSpecie, &iAtom);
 			if (sample_mole[iSpecie].ghost_type[iAtom]==GHOST_NONE) // If Not ghost atom
 			{
-				get_values_from_grid(xx[ii], yy[ii], zz[ii],
-						sample_mole[iSpecie].tasos_type[iAtom], &usflj_tasos,
-						tasos_force);
-				usflj += usflj_tasos*R_RGAS/epsilon_base;
-				fxl[ii] += tasos_force[0]*R_RGAS*sigma_base/epsilon_base;
-				fyl[ii] += tasos_force[1]*R_RGAS*sigma_base/epsilon_base;
-				fzl[ii] += tasos_force[2]*R_RGAS*sigma_base/epsilon_base;
+				get_values_from_grid(xx[ii], yy[ii], zz[ii], sample_mole[iSpecie].interp_type[iAtom], &uij, tforce);
+				usflj += uij*R_RGAS/epsilon_base;
+				fxl[ii] += tforce[0]*R_RGAS*sigma_base/epsilon_base;
+				fyl[ii] += tforce[1]*R_RGAS*sigma_base/epsilon_base;
+				fzl[ii] += tforce[2]*R_RGAS*sigma_base/epsilon_base;
 			} // ghost check
 		} // Atom loop
 	}
@@ -1225,7 +1215,7 @@ int frclong()
 	}
 
 	// Set the inter-molecular energy
-	uinter = uvdw + uelec + usflj;
+	uinter = uvdw + uelec + usflj + uotherff;
 
 	// printf("uvdw = %lf, %lf, %lf\n", uvdw*epsilon_base*RGAS, epsilon_base, RGAS);
 	// printf("ureal=%lf, uexcl=%lf\n", ureal*epsilon_base*RGAS, uexcl*epsilon_base*RGAS);

@@ -77,7 +77,7 @@ int fnVolumeChange()
 	boxlz = fHeightNew;
 
 	// calculate the total energy, only inter-molecular energy
-	erfrc();
+	frclong();
 
 	// calculate the energy difference
 	fDeltaU += (uinter - uinter_old);

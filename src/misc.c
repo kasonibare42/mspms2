@@ -93,6 +93,13 @@ int reconstruct_from_com_one(int iMole, int iabs, int iAtom)
 	return 0;
 }
 
+
+double deriv_inc_gamma(double x, void *params)
+{
+	return gsl_sf_gamma_inc(0.0, x);
+}
+
+
 int calculate_ljlrc()
 {
 	int mm, nn;
