@@ -17,12 +17,16 @@ int echo()
 	fprintf(fpouts, "Only total energy contains long range corrections.\n");
 	fprintf(fpouts, "Pressure is with long range corrections.\n");
 	fprintf(fpouts, "==================================================\n");
-	fprintf(fpouts, "Units:\n");
-	fprintf(fpouts,
-			"  Energy(J/mol)\n  Temperature(K)\n  Velocity(m/s)\n  Distance(Angstrom)\n");
-	fprintf(fpouts, "  Force(J/Angstrom/mol)\n");
-	fprintf(fpouts, "  virial(J/mol)\n");
-	fprintf(fpouts, "  Pressure(Pascal)\n");
+	fprintf(fpouts, "Reduced Units:\n");
+	fprintf(fpouts, "  Energy(%lf K)\n", epsilon_base);  
+	fprintf(fpouts, "  Temperature(%lf K)\n", epsilon_base);
+	fprintf(fpouts, "  Separation(%lf Angstrom)\n", sigma_base);
+	fprintf(fpouts, "  Mass (%lf*E-27 kg/molecule)\n", mass_base);
+	fprintf(fpouts, "  Pressure(%lf bar)\n", pressure_base);
+	fprintf(fpouts, "  Time (%lf fs)\n", time_base);
+	fprintf(fpouts, "  Virial(%lf K)\n", epsilon_base);
+	fprintf(fpouts, "  Force (%lf K/Angstrom)\n", force_base);
+	fprintf(fpouts, "  Velocity (%lf Angstrom/fs)\n", velocity_base);
 	fprintf(fpouts, "==================================================\n");
 	fprintf(fpouts, "System Name: %s\n", sysname);
 
@@ -431,11 +435,9 @@ int echo()
 	fprintf(fpouts, "virial=%lf\n", virial_inter+virial_intra);
 	fprintf(fpouts, "virial_inter=%lf\n", virial_inter);
 	fprintf(fpouts, "virial_intra=%lf\n", virial_intra);
-	fprintf(fpouts, "pideal=%lf\n", pideal=natom/(boxlx*boxly*boxlz) *tinst
-			*KB_OVER_1E30);
+	fprintf(fpouts, "pideal=%lf\n", pideal = natom/(boxlx*boxly*boxlz)*tinst);
 	// pljlrc already calculated in initialization part
-	pinst = pideal + (virial_inter+virial_intra)*VIRIAL_TO_PRESSURE /(boxlx
-			*boxly*boxlz) + pljlrc;
+	pinst = pideal + (virial_inter+virial_intra)/3.0/(boxlx*boxly*boxlz) + pljlrc;
 	fprintf(fpouts, "pressure=%lf\n", pinst);
 
 	fprintf(fpouts, "uljlrc=%lf\npljlrc=%lf\n", uljlrc, pljlrc);

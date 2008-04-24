@@ -11,6 +11,7 @@ char title[200]; ///< Title of the simulation
 int ij, jk; ///< Random seeds
 double sigma_base, epsilon_base, mass_base; ///< Base units for reduced units
 double time_base, pressure_base; ///< Derived reduced units
+double force_base, velocity_base;
 double treq, preq; ///< input required temperature (K), pressure (bar)
 double boxlx, boxly, boxlz; ///< box size
 double boxv;

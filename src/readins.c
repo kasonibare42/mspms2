@@ -37,6 +37,10 @@ int readins()
 	time_base = sqrt(mass_base*1.0e-27/(epsilon_base*BOLTZMAN_CONSTANT))*sigma_base*1.0e5;
 	// Calculate reduced unit for pressure, unit is bar.
 	pressure_base = BOLTZMAN_CONSTANT*epsilon_base*1.0e25/(sigma_base*sigma_base*sigma_base);
+	// Calculate reduced unit for forces, unit is K/Angstrom
+	force_base = epsilon_base/sigma_base;
+	// Calculate reduced unit for velocities, unit is Angstrom/fs
+	velocity_base = sigma_base/time_base;
 	sscanf(fgets(buffer, LONG_STRING_LENGTH, fpins), "%lf", &treq);
 	treq /= epsilon_base;
 	sscanf(fgets(buffer, LONG_STRING_LENGTH, fpins), "%lf", &preq);

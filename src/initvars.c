@@ -174,17 +174,51 @@ int velinit()
 		pz += vz[ii]*sample_mole[specie_id].aw[sample_atom_id];
 	}
 	// zero the momentum
-	px /= natom;
-	py /= natom;
-	pz /= natom;
+	px /= system_mass;
+	py /= system_mass;
+	pz /= system_mass;
 	for (ii=0; ii<natom; ii++)
 	{
 		get_specie_and_relative_atom_id(ii, &specie_id, &sample_atom_id);
-		vx[ii] -= px/sample_mole[specie_id].aw[sample_atom_id];
-		vy[ii] -= py/sample_mole[specie_id].aw[sample_atom_id];
-		vz[ii] -= pz/sample_mole[specie_id].aw[sample_atom_id];
+		vx[ii] -= px;
+		vy[ii] -= py;
+		vz[ii] -= pz;
 	}
-	// rescale velocity for required temperature
+	
+	px = 0.0;
+	py = 0.0;
+	pz = 0.0;
+	for (ii=0; ii<natom; ii++)
+	{
+		// From index ii, we calculate which specie this atom belongs to and
+		// its position within a molecule
+		get_specie_and_relative_atom_id(ii, &specie_id, &sample_atom_id);
+		px += vx[ii]*sample_mole[specie_id].aw[sample_atom_id];
+		py += vy[ii]*sample_mole[specie_id].aw[sample_atom_id];
+		pz += vz[ii]*sample_mole[specie_id].aw[sample_atom_id];
+	}
+	
+	// Calculate the energy and instantaneous temperature
+	ukin = 0.0;
+	for (ii=0; ii<natom; ii++)
+	{
+		get_specie_and_relative_atom_id(ii, &specie_id, &sample_atom_id);
+		ukin += sample_mole[specie_id].aw[sample_atom_id]*(vx[ii]*vx[ii]+vy[ii]*vy[ii]+vz[ii]*vz[ii]);
+	}
+	ukin = 0.5*ukin;
+	tinst = 2.0*ukin/nfree;
+	
+	// Rescale velocity for required temperature
+	double scaling;
+	scaling = sqrt(treq/tinst);
+	for (ii=0; ii<natom; ii++)
+	{
+		vx[ii] *= scaling;
+		vy[ii] *= scaling;
+		vz[ii] *= scaling;
+	}
+	// recalculate the kinetic energy and instantaneous temperature
+	// should be exactly the set tempature
 	ukin = 0.0;
 	for (ii=0; ii<natom; ii++)
 	{
@@ -643,7 +677,7 @@ int init_vars()
 	system_mass = 0.0;
 	for (ii=0; ii<nspecie; ii++)
 	{
-		system_mass += sample_mole[ii].mw;
+		system_mass += sample_mole[ii].mw*nmole_per_specie[ii];
 	}
 	/// Zero the number of frames in trajectory file.
 	nframe = 0;

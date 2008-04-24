@@ -27,8 +27,7 @@ int ewald_real_frc(double rijsq, double chargeij, double *uij, double *fij)
 	temp1 = kappa*rij;
 	temp2 = uij_real_temp*erfc(temp1);
 	// real part force calculation
-	*fij = (temp2+uij_real_temp*2.0*temp1*exp(-temp1*temp1)/sqrt(pi))
-			*coulomb_prefactor/rijsq;
+	*fij = (temp2+uij_real_temp*2.0*temp1*exp(-temp1*temp1)/sqrt(pi))/rijsq;
 
 	return 0;
 }

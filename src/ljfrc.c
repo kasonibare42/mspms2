@@ -57,13 +57,14 @@ int ljfrc(double rijsq, double sigmaij, double epsilonij, double *uij,
 					*(rcutoffsq-rijsq)*(rcutonsq-rijsq)/roff2_minus_ron2_cube;
 			*uij *= LJswitch; // switch energy modifier
 		}
+		*uijshift = 0.0; // If switch is used, we do not need shift energy.
 	}
 	else
 	{
 		*fij = 24.0*epsilonij*(2*r12-r6)*r_rijsq;
 		// Only when LJ swith is not used, we calculate shift energies shift energies.
 		sigmaij6 = sigmaij2*sigmaij2*sigmaij2;
-		*uijshift = 4.0*epsilonij*sigmaij6*(sigmaij6*shift1-1.0);
+		*uijshift = epsilonij*sigmaij6*(sigmaij6*shift1-1.0); ///< The factor of 4.0 is in shift4
 	}
 
 	return 0;

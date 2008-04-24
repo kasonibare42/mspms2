@@ -5,15 +5,15 @@ Title: This is just an Example!
 32.0                   Epsilon(K)
 3.3474                 Mass(*1.0e-27 kg/molecule)
 298.0                  Temperature (K)
-1.0                    Pressure (bar)
+0.08                   Pressure (bar)
 100.0                  Box length (A)
 100.0                  Box width (A)
 100.0                  Box height (A)
 20.0                   rcuton (A)
 20.0                   rcutoff (A)
 20.0                   rcutoffelec (A)
-1                      isLJlrcOn
-0                      isLJswitchOn
+0                      isLJlrcOn
+1                      isLJswitchOn
 1                      Starting option (1-new;2-continue;3-old config only)
 1000                   Number of total steps
 0                      Number of equilibrium steps
@@ -25,10 +25,10 @@ Title: This is just an Example!
 1.0                    Time step, delt (fs)
 5                      Number of inner steps (can NOT be zero, 1 is the minimum)
 0.0                    1,4 LJ modifier (0.0 for no 14 TraPPE, 0.5 for OPLS)
-1                      Simulation type (0-MD;1-HMC)
+0                      Simulation type (0-MD;1-HMC)
 0                      Ensemble type (0-nve;1-nvt;2-npt)
 3                      Number of constraints
-0                      Inter-molecular potentials other than LJ (0-LJ;1-SG)
+0                      Inter-molecular potentials other than LJ (0-LJ;1-SG), Currently NOT used.
 3                      Electrostatic interaction type (0-no elec;1-ewald;2-wolf;3-simple coulomb)
 0                      iSF_type (0-no sf;1-hypergeo;2-atomexplicit;3-tasos;4-my interp)
 0                      Other force fields (0-no other FF;1-metal cluster FF)

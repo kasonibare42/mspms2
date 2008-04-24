@@ -37,6 +37,7 @@ int frclong()
 	double fxij, fyij, fzij;
 
 	uvdw = 0.0;
+	ushift = 0.0;
 	uelec = 0.0;
 	ureal = 0.0;
 	uexcl = 0.0;
@@ -129,6 +130,7 @@ int frclong()
 								ljfrc(rijsq, sigmaij, epsilonij, &uij, &fij,
 										&uijshift);
 								uvdw += uij;
+								ushift += uijshift;
 								virial_inter += fij*rijsq;
 								fxij = fij*rxij;
 								fyij = fij*ryij;
@@ -149,6 +151,7 @@ int frclong()
 								chargeij = pSampleMole_i->charge[mm]
 										*pSampleMole_j->charge[nn];
 								if (iChargeType==ELECTROSTATIC_EWALD) // Ewald summation
+									
 								{
 									if (rijsq<rcutoffelecsq)
 									{
@@ -976,6 +979,9 @@ int frclong()
 		} // End of molecule loop 
 		isum_mole += nmole_per_specie[iSpecie];
 	} // End of specie loop
+	
+	// Factor for shift energy
+	ushift *= shift4;
 
 	// More Ewald and Wolf calculations
 	if (iChargeType==ELECTROSTATIC_EWALD)
@@ -1221,15 +1227,13 @@ int frclong()
 	// Set the inter-molecular energy
 	uinter = uvdw + uelec + usflj;
 
-	printf("uvdw = %lf, %lf, %lf\n", uvdw*epsilon_base*RGAS, epsilon_base, RGAS);
-	printf("ureal=%lf, uexcl=%lf\n", ureal*epsilon_base*RGAS, uexcl
-			*epsilon_base*RGAS);
-	printf("ufourier=%lf, uself=%lf\n", ufourier*epsilon_base*RGAS, uself
-			*epsilon_base*RGAS);
-	printf("uvacuum=%lf\n", uvacuum*epsilon_base*RGAS);
-	printf("uelec=%lf\n", uelec*epsilon_base*RGAS);
-	printf("uinter=%lf\n",uinter*epsilon_base*RGAS);
-	printf("virial_inter=%lf\n", virial_inter*epsilon_base*RGAS);
+	// printf("uvdw = %lf, %lf, %lf\n", uvdw*epsilon_base*RGAS, epsilon_base, RGAS);
+	// printf("ureal=%lf, uexcl=%lf\n", ureal*epsilon_base*RGAS, uexcl*epsilon_base*RGAS);
+	// printf("ufourier=%lf, uself=%lf\n", ufourier*epsilon_base*RGAS, uself*epsilon_base*RGAS);
+	// printf("uvacuum=%lf\n", uvacuum*epsilon_base*RGAS);
+	// printf("uelec=%lf\n", uelec*epsilon_base*RGAS);
+	// printf("uinter=%lf\n",uinter*epsilon_base*RGAS);
+	// printf("virial_inter=%lf\n", virial_inter*epsilon_base*RGAS);
 
 }
 

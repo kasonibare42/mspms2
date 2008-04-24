@@ -87,10 +87,10 @@ int frcshort()
 	uintra = ubond + uangle + udih + uimp;
 	
 	
-	printf("ubond=%lf\n",ubond*epsilon_base*RGAS);
-	printf("uangle=%lf\n",uangle*epsilon_base*RGAS);
-	printf("udih=%lf\n",udih*epsilon_base*RGAS);
-	printf("uimp=%lf\n",uimp*epsilon_base*RGAS);
+	// printf("ubond=%lf\n",ubond*epsilon_base*RGAS);
+	// printf("uangle=%lf\n",uangle*epsilon_base*RGAS);
+	// printf("udih=%lf\n",udih*epsilon_base*RGAS);
+	// printf("uimp=%lf\n",uimp*epsilon_base*RGAS);
 	
 	return 0;
 }

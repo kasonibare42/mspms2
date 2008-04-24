@@ -30,11 +30,10 @@ int printit()
 	// add energy of thermostat, if nose hoover is not used, they will just be zero
 	utot = utot + unhts + unhtss + utsbs;
 	// calculate ideal pressure part, rho*K*T = rho(*)*T(*)
-	pideal=natom/(boxlx*boxly*boxlz)*tinst;
+	pideal = natom/(boxlx*boxly*boxlz)*tinst;
 	// do not need to recalculate lrc here, it should be calculated
 	// elsewhere when variables changed
-	pinst = pideal + (virial_inter+virial_intra)*VIRIAL_TO_PRESSURE/(boxlx
-			*boxly*boxlz);
+	pinst = pideal + (virial_inter+virial_intra)/3.0/(boxlx*boxly*boxlz);
 	// add long range corrections into total energy and pressure if needed
 	if (isLJlrcOn)
 	{
@@ -42,7 +41,8 @@ int printit()
 		pinst += pljlrc;
 	}
 	fprintf(stdout,"%10d %10.4le %10.4le %10.4le %10.4le %10.4le %10.4le\n",
-	istep,utot,upot,ukin,tinst,pinst,boxv);
+	istep,utot*epsilon_base*RGAS,upot*epsilon_base*RGAS,ukin*epsilon_base*RGAS,
+	tinst*epsilon_base,pinst*pressure_base*1.0e5,boxv*sigma_base*sigma_base*sigma_base);
 
 	fprintf(
 			fplog,
@@ -87,6 +87,19 @@ int main(int argc, char *argv[])
 	// Print out the results from the zero step.
 	printit();
 	
+	int ii;
+	for (ii=0;ii<natom;ii++)
+	{
+		printf("%d: fxl=%lf, fyl=%lf, fzl=%lf | fxs=%lf, fys=%lf, fzs=%lf\n",
+				ii, fxl[ii]*force_base, fyl[ii]*force_base, fzl[ii]*force_base, 
+				fxs[ii]*force_base, fys[ii]*force_base, fzs[ii]*force_base);
+	}
+	for (ii=0;ii<natom;ii++)
+	{
+		printf("%d, vx=%lf, vy=%lf, vz=%lf\n", 
+				ii, vx[ii]*velocity_base, vy[ii]*velocity_base, vz[ii]*velocity_base);
+	}
+	
 	if (nstep_trj!=0)
 	{
 		trajectory();
@@ -128,7 +141,6 @@ int main(int argc, char *argv[])
 		fprintf(stderr,"Error: Cannot determine the simulation type.");
 		exit(1);
 	}
-	exit(1);
 	
 	run = true;
 	while (run)
@@ -167,6 +179,7 @@ int main(int argc, char *argv[])
 				saveit();
 			}
 			// adjust delt?
+
 		}
 		if (bEquilibrium==true)
 		{
