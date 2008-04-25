@@ -16,7 +16,8 @@ FILE *fpcoords;
  * Input parameters and their direct related variables
  *************************************************************************************/
 char title[LONG_STRING_LENGTH]; ///< Title of the simulation
-int ij, jk; ///< Random seeds
+int ij; 
+int jk; ///< Random seeds
 double sigma_base;
 double epsilon_base; 
 double mass_base; ///< Base units for reduced units
@@ -53,8 +54,8 @@ bool bEquilibrium; ///< Are we still in equilibrium run?
 double delt; ///< time step
 int nstep_inner; ///< inner step for multi time step
 double deltby2;
-int delts;
-int deltsby2;
+double delts;
+double deltsby2;
 double f0; ///< 1,4 LJ potential modifier (1.0-no modification;0.5-OPLS;0.0-TraPPE)
 int what_simulation; ///< simulation type, MD, HMC, etc.
 int what_ensemble; ///< what type of ensemble, NVT, NPT etc.
@@ -101,11 +102,8 @@ double fugacity_required[NSPECIE_MAX]; ///< required Fugacity of each specie
  * 2 - Wolf's method\n
  * 3 - Simple direct coulomb interaction\n
  */
-int isEwaldOn; ///< Ewald summation electrostatic interactions
 int fEwald_BC; ///< flag of boundary condition for ewald summation. 1-tinfoil; 2-vacuum
 int fEwald_Dim; ///< flag of Ewald method dimension. 1, 2 or 3 dimension.
-int isWolfOn; ///< wolf method for electrostatic interactions
-int isSimpleCoulomb; ///< simple coulomb interactions on/off
 double kappa; 
 double kappasq; ///< sqrt(alpha) in ewald summation. 
 int KMAXX; 
@@ -115,7 +113,7 @@ int KSQMAX; ///< ewald parameter
 int whichNH; ///< which nose hoover subroutine to use? usually 3 for molecule, 2 for atoms, see more details in nvtnh.c
 double TWOPI_LX;
 double TWOPI_LY;
-int TWOPI_LZ; ///< ewald
+double TWOPI_LZ; ///< ewald
 double Bfactor_ewald; 
 double Vfactor_ewald;
 double twopi_over_3v; ///< constant for vacuum boundary

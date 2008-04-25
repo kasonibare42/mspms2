@@ -1012,7 +1012,7 @@ int frclong()
 						// energy
 						for (ii=0; ii<natom; ii++)
 						{
-							// the x,y,z coordinates dont have to be PBC'd
+							// The x,y,z coordinates dont have to be PBC'd
 							// before doing the calculation since the existence of the TWOPI_L
 							// factor will make the cos, sin functions have the same results
 							// with periodical system

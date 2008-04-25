@@ -418,12 +418,8 @@ int init_charge()
 			fprintf(stderr,"Data section for electrostatics found...\n");
 			fprintf(fpouts, "Data section for electrostatics found...\n");
 
-			// preset all electrostatic methods to false
-			// then turn on them according to the input
-			isEwaldOn = isWolfOn = isSimpleCoulomb = 0;
 			if (iChargeType == ELECTROSTATIC_EWALD)
 			{
-				isEwaldOn = 1;
 				sscanf(fgets(buffer, LONG_STRING_LENGTH, fpins), "%lf", &kappa);
 				sscanf(fgets(buffer, LONG_STRING_LENGTH, fpins), "%d", &KMAXX);
 				sscanf(fgets(buffer, LONG_STRING_LENGTH, fpins), "%d", &KMAXY);
@@ -446,7 +442,6 @@ int init_charge()
 			}
 			else if (iChargeType == ELECTROSTATIC_WOLF)
 			{
-				isWolfOn = 1;
 				sscanf(fgets(buffer, LONG_STRING_LENGTH, fpins), "%lf", &kappa);
 				
 				// set wolf parameters
@@ -461,7 +456,6 @@ int init_charge()
 			}
 			else if (iChargeType == ELECTROSTATIC_SIMPLE_COULOMB)
 			{
-				isSimpleCoulomb = 1;
 			}
 			
 			// calculate the reduced coulomb constant

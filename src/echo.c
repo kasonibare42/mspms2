@@ -166,7 +166,7 @@ int echo()
 		fprintf(fpouts,
 				"Electrostatic interaction calculations are enabled (%d).\n",
 				iChargeType);
-		if (isEwaldOn)
+		if (iChargeType==ELECTROSTATIC_EWALD)
 		{
 			fprintf(
 					fpouts,
@@ -189,12 +189,12 @@ int echo()
 			fprintf(fpouts, "kmaxx=%d, kmaxy=%d, kmaxz=%d, kmaxsq=%d\n", KMAXX,
 					KMAXY, KMAXZ, KSQMAX);
 		}
-		else if (isWolfOn)
+		else if (iChargeType==ELECTROSTATIC_WOLF)
 		{
 			fprintf(fpouts, "    Wolf method is enabled.\n");
 			fprintf(fpouts, "    kappa=%lf\n", kappa);
 		}
-		else if (isSimpleCoulomb)
+		else if (iChargeType==ELECTROSTATIC_SIMPLE_COULOMB)
 		{
 			fprintf(fpouts, "    Simple coulomb interaction is enabled.\n");
 		}
