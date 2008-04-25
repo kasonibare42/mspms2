@@ -2,31 +2,59 @@
 #define VARS_H   
 
 /// File operators
-FILE *fpins, *fpouts, *fpcfg, *fplog, *fpss, *fptrj, *fpsave, *fpload, *fpcoords;
+FILE *fpins; 
+FILE *fpouts; 
+FILE *fpcfg; 
+FILE *fplog; 
+FILE *fpss; 
+FILE *fptrj; 
+FILE *fpsave; 
+FILE *fpload;
+FILE *fpcoords;
 
 /*************************************************************************************
  * Input parameters and their direct related variables
  *************************************************************************************/
-char title[200]; ///< Title of the simulation
+char title[LONG_STRING_LENGTH]; ///< Title of the simulation
 int ij, jk; ///< Random seeds
-double sigma_base, epsilon_base, mass_base; ///< Base units for reduced units
-double time_base, pressure_base; ///< Derived reduced units
-double force_base, velocity_base;
-double treq, preq; ///< input required temperature (K), pressure (bar)
-double boxlx, boxly, boxlz; ///< box size
+double sigma_base;
+double epsilon_base; 
+double mass_base; ///< Base units for reduced units
+double time_base;
+double pressure_base; ///< Derived reduced units
+double force_base;
+double velocity_base;
+double treq;
+double preq; ///< input required temperature (K), pressure (bar)
+double boxlx; 
+double boxly; 
+double boxlz; ///< box size
 double boxv;
-double rcutoff, rcuton, rcutoffelec;
-double rcutoffsq, rcutonsq, rcutoffelecsq;
+double rcutoff; 
+double rcuton;
+double rcutoffelec;
+double rcutoffsq;
+double rcutonsq;
+double rcutoffelecsq;
 int isLJlrcOn; ///< if L-J long range correction is ON
 int isLJswitchOn; ///< use switch potential for LJ or not
 int iStart_option; ///< 1-new run, 2-continue run, 3-new from old
 /// Number of steps for total, equilibrium, averages, print, save, snapshots, trajectory
-int nstep, nstep_eq, nstep_ave, nstep_print, nstep_save, nstep_ss, nstep_trj;
-int nstep_start, nstep_end; ///< nstep_start is the starting step for continue runs 
+int nstep;
+int nstep_eq;
+int nstep_ave;
+int nstep_print;
+int nstep_save;
+int nstep_ss;
+int nstep_trj;
+int nstep_start;
+int nstep_end; ///< nstep_start is the starting step for continue runs 
 bool bEquilibrium; ///< Are we still in equilibrium run?
 double delt; ///< time step
 int nstep_inner; ///< inner step for multi time step
-double deltby2, delts, deltsby2;
+double deltby2;
+int delts;
+int deltsby2;
 double f0; ///< 1,4 LJ potential modifier (1.0-no modification;0.5-OPLS;0.0-TraPPE)
 int what_simulation; ///< simulation type, MD, HMC, etc.
 int what_ensemble; ///< what type of ensemble, NVT, NPT etc.
@@ -39,17 +67,16 @@ int iExternal_FF_type; ///< flag of other non-standard force fields
  * End of Input parameters and their direct related variables
  *************************************************************************************/
 
-
 /*************************************************************************************
  * HMC Input parameters and their direct related variables
  *************************************************************************************/
-double pdisp, ///< canonical move probability
-		pvolm, ///< volume change probability
-		pmake, ///< insertion probability
-		pkill; ///< deletion probability
+double pdisp; ///< canonical move probability
+double pvolm; ///< volume change probability
+double pmake; ///< insertion probability
+double pkill; ///< deletion probability
 double delv;
-double rreq_disp, ///< required canonical move accept ratio
-		rreq_volm; ///< required volume change accept ratio
+double rreq_disp; ///< required canonical move accept ratio
+double rreq_volm; ///< required volume change accept ratio
 double rinst_disp; ///< Instantaneous ratio for displacement
 double rinst_volm; ///< Instantaneous ratio for volume change
 int nstep_md_per_hmc; ///< steps of md moves per hmc cycle
@@ -58,7 +85,6 @@ int nstep_delv_adj_cycle; ///< steps between two delv adjustment
 double pcomp[NSPECIE_MAX]; ///< The probability for a specie to be selected for insertion/deletion
 double cpt[NSPECIE_MAX]; ///< pseudo chemcial potential
 double zact[NSPECIE_MAX]; ///< activity
-
 
 double pvolm_upper; ///< upper limit of volume change probability, i.e. pdisp+pvolm
 double probability_to_insert[NSPECIE_MAX]; ///< The probability to insert a molecule for a specie
@@ -80,31 +106,57 @@ int fEwald_BC; ///< flag of boundary condition for ewald summation. 1-tinfoil; 2
 int fEwald_Dim; ///< flag of Ewald method dimension. 1, 2 or 3 dimension.
 int isWolfOn; ///< wolf method for electrostatic interactions
 int isSimpleCoulomb; ///< simple coulomb interactions on/off
-double kappa, kappasq; ///< sqrt(alpha) in ewald summation. 
-int KMAXX, KMAXY, KMAXZ; ///< ewald parameters
+double kappa; 
+double kappasq; ///< sqrt(alpha) in ewald summation. 
+int KMAXX; 
+int KMAXY; 
+int KMAXZ; ///< ewald parameters
 int KSQMAX; ///< ewald parameter
 int whichNH; ///< which nose hoover subroutine to use? usually 3 for molecule, 2 for atoms, see more details in nvtnh.c
-double TWOPI_LX, TWOPI_LY, TWOPI_LZ; ///< ewald
-double Bfactor_ewald, Vfactor_ewald;
+double TWOPI_LX;
+double TWOPI_LY;
+int TWOPI_LZ; ///< ewald
+double Bfactor_ewald; 
+double Vfactor_ewald;
 double twopi_over_3v; ///< constant for vacuum boundary
 
-
 /// variables for nose hoover method
-double Gts, Qts, vts, rts, dt_outer2, dt_outer4;
+double Gts; 
+double Qts;
+double vts;
+double rts;
+double dt_outer2;
+double dt_outer4;
 /// NPT 
-double Gbs, Qbs, vbs, rbs, dt_outer8;
+double Gbs; 
+double Qbs;
+double vbs;
+double rbs;
+double dt_outer8;
 double utsbs; ///< extra energy for the barostat NPT
 
 /// frenkel and smit's nose hoover method
-double qq, ps, gg, ss;
-double delt_sqby2, delts_sqby2;
-double vxo[NATOM_MAX], vyo[NATOM_MAX], vzo[NATOM_MAX];
-double vxn[NATOM_MAX], vyn[NATOM_MAX], vzn[NATOM_MAX];
-double bx[NATOM_MAX], by[NATOM_MAX], bz[NATOM_MAX];
+double qq;
+double ps;
+double gg;
+double ss;
+double delt_sqby2;
+double delts_sqby2;
+double vxo[NATOM_MAX];
+double vyo[NATOM_MAX];
+double vzo[NATOM_MAX];
+double vxn[NATOM_MAX];
+double vyn[NATOM_MAX];
+double vzn[NATOM_MAX];
+double bx[NATOM_MAX];
+double by[NATOM_MAX];
+double bz[NATOM_MAX];
 double unhts;
-double qqs, pss, ggs, sss;
+double qqs;
+double pss;
+double ggs;
+double sss;
 double unhtss;
-
 
 /** 
  * \brief solid-fluid type. for different nanotube potentials and future possible other materials
@@ -166,21 +218,42 @@ double coulomb_prefactor; ///< This is the reduced value of COULOMB_PREFACTOR
 /// shift1 = (1/rcutoff)^6
 /// shift4 = 4*shift;
 double shift4, shift1; 
-double sgshift; ///< shift energy for SG potential
-
-int ncut;
 
 /**
  * Variables used to save the old states
  */
-double *xx_old, *yy_old, *zz_old;
-double upot_old, utot_old;
-double upot_new, utot_new;
-double uljlrc_old, pljlrc_old;
-double ukin_old, tinst_old, uinter_old, uintra_old, uvdw_old, ubond_old,
-		uangle_old, udih_old, uimp_old, uewald_old, uwolf_old, ucoulomb_old, usflj_old, 
-		unhts_old, unhtss_old, virial_inter_old, virial_intra_old,
-		utsbs_old, pinst_old, boxlx_old, boxly_old, boxlz_old, boxv_old;
+double *xx_old; 
+double *yy_old;
+double *zz_old;
+double upot_old;
+double utot_old;
+double upot_new;
+double utot_new;
+double uljlrc_old;
+double pljlrc_old;
+double ukin_old;
+double tinst_old;
+double uinter_old;
+double uintra_old;
+double uvdw_old;
+double ubond_old;
+double uangle_old;
+double udih_old;
+double uimp_old;
+double uewald_old; 
+double uwolf_old;
+double ucoulomb_old;
+double usflj_old;
+double unhts_old;
+double unhtss_old;
+double virial_inter_old;
+double virial_intra_old;
+double utsbs_old;
+double pinst_old;
+double boxlx_old;
+double boxly_old;
+double boxlz_old;
+double boxv_old;
 double ushift_old;
 
 /** 
@@ -188,30 +261,11 @@ double ushift_old;
  * E.g., one loop_ij() session. They will be used to calculate the final total energies
  * or pair energies.
  */
-double gUtotSession, gUpotSession, gUkinSession, gUinterSession, gUintraSession;
-double gUvdwSession, gUvdwNbpSession, gUbondSession, gUangleSession,
-		gUdihSession;
-double gUsgSession; ///< Silvera-goldman potential
-double gUimpSession, gUewaldSession, gUrealSession, gUfourierSession;
-double gUselfSession, gUexclSession, gUvacuumSession, gUGz0Session,
-		gUsfljSession;
-double gUcoulombSession, gVirialSession, gVirialInterSession,
-		gVirialIntraSession;
-double gPidealSession, gPinstSession;
-double gUwolfSession, gUwolfrealSession, gUwolfconSession;
-double gUMetalClusterSession;
-double gUShiftSession;
-int gNcut;
 
 int nfree; ///< freedom
 double tinst; ///< instantaneous temperature
 
 int nframe; ///< number of frames in the trajectory file
-
-/// Variables for Silvera-Goldman potential
-double sg_alpha, sg_beta, sg_gama, sg_c6,
-       sg_c8, sg_c9, sg_c10, sg_rc;
-double spring[NSPECIE_MAX]; ///< spring constant for polymer bead ring
 
 double roff2_minus_ron2_cube; ///< used for switch potential
 
@@ -224,7 +278,8 @@ int iters_fixed_t;
 /* initial temperature */
 double t_initial;
 /* damping factor for temperature */
-double mu_t, t_min;
+double mu_t;
+double t_min;
 
 typedef struct _dftmcffparam
 {
@@ -236,98 +291,189 @@ bool isAccept;
 double rndnum[3];
 double dH;
 double fDeltaU;
-double fDeltaUljlrc, fDeltaPljlrc;
+double fDeltaUljlrc;
+double fDeltaPljlrc;
 double fVolumeNew;
-double fLengthNew, fWidthNew, fHeightNew;
+double fLengthNew;
+double fWidthNew;
+double fHeightNew;
 double fRatioNewV2OldV;
 double fRatioNewL2OldL;
 double fMinHalf;
 
 /// for atom explicit solid (nanotubes)
 int solid_natom;
-double *solid_xx, *solid_yy, *solid_zz;
+double *solid_xx;
+double *solid_yy;
+double *solid_zz;
 int fSolid_type; ///< 0-heterogeneous; 1-uniform (e.g. nanotubes); 
-double *solid_sigma, *solid_epsilon, *solid_charge;
+double *solid_sigma;
+double *solid_epsilon;
+double *solid_charge;
 
 ///< for hypergeometric nanotubes
 int ntube;
-double *hgntc_xx, *hgntc_yy, *hgnt_radius; ///< (h)yper(g)eometric (n)ano(t)ube (c)enter
+double *hgntc_xx;
+double *hgntc_yy;
+double *hgnt_radius; ///< (h)yper(g)eometric (n)ano(t)ube (c)enter
 double const_3pisq_theta;
 
 // my interpolations
 // energy and forces interpolation parameters
-double *ene0[NUNIQUE_ATOM_MAX], *ene1[NUNIQUE_ATOM_MAX],
-		*ene2[NUNIQUE_ATOM_MAX], *ene3[NUNIQUE_ATOM_MAX],
-		*ene4[NUNIQUE_ATOM_MAX], *ene5[NUNIQUE_ATOM_MAX],
-		*ene6[NUNIQUE_ATOM_MAX], *ene7[NUNIQUE_ATOM_MAX],
-		*ene8[NUNIQUE_ATOM_MAX], *ene9[NUNIQUE_ATOM_MAX],
-		*ene10[NUNIQUE_ATOM_MAX], *ene11[NUNIQUE_ATOM_MAX],
-		*ene12[NUNIQUE_ATOM_MAX], *ene13[NUNIQUE_ATOM_MAX],
-		*ene14[NUNIQUE_ATOM_MAX], *ene15[NUNIQUE_ATOM_MAX],
-		*ene16[NUNIQUE_ATOM_MAX], *ene17[NUNIQUE_ATOM_MAX],
-		*ene18[NUNIQUE_ATOM_MAX], *ene19[NUNIQUE_ATOM_MAX],
-		*ene20[NUNIQUE_ATOM_MAX], *ene21[NUNIQUE_ATOM_MAX],
-		*ene22[NUNIQUE_ATOM_MAX], *ene23[NUNIQUE_ATOM_MAX],
-		*ene24[NUNIQUE_ATOM_MAX], *ene25[NUNIQUE_ATOM_MAX],
-		*ene26[NUNIQUE_ATOM_MAX], *ene27[NUNIQUE_ATOM_MAX],
-		*ene28[NUNIQUE_ATOM_MAX], *ene29[NUNIQUE_ATOM_MAX],
-		*ene30[NUNIQUE_ATOM_MAX], *ene31[NUNIQUE_ATOM_MAX];
-double *fxa0[NUNIQUE_ATOM_MAX], *fxa1[NUNIQUE_ATOM_MAX],
-		*fxa2[NUNIQUE_ATOM_MAX], *fxa3[NUNIQUE_ATOM_MAX],
-		*fxa4[NUNIQUE_ATOM_MAX], *fxa5[NUNIQUE_ATOM_MAX],
-		*fxa6[NUNIQUE_ATOM_MAX], *fxa7[NUNIQUE_ATOM_MAX],
-		*fxa8[NUNIQUE_ATOM_MAX], *fxa9[NUNIQUE_ATOM_MAX],
-		*fxa10[NUNIQUE_ATOM_MAX], *fxa11[NUNIQUE_ATOM_MAX],
-		*fxa12[NUNIQUE_ATOM_MAX], *fxa13[NUNIQUE_ATOM_MAX],
-		*fxa14[NUNIQUE_ATOM_MAX], *fxa15[NUNIQUE_ATOM_MAX],
-		*fxa16[NUNIQUE_ATOM_MAX], *fxa17[NUNIQUE_ATOM_MAX],
-		*fxa18[NUNIQUE_ATOM_MAX], *fxa19[NUNIQUE_ATOM_MAX],
-		*fxa20[NUNIQUE_ATOM_MAX], *fxa21[NUNIQUE_ATOM_MAX],
-		*fxa22[NUNIQUE_ATOM_MAX], *fxa23[NUNIQUE_ATOM_MAX],
-		*fxa24[NUNIQUE_ATOM_MAX], *fxa25[NUNIQUE_ATOM_MAX],
-		*fxa26[NUNIQUE_ATOM_MAX], *fxa27[NUNIQUE_ATOM_MAX],
-		*fxa28[NUNIQUE_ATOM_MAX], *fxa29[NUNIQUE_ATOM_MAX],
-		*fxa30[NUNIQUE_ATOM_MAX], *fxa31[NUNIQUE_ATOM_MAX];
-double *fya0[NUNIQUE_ATOM_MAX], *fya1[NUNIQUE_ATOM_MAX],
-		*fya2[NUNIQUE_ATOM_MAX], *fya3[NUNIQUE_ATOM_MAX],
-		*fya4[NUNIQUE_ATOM_MAX], *fya5[NUNIQUE_ATOM_MAX],
-		*fya6[NUNIQUE_ATOM_MAX], *fya7[NUNIQUE_ATOM_MAX],
-		*fya8[NUNIQUE_ATOM_MAX], *fya9[NUNIQUE_ATOM_MAX],
-		*fya10[NUNIQUE_ATOM_MAX], *fya11[NUNIQUE_ATOM_MAX],
-		*fya12[NUNIQUE_ATOM_MAX], *fya13[NUNIQUE_ATOM_MAX],
-		*fya14[NUNIQUE_ATOM_MAX], *fya15[NUNIQUE_ATOM_MAX],
-		*fya16[NUNIQUE_ATOM_MAX], *fya17[NUNIQUE_ATOM_MAX],
-		*fya18[NUNIQUE_ATOM_MAX], *fya19[NUNIQUE_ATOM_MAX],
-		*fya20[NUNIQUE_ATOM_MAX], *fya21[NUNIQUE_ATOM_MAX],
-		*fya22[NUNIQUE_ATOM_MAX], *fya23[NUNIQUE_ATOM_MAX],
-		*fya24[NUNIQUE_ATOM_MAX], *fya25[NUNIQUE_ATOM_MAX],
-		*fya26[NUNIQUE_ATOM_MAX], *fya27[NUNIQUE_ATOM_MAX],
-		*fya28[NUNIQUE_ATOM_MAX], *fya29[NUNIQUE_ATOM_MAX],
-		*fya30[NUNIQUE_ATOM_MAX], *fya31[NUNIQUE_ATOM_MAX];
-double *fza0[NUNIQUE_ATOM_MAX], *fza1[NUNIQUE_ATOM_MAX],
-		*fza2[NUNIQUE_ATOM_MAX], *fza3[NUNIQUE_ATOM_MAX],
-		*fza4[NUNIQUE_ATOM_MAX], *fza5[NUNIQUE_ATOM_MAX],
-		*fza6[NUNIQUE_ATOM_MAX], *fza7[NUNIQUE_ATOM_MAX],
-		*fza8[NUNIQUE_ATOM_MAX], *fza9[NUNIQUE_ATOM_MAX],
-		*fza10[NUNIQUE_ATOM_MAX], *fza11[NUNIQUE_ATOM_MAX],
-		*fza12[NUNIQUE_ATOM_MAX], *fza13[NUNIQUE_ATOM_MAX],
-		*fza14[NUNIQUE_ATOM_MAX], *fza15[NUNIQUE_ATOM_MAX],
-		*fza16[NUNIQUE_ATOM_MAX], *fza17[NUNIQUE_ATOM_MAX],
-		*fza18[NUNIQUE_ATOM_MAX], *fza19[NUNIQUE_ATOM_MAX],
-		*fza20[NUNIQUE_ATOM_MAX], *fza21[NUNIQUE_ATOM_MAX],
-		*fza22[NUNIQUE_ATOM_MAX], *fza23[NUNIQUE_ATOM_MAX],
-		*fza24[NUNIQUE_ATOM_MAX], *fza25[NUNIQUE_ATOM_MAX],
-		*fza26[NUNIQUE_ATOM_MAX], *fza27[NUNIQUE_ATOM_MAX],
-		*fza28[NUNIQUE_ATOM_MAX], *fza29[NUNIQUE_ATOM_MAX],
-		*fza30[NUNIQUE_ATOM_MAX], *fza31[NUNIQUE_ATOM_MAX];
-double *interp_vector;
-double uclx, ucly, uclz;
-double grid_itvl_x, grid_itvl_y, grid_itvl_z;
+double *ene0[NUNIQUE_ATOM_MAX];
+double *ene1[NUNIQUE_ATOM_MAX];
+double *ene2[NUNIQUE_ATOM_MAX];
+double *ene3[NUNIQUE_ATOM_MAX];
+double *ene4[NUNIQUE_ATOM_MAX];
+double *ene5[NUNIQUE_ATOM_MAX];
+double *ene6[NUNIQUE_ATOM_MAX];
+double *ene7[NUNIQUE_ATOM_MAX];
+double *ene8[NUNIQUE_ATOM_MAX];
+double *ene9[NUNIQUE_ATOM_MAX];
+double *ene10[NUNIQUE_ATOM_MAX];
+double *ene11[NUNIQUE_ATOM_MAX];
+double *ene12[NUNIQUE_ATOM_MAX];
+double *ene13[NUNIQUE_ATOM_MAX];
+double *ene14[NUNIQUE_ATOM_MAX];
+double *ene15[NUNIQUE_ATOM_MAX];
+double *ene16[NUNIQUE_ATOM_MAX];
+double *ene17[NUNIQUE_ATOM_MAX];
+double *ene18[NUNIQUE_ATOM_MAX];
+double *ene19[NUNIQUE_ATOM_MAX];
+double *ene20[NUNIQUE_ATOM_MAX];
+double *ene21[NUNIQUE_ATOM_MAX];
+double *ene22[NUNIQUE_ATOM_MAX];
+double *ene23[NUNIQUE_ATOM_MAX];
+double *ene24[NUNIQUE_ATOM_MAX];
+double *ene25[NUNIQUE_ATOM_MAX];
+double *ene26[NUNIQUE_ATOM_MAX];
+double *ene27[NUNIQUE_ATOM_MAX];
+double *ene28[NUNIQUE_ATOM_MAX];
+double *ene29[NUNIQUE_ATOM_MAX]; 
+double *ene30[NUNIQUE_ATOM_MAX];
+double *ene31[NUNIQUE_ATOM_MAX];
+double *fxa0[NUNIQUE_ATOM_MAX];
+double *fxa1[NUNIQUE_ATOM_MAX];
+double *fxa2[NUNIQUE_ATOM_MAX];
+double *fxa3[NUNIQUE_ATOM_MAX];
+double *fxa4[NUNIQUE_ATOM_MAX];
+double *fxa5[NUNIQUE_ATOM_MAX];
+double *fxa6[NUNIQUE_ATOM_MAX];
+double *fxa7[NUNIQUE_ATOM_MAX];
+double *fxa8[NUNIQUE_ATOM_MAX];
+double *fxa9[NUNIQUE_ATOM_MAX];
+double *fxa10[NUNIQUE_ATOM_MAX];
+double *fxa11[NUNIQUE_ATOM_MAX];
+double *fxa12[NUNIQUE_ATOM_MAX];
+double *fxa13[NUNIQUE_ATOM_MAX];
+double *fxa14[NUNIQUE_ATOM_MAX];
+double *fxa15[NUNIQUE_ATOM_MAX];
+double *fxa16[NUNIQUE_ATOM_MAX];
+double *fxa17[NUNIQUE_ATOM_MAX];
+double *fxa18[NUNIQUE_ATOM_MAX];
+double *fxa19[NUNIQUE_ATOM_MAX];
+double *fxa20[NUNIQUE_ATOM_MAX];
+double *fxa21[NUNIQUE_ATOM_MAX];
+double *fxa22[NUNIQUE_ATOM_MAX];
+double *fxa23[NUNIQUE_ATOM_MAX];
+double *fxa24[NUNIQUE_ATOM_MAX];
+double *fxa25[NUNIQUE_ATOM_MAX];
+double *fxa26[NUNIQUE_ATOM_MAX];
+double *fxa27[NUNIQUE_ATOM_MAX];
+double *fxa28[NUNIQUE_ATOM_MAX];
+double *fxa29[NUNIQUE_ATOM_MAX];
+double *fxa30[NUNIQUE_ATOM_MAX];
+double *fxa31[NUNIQUE_ATOM_MAX];
+double *fya0[NUNIQUE_ATOM_MAX];
+double *fya1[NUNIQUE_ATOM_MAX];
+double *fya2[NUNIQUE_ATOM_MAX];
+double *fya3[NUNIQUE_ATOM_MAX];
+double *fya4[NUNIQUE_ATOM_MAX];
+double *fya5[NUNIQUE_ATOM_MAX];
+double *fya6[NUNIQUE_ATOM_MAX];
+double *fya7[NUNIQUE_ATOM_MAX];
+double *fya8[NUNIQUE_ATOM_MAX];
+double *fya9[NUNIQUE_ATOM_MAX];
+double *fya10[NUNIQUE_ATOM_MAX];
+double *fya11[NUNIQUE_ATOM_MAX];
+double *fya12[NUNIQUE_ATOM_MAX];
+double *fya13[NUNIQUE_ATOM_MAX];
+double *fya14[NUNIQUE_ATOM_MAX];
+double *fya15[NUNIQUE_ATOM_MAX];
+double *fya16[NUNIQUE_ATOM_MAX];
+double *fya17[NUNIQUE_ATOM_MAX];
+double *fya18[NUNIQUE_ATOM_MAX];
+double *fya19[NUNIQUE_ATOM_MAX];
+double *fya20[NUNIQUE_ATOM_MAX];
+double *fya21[NUNIQUE_ATOM_MAX];
+double *fya22[NUNIQUE_ATOM_MAX];
+double *fya23[NUNIQUE_ATOM_MAX];
+double *fya24[NUNIQUE_ATOM_MAX];
+double *fya25[NUNIQUE_ATOM_MAX];
+double *fya26[NUNIQUE_ATOM_MAX];
+double *fya27[NUNIQUE_ATOM_MAX];
+double *fya28[NUNIQUE_ATOM_MAX];
+double *fya29[NUNIQUE_ATOM_MAX];
+double *fya30[NUNIQUE_ATOM_MAX];
+double *fya31[NUNIQUE_ATOM_MAX];
+double *fza0[NUNIQUE_ATOM_MAX];
+double *fza1[NUNIQUE_ATOM_MAX];
+double *fza2[NUNIQUE_ATOM_MAX];
+double *fza3[NUNIQUE_ATOM_MAX];
+double *fza4[NUNIQUE_ATOM_MAX];
+double *fza5[NUNIQUE_ATOM_MAX];
+double *fza6[NUNIQUE_ATOM_MAX];
+double *fza7[NUNIQUE_ATOM_MAX];
+double *fza8[NUNIQUE_ATOM_MAX];
+double *fza9[NUNIQUE_ATOM_MAX];
+double *fza10[NUNIQUE_ATOM_MAX];
+double *fza11[NUNIQUE_ATOM_MAX];
+double *fza12[NUNIQUE_ATOM_MAX];
+double *fza13[NUNIQUE_ATOM_MAX];
+double *fza14[NUNIQUE_ATOM_MAX];
+double *fza15[NUNIQUE_ATOM_MAX];
+double *fza16[NUNIQUE_ATOM_MAX];
+double *fza17[NUNIQUE_ATOM_MAX];
+double *fza18[NUNIQUE_ATOM_MAX];
+double *fza19[NUNIQUE_ATOM_MAX];
+double *fza20[NUNIQUE_ATOM_MAX];
+double *fza21[NUNIQUE_ATOM_MAX];
+double *fza22[NUNIQUE_ATOM_MAX];
+double *fza23[NUNIQUE_ATOM_MAX];
+double *fza24[NUNIQUE_ATOM_MAX];
+double *fza25[NUNIQUE_ATOM_MAX];
+double *fza26[NUNIQUE_ATOM_MAX];
+double *fza27[NUNIQUE_ATOM_MAX];
+double *fza28[NUNIQUE_ATOM_MAX];
+double *fza29[NUNIQUE_ATOM_MAX];
+double *fza30[NUNIQUE_ATOM_MAX];
+double *fza31[NUNIQUE_ATOM_MAX];
 
-int ngrid_x, ngrid_y, ngrid_z, ngrid_total;
-int ncube_x, ncube_y, ncube_z, ncube_total;
-double xcenter, ycenter, zcenter;
-double xmin, xmax, ymin, ymax, zmin, zmax;
+double *interp_vector;
+double uclx;
+double ucly;
+double uclz;
+double grid_itvl_x;
+double grid_itvl_y;
+double grid_itvl_z;
+
+int ngrid_x;
+int ngrid_y;
+int ngrid_z;
+int ngrid_total;
+int ncube_x;
+int ncube_y;
+int ncube_z;
+int ncube_total;
+double xcenter;
+double ycenter;
+double zcenter;
+double xmin;
+double xmax;
+double ymin;
+double ymax;
+double zmin;
+double zmax;
 
 /// long range correction related variables
 /// every unique molecule should have two types of long range corrections
