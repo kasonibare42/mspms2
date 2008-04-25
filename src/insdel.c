@@ -94,6 +94,7 @@ int cal_all_atom_efg2xyz_ortn(int iSpecieSelected, int iMoleSelected,
 	int idFirstRealAtom;
 	int idRealAtom;
 
+	/*
 	idFirstRealAtom = mole_first_atom_idx[iMoleSelected];
 	for (ii=sample_mole_first_atom_idx[iSpecieSelected]; ii
 			<sample_mole_last_atom_idx[iSpecieSelected]; ii++)
@@ -112,6 +113,7 @@ int cal_all_atom_efg2xyz_ortn(int iSpecieSelected, int iMoleSelected,
 		zz[idRealAtom] += fOrientF_z*sample_ff[ii];
 		zz[idRealAtom] += fOrientG_z*sample_gg[ii];
 	}
+	*/
 
 	return 0;
 }
@@ -125,28 +127,33 @@ int cal_all_atom_efg2xyz(int iSpecieSelected, int iMoleSelected, double xxnew,
 	int idFirstRealAtom;
 	int idRealAtom;
 
+	/*
 	idFirstRealAtom = mole_first_atom_idx[iMoleSelected];
 	for (ii=sample_mole_first_atom_idx[iSpecieSelected]; ii
 			<sample_mole_last_atom_idx[iSpecieSelected]; ii++)
 	{
 		idRealAtom = idFirstRealAtom + ii;
-
 		xx[idRealAtom] = sample_ee[ii] + xxnew;
 		yy[idRealAtom] = sample_ff[ii] + yynew;
 		zz[idRealAtom] = sample_gg[ii] + zznew;
 	}
+	*/
 
 	return 0;
 }
 
 int GetNextVacancy(int iSpecie)
 {
+	/*
 	return (specie_first_vacancy_idx[iSpecie]==-1) ? nmole
 			: specie_first_vacancy_idx[iSpecie];
+			*/
+	return 0;
 }
 
 int SetNextVacancyAfterDeletion(int iSpecie, int index)
 {
+	/*
 	// For deletion case
 	if (specie_first_vacancy_idx[iSpecie] != -1 && index
 			> specie_first_vacancy_idx[iSpecie])
@@ -158,6 +165,7 @@ int SetNextVacancyAfterDeletion(int iSpecie, int index)
 		specie_first_vacancy_idx[iSpecie] = index;
 	}
 
+	*/
 	return 0;
 }
 
@@ -165,6 +173,7 @@ int SetNextVacancyAfterCreation(int iSpecie, int index)
 {
 	int ii;
 	
+	/*
 	for (ii=index;ii<NMOLE_MAX;ii++)
 	{
 		if (mole_status[ii] == MOLE_STATUS_UNINIT)
@@ -186,6 +195,7 @@ int SetNextVacancyAfterCreation(int iSpecie, int index)
 	fprintf(stderr, "Error: There is no more vacant position for specie %d to insert more molecules. STOP!\n", iSpecie);
 	fprintf(fpouts, "Error: There is no more vacant position for specie %d to insert more molecules. STOP!\n", iSpecie);
 	exit(1);
+	*/
 }
 
 /// Build the inserted molecule using Sample template
@@ -206,6 +216,7 @@ int BulidInsertedMole(int iSpecieSelected, int iMoleSelected)
 
 	// copy efg coordinates for atoms
 
+	/*
 	// choose orientation and calculate efg2xyz according to orientation if multi-atom molecule
 	if (sample_natom_per_mole[iSpecieSelected] > 1)
 	{
@@ -219,6 +230,7 @@ int BulidInsertedMole(int iSpecieSelected, int iMoleSelected)
 		cal_all_atom_efg2xyz(iSpecieSelected, iMoleSelected, xxnew, yynew,
 				zznew);
 	}
+	*/
 
 	return 0;
 }
@@ -230,6 +242,7 @@ int InitInsertedMole(int iSpecieSelected, int iMoleSelected)
 	int iAtom, iMole, iBond, iAngle, iDih, iImp, iNbp;
 	int idMoleInSpecie;
 
+	/*
 	// init the real atom, bond, angle, dihedral, improper, non-bonded list
 	iAtom = idAtomUninit;
 	iMole = iMoleSelected;
@@ -366,7 +379,7 @@ int InitInsertedMole(int iSpecieSelected, int iMoleSelected)
 	nimp_hist_max = iImp;
 	nnbp_hist_max = iNbp;
 	
-	
+	*/
 	return 0;
 }
 
@@ -378,6 +391,7 @@ int fnInsDelMole()
 	double del_u;
 	double pcreate, pdelete;
 
+	/*
 	ranmar(rndnum, 2);
 
 	// Find out which specie to insert/delete
@@ -646,6 +660,7 @@ int fnInsDelMole()
 		} // if NOT last molecule
 
 	} // if (rndnum[1] < prob_insert)
+	*/
 
 	return 0;
 }

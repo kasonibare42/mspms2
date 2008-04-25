@@ -83,7 +83,7 @@ int fnVolumeChange()
 	fDeltaU += (uinter - uinter_old);
 
 	// calculate Hamotonial difference
-	dH = fDeltaU*R_RGAS/treq + preq*delv/KB_OVER_1E30/treq;
+	dH = fDeltaU/treq + preq*delv/treq;
 	dH = dH - nmole*log(fRatioNewV2OldV);
 
 	// attempted vc moves

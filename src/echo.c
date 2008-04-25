@@ -78,6 +78,7 @@ int echo()
 			fpouts,
 			"The system contains %d specie(s), or %d molecule(s), or %d atom(s).\n",
 			nspecie, nmole, natom);
+	/*
 	fprintf(fpouts, "There are totally %d bonds, %d angles, %d dihedrals, ",
 			nbond, nangle, ndih);
 	fprintf(fpouts, "%d improper dihedrals, and %d non-bonded pairs.\n", nimp,
@@ -94,6 +95,7 @@ int echo()
 		fprintf(fpouts, "%d improper dihedrals, and %d non-bonded pairs.\n",
 				sample_nimp_per_mole[ii], sample_nnbp_per_mole[ii]);
 	}
+	*/
 	switch (iStart_option)
 	{
 	case NEW:
@@ -132,11 +134,6 @@ int echo()
 			fpouts,
 			"The Cutoff for LJ interaction is %lf, for Coulomb interactions is %lf.\n    The squares are %lf and %lf, respectively.\n",
 			rcutoff, rcutoffelec, rcutoffsq, rcutoffelecsq);
-	if (iInterMolePotType == INTER_MOLE_SG)
-	{
-		fprintf(fpouts, "The Silvera-Goldman potential has been set as the inter-molecular potential.\n");
-		
-	}
 	
 	fprintf(fpouts, "The 1,4 LJ interaction modifier is %lf.\n", f0);
 	if (f0==0.0)
@@ -330,6 +327,7 @@ int echo()
 	}
 
 	int iAtomPosInMole;
+	/*
 	fprintf(fpouts, "System configuration:\n");
 	for (ii=0; ii<nspecie; ii++)
 	{
@@ -409,6 +407,7 @@ int echo()
 			}
 		}
 	}
+	*/
 	
 	// Calculate energies and pressures
 	upot = uinter + uintra;

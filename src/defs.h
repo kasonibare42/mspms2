@@ -19,7 +19,6 @@
 #define NVT		1
 #define NPT		2
 
-#define ENTIRE_SYSTEM	-1
 #define DYNAMIC_ID			-1
 
 #define GHOST_NONE	0
@@ -32,7 +31,6 @@
 
 /// Inter-molecular potentials
 #define INTER_MOLE_LJ	0
-#define INTER_MOLE_SG	1
 
 #define BOND_NONE			0
 #define BOND_HARMONIC		1
@@ -83,8 +81,11 @@
 #define Y_AXIS	1
 #define Z_AXIS	2
 
-#define STEP_SIZE	1.0e-8
+#define SHORT_STRING_LENGTH		5
+#define LONG_STRING_LENGTH		200
 
+#define STEP_SIZE	1.0e-8
+#define TOLERANCE	1.0e-8
 #define AVOGADRO	6.0221415e23    ///< mol^-1
 #define BOLTZMAN_CONSTANT   1.3806505e-23  ///< J/K
 #define PLANCK_CONSTANT		6.6260693e-34		///< J*s or (kg*m^2/s)
@@ -93,25 +94,8 @@
 #define RGAS		8.314472 ///< J/mol/K 
 #define R_RGAS		0.120272219 ///< reciprocal of RGAS
 #define EV_TO_K		11604.5112770 /// ev to K. 1 ev = 1.6021773e-19 joule
-
-
-#define HBAR_AVOGADRO_SQ		4.03324050696405689198634513984e-21			///< (hbar*avogadro)^2
-#define COULOMB_CONSTANT	1389355.1051  ///< unit is J/mol. Na*(1.602177e-19)^2/4/PI/epsilon0/(1.0e-10)
-#define KB_OVER_1E30		1.3806505e7   ///< kb/1e-30  
-#define VIRIAL_TO_PRESSURE	553512.954376   ///< 1.0/(3.0*6.0221415e-7)
 #define pi		3.141592653589793
-#define EULER_CONSTANT	0.577215665
-#define TOLERANCE	1.0e-8
 /// 3*pi^2*theta, assume the same charge density as graphite, theta=0.382 A^-2, used for hypergeo nanotube
 #define C3_PI_SQ_THETA 	11.3105666436484 
-#define PA_A3_TO_J_PER_MOL	6.0221415e-7 ///< Na*1e-30 turn preq*boxv to J/mol
-#define J_PER_MOL_A3_TO_PA	1660538.86313 ///< 1/6.0221415e-7 = 1.0/(6.0221415e23*1.0e-30)
-
-#define EV_TO_J_PER_MOLE	96485.3840868795   ///< 1 electronvolt = 1.6021773e-19 joule
-#define HARTREE_TO_J_PER_MOL	2625499.6295540055		///< 1 hartree = 4.359 744 17(75)×10-18 J
-
-#define SHORT_STRING_LENGTH		5
-#define LONG_STRING_LENGTH		200
-
 
 #endif /*DEFS_H_*/

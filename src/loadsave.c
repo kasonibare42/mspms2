@@ -104,8 +104,7 @@ int loadit()
 	fread(&boxv, sizeof(double), 1, fpload);
 
 	// recalculate the thermostat energy
-	utsbs = 0.5*Qbs*vbs*vbs + 0.5*Qts*vts*vts + (nfree+1)*RGAS*treq*rts + preq
-			*boxv*PA_A3_TO_J_PER_MOL;
+	utsbs = 0.5*Qbs*vbs*vbs + 0.5*Qts*vts*vts + (nfree+1)*RGAS*treq*rts + preq*boxv;
 	if (isLJlrcOn)
 	{
 		// recalculate the long range corrections since the box size may be changed

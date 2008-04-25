@@ -227,7 +227,8 @@ int init_tasos_grid()
  */
 int init_my_interp()
 {
-	int ii;
+	int ii, jj;
+	PSAMPLE_MOLECULE pSampleMole;
 	FILE *fpgridfile;
 	char buffer[LONG_STRING_LENGTH];
 	int nunique_atom;
@@ -245,11 +246,15 @@ int init_my_interp()
 	// re-open input file to read extra data section
 	fpins = fopen(INPUT,"r");
 
-	// change the atom type from tasos type to myinterp type
+	// Change the atom type from tasos type to myinterp type.
 	// myinterp type = tasos type - 1
-	for (ii=0; ii<natom; ii++)
+	for (ii=0;ii<nspecie;ii++)
 	{
-		interp_type[ii] -= 1;
+		pSampleMole = sample_mole + ii;
+		for (jj=0;jj<pSampleMole->natom;jj++)
+		{
+			pSampleMole->interp_type[jj] -= 1;
+		}
 	}
 
 	// set up the variable needed for interpolation
