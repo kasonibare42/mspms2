@@ -77,21 +77,6 @@ int main(int argc, char *argv[])
 	// Print out the results from the zero step.
 	printit();
 	
-	/*
-	int ii;
-	for (ii=0;ii<natom;ii++)
-	{
-		printf("%d: fxl=%lf, fyl=%lf, fzl=%lf | fxs=%lf, fys=%lf, fzs=%lf\n",
-				ii, fxl[ii]*force_base, fyl[ii]*force_base, fzl[ii]*force_base, 
-				fxs[ii]*force_base, fys[ii]*force_base, fzs[ii]*force_base);
-	}
-	for (ii=0;ii<natom;ii++)
-	{
-		printf("%d, vx=%lf, vy=%lf, vz=%lf\n", 
-				ii, vx[ii]*velocity_base, vy[ii]*velocity_base, vz[ii]*velocity_base);
-	}
-	*/
-	
 	if (nstep_trj!=0)
 	{
 		trajectory();

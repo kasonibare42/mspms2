@@ -23,12 +23,12 @@ int echo()
 	char szSimulation[100], szEnsemble[100];
 	char szOutput[100];
 
-	fprintf(fpouts, "==================================================\n");
+	fprintf(fpouts, "=================================================================================\n");
 	fprintf(fpouts, "Energies are for all molecules.\n");
-	fprintf(fpouts, "Only total energy contains long range corrections.\n");
+	fprintf(fpouts, "Only total energy (utot) contains long range corrections.\n");
 	fprintf(fpouts, "Pressure is with long range corrections.\n");
-	fprintf(fpouts, "==================================================\n");
-	fprintf(fpouts, "Reduced Units:\n");
+	fprintf(fpouts, "=================================================================================\n");
+	fprintf(fpouts, "This program uses reduced units:\n");
 	fprintf(fpouts, "  Energy(%lf K)\n", epsilon_base);  
 	fprintf(fpouts, "  Temperature(%lf K)\n", epsilon_base);
 	fprintf(fpouts, "  Separation(%lf Angstrom)\n", sigma_base);
@@ -38,7 +38,7 @@ int echo()
 	fprintf(fpouts, "  Virial(%lf K)\n", epsilon_base);
 	fprintf(fpouts, "  Force (%lf K/Angstrom)\n", force_base);
 	fprintf(fpouts, "  Velocity (%lf Angstrom/fs)\n", velocity_base);
-	fprintf(fpouts, "==================================================\n");
+	fprintf(fpouts, "=================================================================================\n");
 	fprintf(fpouts, "System Name: %s\n", sysname);
 
 	switch (what_simulation)
@@ -50,7 +50,6 @@ int echo()
 		strcpy(szSimulation, "HMC");
 		break;
 	default:
-		strcpy(szSimulation, "Unknown");
 		break;
 	}
 	switch (what_ensemble)
@@ -65,97 +64,63 @@ int echo()
 		strcpy(szEnsemble, "NPT");
 		break;
 	default:
-		strcpy(szEnsemble, "Unknown");
 		break;
 	}
 	fprintf(fpouts, "Running %s simulation (%d) with %s ensemble (%d).\n",
 			szSimulation, what_simulation, szEnsemble, what_ensemble);
-	fprintf(
-			fpouts,
-			"The simulation box is %lf long, %lf wide, %lf high, which is %lf in volume.\n",
-			boxlx, boxly, boxlz, boxv);
-	fprintf(
-			fpouts,
-			"The system contains %d specie(s), or %d molecule(s), or %d atom(s).\n",
-			nspecie, nmole, natom);
-	/*
-	fprintf(fpouts, "There are totally %d bonds, %d angles, %d dihedrals, ",
-			nbond, nangle, ndih);
-	fprintf(fpouts, "%d improper dihedrals, and %d non-bonded pairs.\n", nimp,
-			nnbp);
-	fprintf(fpouts, "Total number of Constraints is %d.\n", nconstraint);
-	for (ii=0; ii<nspecie; ii++)
-	{
-		fprintf(
-				fpouts,
-				"Specie %d has %d molecules.\n    Each molecule has %d atoms, ",
-				ii, nmole_per_specie[ii], sample_natom_per_mole[ii]);
-		fprintf(fpouts, "%d bonds, %d angles, %d dihedrals, ",
-				sample_nbond_per_mole[ii], sample_nangle_per_mole[ii], sample_ndih_per_mole[ii]);
-		fprintf(fpouts, "%d improper dihedrals, and %d non-bonded pairs.\n",
-				sample_nimp_per_mole[ii], sample_nnbp_per_mole[ii]);
-	}
-	*/
+	fprintf(fpouts, "Length: %lf, Width: %lf, Height: %lf. Volume: %lf.\n", boxlx, boxly, boxlz, boxv);
+	fprintf(fpouts, "nspecie=%d, nmole=%d, natom=%d\n", nspecie, nmole, natom);
+	fprintf(fpouts, "nbond=%d, nangle=%d, ndih=%d, nimp=%d, nnbp=%d\n",
+			nbond, nangle, ndih, nimp, nnbp);
+	fprintf(fpouts, "nconstraints=%d.\n", nconstraint);
 	switch (iStart_option)
 	{
 	case NEW:
-		strcpy(szOutput, "New Run");
+		strcpy(szOutput, "New run");
 		break;
 	case CONTINUE:
-		strcpy(szOutput, "Continue Run");
+		strcpy(szOutput, "Continue previoius runs");
 		break;
 	case CONFIG_ONLY:
-		strcpy(szOutput, "New Run From Old Configuration");
+		strcpy(szOutput, "New run from old configuration");
 		break;
 	default:
 		strcpy(szOutput, "Unknown");
 		break;
 	}
-	fprintf(fpouts,
-			"This is a %s, with %d total steps and %d equilibirum steps.\n",
-			szOutput, nstep, nstep_eq);
-	fprintf(fpouts, "    The averages are taken every %d steps.\n", nstep_ave);
-	fprintf(fpouts, "    The logs are printed every %d steps.\n", nstep_print);
-	fprintf(fpouts, "    The save happens every %d steps.\n", nstep_save);
-	fprintf(fpouts, "    The snapshots are taken every %d steps.\n", nstep_ss);
-	fprintf(fpouts, "    The trajectory is taken every %d steps.\n", nstep_trj);
-	fprintf(fpouts, "Random seeds are set to be %d (ij) and %d (jk).\n", ij, jk);
-	fprintf(fpouts, "Required Temperature is %lf.\n", treq);
-	fprintf(fpouts, "Required Pressure is %lf.\n", preq);
-	fprintf(
-			fpouts,
-			"Time step is %lf fs, with %d inner step(s), which is %lf fs for one inner step.\n",
-			delt, nstep_inner, delts);
-	fprintf(
-			fpouts,
-			"    Other time step related variables are: deltby2=%lf, deltsby2=%lf, dt_outer2=%lf, dt_outer4=%lf, dt_outer8=%lf\n",
-			deltby2, deltsby2, dt_outer2, dt_outer4, dt_outer8);
-	fprintf(
-			fpouts,
-			"The Cutoff for LJ interaction is %lf, for Coulomb interactions is %lf.\n    The squares are %lf and %lf, respectively.\n",
-			rcutoff, rcutoffelec, rcutoffsq, rcutoffelecsq);
+	fprintf(fpouts, "iStart_option=%d (%s)\n", iStart_option, szOutput);
+	fprintf(fpouts, "nstep=%d\n", nstep);
+	fprintf(fpouts, "nstep_eq=%d\n", nstep_eq);
+	fprintf(fpouts, "nstep_ave=%d\n", nstep_ave);
+	fprintf(fpouts, "nstep_print=%d\n", nstep_print);
+	fprintf(fpouts, "nstep_save=%d\n", nstep_save);
+	fprintf(fpouts, "nstep_ss=%d\n", nstep_ss);
+	fprintf(fpouts, "nstep_trj=%d\n", nstep_trj);
+	fprintf(fpouts, "Random seeds: %d (ij), %d (jk)\n", ij, jk);
+	fprintf(fpouts, "Required T(*): %lf.\n", treq);
+	fprintf(fpouts, "Required P(*): %lf.\n", preq);
+	fprintf(fpouts, "delt=%lf (%d inner steps) --> delts=%lf\n", delt, nstep_inner, delts);
+	fprintf(fpouts, "rcutoff(LJ)=%lf; rcutoffelec=%lf.\n", rcutoff, rcutoffelec);
 	
-	fprintf(fpouts, "The 1,4 LJ interaction modifier is %lf.\n", f0);
+	fprintf(fpouts, "1,4 LJ interaction modifier (f0): %lf.\n", f0);
 	if (f0==0.0)
 	{
 		fprintf(fpouts,
-				"    No 1,4 LJ interaction will be calculated, e.g. TraPPE.\n");
+				"--->No 1,4 LJ interaction will be calculated, e.g. TraPPE.\n");
 	}
 	else if (f0==0.5)
 	{
 		fprintf(fpouts,
-				"    The 1,4 LJ interactions are reduced by half, e.g. OPLS potential.\n");
+				"--->The 1,4 LJ interactions are reduced by half, e.g. OPLS potential.\n");
 	}
 	else
 	{
-		fprintf(fpouts, "    The 1,4 LJ interactions are reduced.\n");
+		fprintf(fpouts, "--->The 1,4 LJ interactions are reduced.\n");
 	}
 	if (isLJswitchOn)
 	{
 		fprintf(
-				fpouts,
-				"Switch potential is enabled (%d) with Cuton = %lf (sqare is %lf).\n",
-				isLJswitchOn, rcuton, rcutonsq);
+				fpouts, "Switch potential is enabled (%d) with Cuton=%lf.\n", isLJswitchOn, rcuton);
 	}
 	else
 	{
@@ -183,11 +148,9 @@ int echo()
 			default:
 				break;
 			}
-			fprintf(fpouts, "with %s boundary condition (%d).\n", szOutput,
-					fEwald_BC);
+			fprintf(fpouts, "with %s boundary condition (%d).\n", szOutput, fEwald_BC);
 			fprintf(fpouts, "    kappa=%lf, ", kappa);
-			fprintf(fpouts, "kmaxx=%d, kmaxy=%d, kmaxz=%d, kmaxsq=%d\n", KMAXX,
-					KMAXY, KMAXZ, KSQMAX);
+			fprintf(fpouts, "kmaxx=%d, kmaxy=%d, kmaxz=%d, kmaxsq=%d\n", KMAXX, KMAXY, KMAXZ, KSQMAX);
 		}
 		else if (iChargeType==ELECTROSTATIC_WOLF)
 		{
@@ -198,16 +161,11 @@ int echo()
 		{
 			fprintf(fpouts, "    Simple coulomb interaction is enabled.\n");
 		}
-		else
-		{
-			fprintf(fpouts, "    Unknown electrostatic interaction type.\n");
-		}
 	}
 	else
 	{
 		fprintf(fpouts,
-				"Electrostatic interaction calculations are disabled (%d).\n",
-				iChargeType);
+				"Electrostatic interaction calculations are disabled (%d).\n", iChargeType);
 	}
 	if (what_simulation == MOLECULAR_DYNAMICS)
 	{
@@ -218,10 +176,7 @@ int echo()
 					fpouts,
 					"    The mass of thermostat is %le. The Mass of barostat is %le. (Larger number means weaker coupling)\n",
 					Qts, Qbs);
-			fprintf(
-					fpouts,
-					"    Initialized variables: vts=%lf, vbs=%lf, rts=%lf, utsbs=%lf\n",
-					vts, vbs, rts, utsbs);
+			fprintf(fpouts, "    Initialized variables: vts=%lf, vbs=%lf, rts=%lf, utsbs=%lf\n", vts, vbs, rts, utsbs);
 		}
 		else if (what_ensemble == NVT)
 		{
@@ -326,89 +281,95 @@ int echo()
 		}
 	}
 
-	int iAtomPosInMole;
-	/*
-	fprintf(fpouts, "System configuration:\n");
+	PSAMPLE_MOLECULE pSampleMole;
+	int ii1, ii2, ii3, ii4;
+	fprintf(fpouts, "=================================================================================\n");
+	fprintf(fpouts, "Sample molecule configurations:\n");
 	for (ii=0; ii<nspecie; ii++)
 	{
-		fprintf(fpouts, "Speice %d\n", ii);
-		for (jj=specie_first_mole_idx[ii]; jj<specie_last_mole_idx[ii]; jj++)
+		fprintf(fpouts, "---------------------------------------------------------------------------------\n");
+		pSampleMole = sample_mole + ii;
+		fprintf(fpouts, "Speice %d (%s): %d moles\n", ii, pSampleMole->mole_name, nmole_per_specie[ii]);
+		fprintf(fpouts, "--->Sample mole has %d atoms.\n",pSampleMole->natom);
+		for (jj=0;jj<pSampleMole->natom;jj++)
 		{
-			fprintf(fpouts, " Mole %d, index %d in specie %d.\n", jj, jj
-					-specie_first_mole_idx[ii], ii);
-			fprintf(
-					fpouts,
-					"      ATOM PARAM: name, idx_global, idx_local, coordinates, soft-forces, rigid-forces\n");
-			for (kk=mole_first_atom_idx[jj]; kk<mole_last_atom_idx[jj]; kk++)
-			{
-				iAtomPosInMole = kk - mole_first_atom_idx[jj];
-				fprintf(fpouts,
-						"  %s %d %d %lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf\n",
-						atomname[kk], kk, iAtomPosInMole, xx[kk], yy[kk], zz[kk],
-						fxl[kk], fyl[kk], fzl[kk], fxs[kk], fys[kk], fzs[kk]);
-				fprintf(fpouts, "      Excluding pairs: ");
-				for (ll=pointexcl_atom[ii][iAtomPosInMole]; ll
-						<pointexcl_atom[ii][iAtomPosInMole+1]; ll++)
-				{
-					fprintf(fpouts, "%d ", excllist[ll]+kk);
-				}
-				fprintf(fpouts, "\n");
-			}
-			fprintf(
-					fpouts,
-					"      BOND PARAM: idx_global, idx_local, bond_composition, type, Kb, Req, alpha\n");
-			for (kk=mole_first_bond_idx[jj]; kk<mole_last_bond_idx[jj]; kk++)
-			{
-				fprintf(fpouts, "  Bond %d %d, %d-%d, %d, %lf, %lf, %lf\n", kk,
-						kk -mole_first_bond_idx[jj], bond_idx[kk][0],
-						bond_idx[kk][1], bond_type[kk], Kb[kk], Req[kk],
-						alpha[kk]);
-			}
-			fprintf(
-					fpouts,
-					"      ANGLE PARAM: idx_global, idx_local, angle_composition, type, Ktheta, ThetaEq, angle_para_3, angle_para_4, angle_para_5\n");
-			for (kk=mole_first_angle_idx[jj]; kk<mole_last_angle_idx[jj]; kk++)
-			{
-				fprintf(
-						fpouts,
-						"  Angle %d %d, %d-%d-%d, %d, %lf, %lf, %lf, %lf, %lf\n",
-						kk, kk-mole_first_angle_idx[jj], angle_idx[kk][0],
-						angle_idx[kk][1], angle_idx[kk][2], angle_type[kk],
-						Ktheta[kk], Thetaeq[kk], agl_para_3[kk],
-						agl_para_4[kk], agl_para_5[kk]);
-			}
-			fprintf(
-					fpouts,
-					"      DIHEDRAL PARAM: idx_global, idx_local, dihedral_composition, type, c1, c2, c3, c4\n");
-			for (kk=mole_first_dih_idx[jj]; kk<mole_last_dih_idx[jj]; kk++)
-			{
-				fprintf(fpouts,
-						"  Dih %d %d, %d-%d-%d-%d, %d, %lf, %lf, %lf, %lf\n",
-						kk, kk-mole_first_dih_idx[jj], dih_idx[kk][0],
-						dih_idx[kk][1], dih_idx[kk][2], dih_idx[kk][3],
-						dih_type[kk], c1[kk], c2[kk], c3[kk], c4[kk]);
-			}
-			fprintf(
-					fpouts,
-					"      IMPROPER PARAM: idx_global, idx_local, improper_composition, type, Komega, Omega0\n");
-			for (kk=mole_first_imp_idx[jj]; kk<mole_last_imp_idx[jj]; kk++)
-			{
-				fprintf(fpouts, "  Imp %d %d, %d-%d-%d-%d, %d, %lf, %lf\n", kk,
-						kk-mole_first_imp_idx[jj], imp_idx[kk][0],
-						imp_idx[kk][1], imp_idx[kk][2], imp_idx[kk][3],
-						imp_type[kk], komega[kk], omega0[kk]);
-			}
-			fprintf(
-					fpouts,
-					"      NON-BONDED PARAM: idx_global, idx_local, non-bonded_composition\n");
-			for (kk=mole_first_nbp_idx[jj]; kk<mole_last_nbp_idx[jj]; kk++)
-			{
-				fprintf(fpouts,"  Nbp %d %d", kk, kk-mole_first_nbp_idx[jj], nbp_idx[kk][0], nbp_idx[kk][1]);
-			}
+			fprintf(fpouts, "%s  %lf, %lf, %lf; %lf, %lf, %lf; %d, %d\n", 
+					pSampleMole->atom_name[jj], pSampleMole->xx[jj], pSampleMole->yy[jj], pSampleMole->zz[jj],
+					pSampleMole->sigma[jj], pSampleMole->epsilon[jj], pSampleMole->charge[jj],
+					pSampleMole->ghost_type[jj], pSampleMole->interp_type[jj]);
 		}
+		fprintf(fpouts, "--->Sample mole has %d bonds.\n", pSampleMole->nbond);
+		for (jj=0;jj<pSampleMole->nbond;jj++)
+		{ 
+			ii1 = pSampleMole->bnd_idx[jj][0];
+			ii2 = pSampleMole->bnd_idx[jj][1];
+			fprintf(fpouts, "%d) %d-%d (%s-%s); %d; %lf, %lf, %lf\n",
+					jj, ii1, ii2, pSampleMole->atom_name[ii1], pSampleMole->atom_name[ii2],
+					pSampleMole->bnd_type[jj], pSampleMole->bnd_para_0[jj],
+					pSampleMole->bnd_para_1[jj], pSampleMole->bnd_para_2[jj]);
+		}
+		fprintf(fpouts, "--->Sample mole has %d angles.\n", pSampleMole->nangle);
+		for (jj=0;jj<pSampleMole->nangle;jj++)
+		{
+			ii1 = pSampleMole->agl_idx[jj][0];
+			ii2 = pSampleMole->agl_idx[jj][1];
+			ii3 = pSampleMole->agl_idx[jj][2];
+			fprintf(fpouts, "%d) %d-%d-%d (%s-%s-%s); %d; %lf, %lf, %lf, %lf, %lf\n",
+				jj, ii1, ii2, ii3, pSampleMole->atom_name[ii1], pSampleMole->atom_name[ii2],
+				pSampleMole->atom_name[ii3], pSampleMole->agl_type[jj], pSampleMole->agl_para_1[jj], pSampleMole->agl_para_2[jj],
+			       pSampleMole->agl_para_3[jj], pSampleMole->agl_para_4[jj], pSampleMole->agl_para_5[jj]);
+		}
+		fprintf(fpouts, "--->Sample mole has %d dihedrals.\n", pSampleMole->ndih);
+		for (jj=0;jj<pSampleMole->ndih;jj++)
+		{
+		    ii1 = pSampleMole->dih_idx[jj][0];
+		    ii2 = pSampleMole->dih_idx[jj][1];
+		    ii3 = pSampleMole->dih_idx[jj][2];
+		    ii4 = pSampleMole->dih_idx[jj][3];
+		    fprintf(fpouts, "%d) %d-%d-%d-%d (%s-%s-%s-%s); %d; %lf, %lf, %lf, %lf\n",
+			    jj, ii1, ii2, ii3, ii4, pSampleMole->atom_name[ii1], pSampleMole->atom_name[ii2],
+			    pSampleMole->atom_name[ii3], pSampleMole->atom_name[ii4], pSampleMole->dih_type[jj], pSampleMole->dih_para_1[jj],
+			    pSampleMole->dih_para_2[jj], pSampleMole->dih_para_3[jj], pSampleMole->dih_para_4[jj]);
+		}
+		fprintf(fpouts, "--->Sample mole has %d impropers.\n", pSampleMole->nimp);
+		for (jj=0;jj<pSampleMole->nimp;jj++)
+		{
+		    ii1 = pSampleMole->imp_idx[jj][0];
+		    ii2 = pSampleMole->imp_idx[jj][1];
+		    ii3 = pSampleMole->imp_idx[jj][2];
+		    ii4 = pSampleMole->imp_idx[jj][3];
+		    fprintf(fpouts, "%d) %d-%d-%d-%d (%s-%s-%s-%s); %d; %lf, %lf\n",
+			    jj, ii1, ii2, ii3, ii4, pSampleMole->atom_name[ii1], pSampleMole->atom_name[ii2],
+			    pSampleMole->atom_name[ii3], pSampleMole->atom_name[ii4], pSampleMole->imp_type[jj], pSampleMole->imp_para_0[jj],
+			    pSampleMole->imp_para_1[jj]);
+		}
+		fprintf(fpouts, "--->Sample mole has %d non-bonded pairs.\n", pSampleMole->nnbp);
+		for (jj=0;jj<pSampleMole->nnbp;jj++)
+		{
+		    ii1 = pSampleMole->nbp_idx[jj][0];
+		    ii2 = pSampleMole->nbp_idx[jj][1];
+		    fprintf(fpouts, "%d) %d-%d (%s-%s)\n",
+			    jj, ii1, ii2, pSampleMole->atom_name[ii1], pSampleMole->atom_name[ii2]);
+		} 
 	}
-	*/
-	
+	fprintf(fpouts, "=================================================================================\n");
+	fprintf(fpouts, "Initial soft forces and hard forces (unit is K/Angstrom):\n");
+	fprintf(fpouts, "---------------------------------------------------------------------------------\n");
+	for (ii=0;ii<natom;ii++)
+	{
+		fprintf(fpouts, "%d: (soft) %10.5lf, %10.5lf, %10.5lf, (hard) %12.5lf, %12.5lf, %12.5lf\n",
+				ii, fxl[ii]*force_base, fyl[ii]*force_base, fzl[ii]*force_base, 
+				fxs[ii]*force_base, fys[ii]*force_base, fzs[ii]*force_base);
+	}
+	fprintf(fpouts, "---------------------------------------------------------------------------------\n");	
+	fprintf(fpouts, "Initial velocities (unit is Angstrom/fs):\n");
+	fprintf(fpouts, "---------------------------------------------------------------------------------\n");
+	for (ii=0;ii<natom;ii++)
+	{
+		fprintf(fpouts, "%d: vx=%10.7lf, vy=%10.7lf, vz=%10.7lf\n", 
+				ii, vx[ii]*velocity_base, vy[ii]*velocity_base, vz[ii]*velocity_base);
+	}
+	fprintf(fpouts, "=================================================================================\n");
 	// Calculate energies and pressures
 	upot = uinter + uintra;
 	utot = upot + ukin;
@@ -437,7 +398,8 @@ int echo()
 		utot += uljlrc;
 		pinst += pljlrc;
 	}
-	fprintf(fpouts, "The initial energies etc.:\n");
+	fprintf(fpouts, "The initial energies and pressures:\n");
+	fprintf(fpouts, "---------------------------------------------------------------------------------\n");	
 	fprintf(fpouts, "utot=%lf\n", utot); // utot
 	fprintf(fpouts, "upot=%lf\n", upot); // upot
 	fprintf(fpouts, "ukin=%lf\n", ukin);
@@ -455,7 +417,6 @@ int echo()
 	fprintf(fpouts, "uexcl=%lf\n", uexcl);
 	fprintf(fpouts, "uvacuum=%lf\n", uvacuum);
 	fprintf(fpouts, "uGz0=%lf\n", uGz0);
-
 	fprintf(fpouts, "usflj=%lf\n", usflj);
 	fprintf(fpouts, "uwolf=%lf\n", uwolf);
 	fprintf(fpouts, "uwolf_real=%lf\n", uwolf_real);
@@ -469,11 +430,10 @@ int echo()
 	fprintf(fpouts, "virial_inter=%lf\n", virial_inter);
 	fprintf(fpouts, "virial_intra=%lf\n", virial_intra);
 	fprintf(fpouts, "pideal=%lf\n", pideal);
-	// pljlrc already calculated in initialization part
 	fprintf(fpouts, "pressure=%lf\n", pinst);
 	fprintf(fpouts, "uljlrc=%lf\npljlrc=%lf\n", uljlrc, pljlrc);
 	fflush(fpouts);
 	fflush(stderr);
-
+	
 	return 0;
 }

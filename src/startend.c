@@ -35,7 +35,9 @@ int opening()
 	fprintf(fpouts, "WWWWWWWWWWWWWWWWWW..WWWWWWWWWWWWWWWWWWWWWWW\n");
 	fprintf(fpouts, "WWWWWWWWWWWWWWWWWW..WWWWWWWWWWWWWWWWWWWWWWW\n");
 	fprintf(fpouts, "WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWYWANG\n");
-
+	
+	fprintf(fpouts, "=================================================================================\n");
+	
 	return 0;
 }
 
