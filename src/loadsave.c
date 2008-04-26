@@ -8,7 +8,6 @@
  * Description:
  * 
  */
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -47,6 +46,7 @@ int saveit()
 	fwrite(&boxv, sizeof(double), 1, fpsave);
 
 	fwrite(&bEquilibrium, sizeof(bool), 1, fpsave);
+	fwrite(&nframe, sizeof(int), 1, fpsave);
 	
 	fwrite(&istep, sizeof(int), 1, fpsave);
 	fwrite(counts, sizeof(int), NCOUNTS_MAX, fpsave);
@@ -115,6 +115,7 @@ int loadit()
 	if (iStart_option==CONTINUE)
 	{
 		fread(&bEquilibrium, sizeof(bool), 1, fpload);
+		fread(&nframe, sizeof(int), 1, fpload);
 		fread(&istep, sizeof(int), 1, fpload);
 		nstep_start = istep + 1;
 		fread(counts, sizeof(int), NCOUNTS_MAX, fpload);

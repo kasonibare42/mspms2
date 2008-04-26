@@ -37,6 +37,7 @@ bool md_move(int nStepMD);
 
 int vver();
 int averages();
+int printit();
 int calres();
 int loadit();
 int saveit();
@@ -48,7 +49,7 @@ int vver_nh_3();
 int npt_respa();
 int hmc();
 int fnValidateInit();
-int fnVolumeChange();
+int volume_change();
 int collect_aves();
 int fnMetalClusterFF();
 int fnInsDelMole();

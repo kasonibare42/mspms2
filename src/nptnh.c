@@ -122,8 +122,8 @@ int npt_nh_operator()
 
 	// calculate the total pressure
 	pideal = natom/boxv*tinst;
-	// pljlrc is calculated already at the beginning of this function
-	// and did not change during above calculations
+	// pljlrc is calculated already after the box size changes
+	// and does not change during above calculations
 	pinst = pideal + (virial_inter+virial_intra)/3.0/boxv + pljlrc;
 
 	// printf("tinst=%lf  vts=%lf  vbs=%lf\n",tinst,vts,vbs);

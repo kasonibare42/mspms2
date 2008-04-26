@@ -357,7 +357,7 @@ int echo()
 	fprintf(fpouts, "---------------------------------------------------------------------------------\n");
 	for (ii=0;ii<natom;ii++)
 	{
-		fprintf(fpouts, "%d: (soft) %10.5lf, %10.5lf, %10.5lf, (hard) %12.5lf, %12.5lf, %12.5lf\n",
+		fprintf(fpouts, "%d: (soft) %10.5lf, %10.5lf, %10.5lf; (hard) %12.5lf, %12.5lf, %12.5lf\n",
 				ii, fxl[ii]*force_base, fyl[ii]*force_base, fzl[ii]*force_base, 
 				fxs[ii]*force_base, fys[ii]*force_base, fzs[ii]*force_base);
 	}

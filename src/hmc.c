@@ -37,7 +37,7 @@ int hmc()
 	}
 	else if (rndnum[0]<=pvolm_upper) // volume change moves
 	{
-		fnVolumeChange();
+		volume_change();
 	}
 	else // insertions or deletions
 	{

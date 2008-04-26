@@ -6,7 +6,7 @@
 #include <ctype.h>
 #include "mspms2.h"
 
-int fnVolumeChange()
+int volume_change()
 {
 	// zero the delta energies
 	fDeltaU = 0.0;
@@ -32,21 +32,24 @@ int fnVolumeChange()
 	fVolumeNew = boxv + 2.0*delv*(rndnum[0]-0.5);
 	fRatioNewV2OldV = fVolumeNew/boxv;
 	fRatioNewL2OldL = pow(fRatioNewV2OldV, 0.333333333);
-	fLengthNew = boxlx*fRatioNewL2OldL;
-	fWidthNew = boxly*fRatioNewL2OldL;
-	fHeightNew = boxlz*fRatioNewL2OldL;
+	
+	// Set the new box sizes
+	boxlx *= fRatioNewL2OldL;
+	boxly *= RatioNewL2OldL;
+	boxlz *= RatioNewL2OldL;
+	boxv = fVolumeNew;
 
 	/** 
 	 * Check whether the the cutoff is still valid. If not, exit.
 	 */
-	fMinHalf = fLengthNew;
-	if (fMinHalf > fWidthNew)
+	fMinHalf = boxlx;
+	if (fMinHalf > boxly)
 	{
-		fMinHalf = fWidthNew;
+		fMinHalf = boxly;
 	}
-	if (fMinHalf > fHeightNew)
+	if (fMinHalf > boxlz)
 	{
-		fMinHalf = fHeightNew;
+		fMinHalf = boxlz;
 	}
 	fMinHalf *= 0.5;
 	if (rcuton>fMinHalf || rcutoff>fMinHalf || rcutoffelec>fMinHalf)
@@ -70,13 +73,7 @@ int fnVolumeChange()
 		fDeltaU += fDeltaUljlrc;
 	}
 
-	// Set the box size to the new data for energy calculation
-	boxv = fVolumeNew;
-	boxlx = fLengthNew;
-	boxly = fWidthNew;
-	boxlz = fHeightNew;
-
-	// calculate the total energy, only inter-molecular energy
+	// Calculate the total energy, only inter-molecular energy
 	frclong();
 
 	// calculate the energy difference
@@ -111,12 +108,12 @@ int fnVolumeChange()
 		// re-calculate box size related variables for ewald summation
 		if (iChargeType == ELECTROSTATIC_EWALD)
 		{
-			Vfactor_ewald = 2.0*pi/(boxlx*boxly*boxlz);
+			Vfactor_ewald = 2.0*pi/boxv;
 			TWOPI_LX = 2.0*pi/boxlx;
 			TWOPI_LY = 2.0*pi/boxly;
 			TWOPI_LZ = 2.0*pi/boxlz;
 			// 1D ewald constant
-			twopi_over_3v = 2.0*pi/3.0/boxlx/boxly/boxlz;
+			twopi_over_3v = 2.0*pi/3.0/boxv;
 		}
 	}
 	else

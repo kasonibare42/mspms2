@@ -16,7 +16,7 @@ Title: This is just an Example!
 0                      isLJswitchOn
 1                      Starting option (1-new;2-continue;3-old config only)
 1000                   Number of total steps
-0                      Number of equilibrium steps
+500                    Number of equilibrium steps
 100                    Number of average steps
 1                      Number of print steps
 100                    Number of save steps

@@ -17,6 +17,28 @@
 #include <ctype.h>
 #include "mspms2.h"
 
+int printit()
+{
+	fprintf(stdout,"%10d %10.4le %10.4le %10.4le %10.4le %10.4le %10.4le\n",
+	istep,utot*epsilon_base*RGAS,upot*epsilon_base*RGAS,ukin*epsilon_base*RGAS,
+	tinst*epsilon_base,pinst*pressure_base*1.0e5,boxv*sigma_base*sigma_base*sigma_base);
+
+	fprintf(
+			fplog,
+			"%10d %10.4le %10.4le %10.4le %10.4le %10.4le %10.4le %10.4le %10.4le %10.4le ",
+			istep, utot, upot, ukin, tinst, uinter, uintra, uvdw, ubond, uangle);
+
+	fprintf(
+			fplog,
+			"%10.4le %10.4le %10.4le %10.4le %10.4le %10.4le %10.4le %10.4le %10.4le ",
+			udih, uimp, uewald, usflj, unhts, unhtss, virial, virial_inter,
+			virial_intra);
+
+	fprintf(fplog, "%10.4le %10.4le %10.4le\n", utsbs, pinst, boxv);
+
+	return 0;
+}
+
 /// Give the absolute atom id, calculate its specie id and relative atom id in the sample
 /// molecule.
 void get_specie_and_relative_atom_id(int abs_atom_id, int *specie_id, int *sample_atom_id)

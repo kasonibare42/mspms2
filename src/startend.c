@@ -48,9 +48,7 @@ int ending()
 	int ii;
 	double fExecutionTime;
 
-
-	fprintf(fpouts,
-			"=========================================================\n");
+	fprintf(fpouts, "=================================================================================\n");
 	if (bEquilibrium)
 	{
 		fprintf(fpouts," EQUILIBRIUM RUN\n");
@@ -59,8 +57,7 @@ int ending()
 	{
 		fprintf(fpouts, " DATA TAKING RUN\n");
 	}
-	fprintf(fpouts,
-			"=========================================================\n");
+	fprintf(fpouts, "---------------------------------------------------------------------------------\n");
 	fprintf(fpouts, "Total energy                %15.6le\n", accum[0][5]);
 	fprintf(fpouts, "   std. dev.                %15.4lf\n", accum[0][6]);
 	fprintf(fpouts, "   fluctuation              %15.4lf\n", accum[0][7]);
@@ -101,7 +98,7 @@ int ending()
 	fprintf(fpouts, "   std. dev.                %15.4lf\n", accum[9][6]);
 	fprintf(fpouts, "   fluctuation              %15.4lf\n", accum[9][7]);
 
-	fprintf(fpouts, "Ewald energy                %15.6le\n", accum[10][5]);
+	fprintf(fpouts, "Electrostatic energy        %15.6le\n", accum[10][5]);
 	fprintf(fpouts, "   std. dev.                %15.4lf\n", accum[10][6]);
 	fprintf(fpouts, "   fluctuation              %15.4lf\n", accum[10][7]);
 
@@ -128,10 +125,6 @@ int ending()
 	fprintf(fpouts, "Temperature                 %15.6le\n", accum[15][5]);
 	fprintf(fpouts, "   std. dev.                %15.4lf\n", accum[15][6]);
 	fprintf(fpouts, "   fluctuation              %15.4lf\n", accum[15][7]);
-
-	fprintf(fpouts, "Wolf energy                 %15.6le\n", accum[17][5]);
-	fprintf(fpouts, "   std. dev.                %15.4lf\n", accum[17][6]);
-	fprintf(fpouts, "   fluctuation              %15.4lf\n", accum[17][7]);
 
 	fprintf(fpouts, "Pressure                    %15.6le\n", accum[18][5]);
 	fprintf(fpouts, "   std. dev.                %15.4lf\n", accum[18][6]);
@@ -164,10 +157,9 @@ int ending()
 	}
 
 	fprintf(fpouts, "Number of frames            %15d\n", nframe);
-	fprintf(fpouts,
-			"=========================================================\n");
+	fprintf(fpouts, "=================================================================================\n");
 
-    // If this is still in equilibrium, do not free memories
+    // If this is still in equilibrium, do not free memories.
 	if (bEquilibrium)
 	{
 		return 0;
