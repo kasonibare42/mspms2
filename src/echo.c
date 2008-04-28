@@ -400,38 +400,37 @@ int echo()
 	}
 	fprintf(fpouts, "The initial energies and pressures:\n");
 	fprintf(fpouts, "---------------------------------------------------------------------------------\n");	
-	fprintf(fpouts, "utot=%lf\n", utot); // utot
-	fprintf(fpouts, "upot=%lf\n", upot); // upot
-	fprintf(fpouts, "ukin=%lf\n", ukin);
-	fprintf(fpouts, "uinter=%lf\n", uinter);
-	fprintf(fpouts, "uintra=%lf\n", uintra);
-	fprintf(fpouts, "uvdw=%lf\n", uvdw);
-	fprintf(fpouts, "ubond=%lf\n", ubond);
-	fprintf(fpouts, "uangle=%lf\n", uangle);
-	fprintf(fpouts, "udih=%lf\n", udih);
-	fprintf(fpouts, "uimp=%lf\n", uimp);
-	fprintf(fpouts, "uewald=%lf\n", uewald);
-	fprintf(fpouts, "ureal=%lf\n", ureal);
-	fprintf(fpouts, "ufourier=%lf\n", ufourier);
-	fprintf(fpouts, "uself=%lf\n", uself);
-	fprintf(fpouts, "uexcl=%lf\n", uexcl);
-	fprintf(fpouts, "uvacuum=%lf\n", uvacuum);
-	fprintf(fpouts, "uGz0=%lf\n", uGz0);
-	fprintf(fpouts, "usflj=%lf\n", usflj);
-	fprintf(fpouts, "uwolf=%lf\n", uwolf);
-	fprintf(fpouts, "uwolf_real=%lf\n", uwolf_real);
-	fprintf(fpouts, "uwolf_con=%lf\n", uwolf_con);
-	fprintf(fpouts, "ucoulomb=%lf\n", ucoulomb);
+	fprintf(fpouts, "utot=%lf\n", utot*epsilon_base); // utot
+	fprintf(fpouts, "upot=%lf\n", upot*epsilon_base); // upot
+	fprintf(fpouts, "ukin=%lf\n", ukin*epsilon_base);
+	fprintf(fpouts, "uinter=%lf\n", uinter*epsilon_base);
+	fprintf(fpouts, "uintra=%lf\n", uintra*epsilon_base);
+	fprintf(fpouts, "uvdw=%lf\n", uvdw*epsilon_base);
+	fprintf(fpouts, "ubond=%lf\n", ubond*epsilon_base);
+	fprintf(fpouts, "uangle=%lf\n", uangle*epsilon_base);
+	fprintf(fpouts, "udih=%lf\n", udih*epsilon_base);
+	fprintf(fpouts, "uimp=%lf\n", uimp*epsilon_base);
+	fprintf(fpouts, "uewald=%lf\n", uewald*epsilon_base);
+	fprintf(fpouts, "ureal=%lf\n", ureal*epsilon_base);
+	fprintf(fpouts, "ufourier=%lf\n", ufourier*epsilon_base);
+	fprintf(fpouts, "uself=%lf\n", uself*epsilon_base);
+	fprintf(fpouts, "uexcl=%lf\n", uexcl*epsilon_base);
+	fprintf(fpouts, "uvacuum=%lf\n", uvacuum*epsilon_base);
+	fprintf(fpouts, "uGz0=%lf\n", uGz0*epsilon_base);
+	fprintf(fpouts, "usflj=%lf\n", usflj*epsilon_base);
+	fprintf(fpouts, "uwolf=%lf\n", uwolf*epsilon_base);
+	fprintf(fpouts, "uwolf_real=%lf\n", uwolf_real*epsilon_base);
+	fprintf(fpouts, "uwolf_con=%lf\n", uwolf_con*epsilon_base);
+	fprintf(fpouts, "ucoulomb=%lf\n", ucoulomb*epsilon_base);
 	fprintf(fpouts, "udftmcff=%lf (%lf ev/atom)\n", udftmcff, udftmcff/EV_TO_K/natom);
-	fprintf(fpouts, "usg=%lf\n", usg);
-	fprintf(fpouts, "ushift=%lf\n", ushift);
-	fprintf(fpouts, "tinst=%lf\n", tinst);
-	fprintf(fpouts, "virial=%lf\n", virial);
-	fprintf(fpouts, "virial_inter=%lf\n", virial_inter);
-	fprintf(fpouts, "virial_intra=%lf\n", virial_intra);
-	fprintf(fpouts, "pideal=%lf\n", pideal);
-	fprintf(fpouts, "pressure=%lf\n", pinst);
-	fprintf(fpouts, "uljlrc=%lf\npljlrc=%lf\n", uljlrc, pljlrc);
+	fprintf(fpouts, "ushift=%lf\n", ushift*epsilon_base);
+	fprintf(fpouts, "tinst=%lf\n", tinst*epsilon_base);
+	fprintf(fpouts, "virial=%lf\n", virial*epsilon_base);
+	fprintf(fpouts, "virial_inter=%lf\n", virial_inter*epsilon_base);
+	fprintf(fpouts, "virial_intra=%lf\n", virial_intra*epsilon_base);
+	fprintf(fpouts, "pideal=%lf\n", pideal*pressure_base);
+	fprintf(fpouts, "pressure=%lf\n", pinst*pressure_base);
+	fprintf(fpouts, "uljlrc=%lf\npljlrc=%lf\n", uljlrc*epsilon_base, pljlrc*pressure_base);
 	fflush(fpouts);
 	fflush(stderr);
 	

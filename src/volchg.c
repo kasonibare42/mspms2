@@ -35,8 +35,8 @@ int volume_change()
 	
 	// Set the new box sizes
 	boxlx *= fRatioNewL2OldL;
-	boxly *= RatioNewL2OldL;
-	boxlz *= RatioNewL2OldL;
+	boxly *= fRatioNewL2OldL;
+	boxlz *= fRatioNewL2OldL;
 	boxv = fVolumeNew;
 
 	/** 
