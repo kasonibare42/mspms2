@@ -56,5 +56,7 @@ int fnInsDelMole();
 int opening();
 int ending();
 int readins();
+int init_siman();
+int siman();
 
 #endif /*FUNCS_H_*/

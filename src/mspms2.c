@@ -79,6 +79,11 @@ int main(int argc, char *argv[])
 	else if (what_simulation == HYBRID_MONTE_CARLO)
 	{
 		pfnSimulation = &hmc;
+	}
+	else if (what_simulation == SIMULATED_ANNEALING)
+	{
+		pfnSimulation = &siman;
+		exit(1);
 	} // End of simulation functtion assignment 
 	
 	if (pfnSimulation == NULL)

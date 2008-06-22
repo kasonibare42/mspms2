@@ -606,7 +606,7 @@ int init_vars()
 	}
 	else if (what_simulation == SIMULATED_ANNEALING)
 	{
-		// init_siman();
+		init_siman();
 	}
 
 	// initialize thermostat/baron stat input data

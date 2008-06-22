@@ -5,7 +5,6 @@
 #include <assert.h>
 #include "mspms2.h"
 
-/*
 int init_siman()
 {
 	int ii;
@@ -56,33 +55,12 @@ int init_siman()
 	fclose(fpins);
 	exit(1);
 }
-*/
 
-/*
 int siman()
 {
 	int ii, done;
 	double T;
 	int n_accepts, n_rejects;
-
-	void (*pfnRezero)();
-	int (*pfnMDtype)();
-	
-	if (what_ensemble == NVT)
-	{ 
-		pfnRezero = &rezero_nvt_ts;
-		pfnMDtype = &vver_nh_3;
-	}
-	else if (what_ensemble == NVE)
-	{
-		pfnRezero = NULL;
-		pfnMDtype = &vver;
-	}
-	else if (what_ensemble == NPT)
-	{
-		pfnRezero = &rezero_npt_ts;
-		pfnMDtype = &npt_respa;
-	}
 
 	// if not new run, load from old file
 	// FIXME: NOT tested for simulated annealing
@@ -184,4 +162,3 @@ int siman()
 	
 	return 0;
 }
-*/
