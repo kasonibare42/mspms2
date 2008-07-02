@@ -32,11 +32,14 @@ int init_siman()
 
 			sscanf(fgets(buffer, LONG_STRING_LENGTH, fpins), "%d %d", &n_tries,
 					&iters_fixed_t);
-			sscanf(fgets(buffer, LONG_STRING_LENGTH, fpins), "%lf %lf %lf", &t_initial,
-					&t_min, &mu_t);
+			sscanf(fgets(buffer, LONG_STRING_LENGTH, fpins), "%lf %lf %lf",
+					&t_initial, &t_min, &mu_t);
 
 			// set the required temperature for velocity initialization
+			t_initial /= epsilon_base;
 			treq = t_initial;
+
+			t_min /= epsilon_base;
 
 			// allocate memory for saving positions
 			_safealloc(xx_old,natom,sizeof(double))
@@ -64,24 +67,24 @@ int siman()
 
 	// if not new run, load from old file
 	// FIXME: NOT tested for simulated annealing
-	if (iStart_option!=NEW)
-	{
-		loadit();
-	}
+	// if (iStart_option!=NEW)
+	// {
+	// 	loadit();
+	// }
 
 	// calculate total energies
-	frclong();
-	frcshort();
+	// frclong();
+	// frcshort();
 
 	// print out initial values
-	echo();
+	// echo();
 	// print initial properties
-	printit();
+	// printit();
 	// make snapshots & movies
-	if (nstep_trj)
-	{ 
-		trajectory();
-	}
+	// if (nstep_trj)
+	// { 
+	// 	trajectory();
+	// }
 
 	n_accepts = 0;
 	n_rejects = 0;
@@ -90,27 +93,33 @@ int siman()
 	done = 0;
 
 	istep = nstep_start;
+	
+	printf("here, T=%lf, mu_t=%lf\n", T, mu_t);
 
+	printf("n_tries=%d\n", n_tries);
 	while (!done)
 	{
-		for (ii = 0; ii < n_tries; ii++)
-		{
-			if (istep != nstep_start)
-			{
-				treq = T;
-				velinit();
-				frclong();
-				frcshort(); // we may not need rafrc here??
-			}
-			if (md_move(iters_fixed_t) == 1) // if accepted
-			{
-				++n_accepts;
-			}
-			else
-			{
-				++n_rejects;
-			}
+		treq = T;
+		printf("there, T=%lf, mu_t=%lf\n", T, mu_t);
+		velinit();
+		printf("here1, T=%lf, mu_t=%lf\n", T, mu_t);
+		frclong();
+		printf("here2, T=%lf, mu_t=%lf\n", T, mu_t);
+		frcshort();
+		printf("here3, T=%lf, mu_t=%lf\n", T, mu_t);
 
+		for (ii=0; ii<n_tries;ii++)
+		{
+			printf("n_tries=%d\n", n_tries);
+			printf("Now T=%lf\n", T);
+			printf("ii=%d\n",ii);
+			printf("T=%lf, treq=%lf\n",T,treq);
+
+			// vver_nh_3();
+
+			// printit();
+
+			printf("ii=%d\n",ii);
 		}
 
 		// print out, snapshot, trajectory, save
@@ -130,7 +139,7 @@ int siman()
 		{
 			saveit();
 		}
-		
+
 		istep++;
 		if (T < t_min)
 		{
@@ -153,12 +162,12 @@ int siman()
 		{
 			averages();
 		}
-		
+
 		// apply the cooling schedule to the temperature 
 		T /= mu_t;
 	}
 
 	fprintf(stderr, "accepted = %d     rejected = %d\n", n_accepts, n_rejects);
-	
+
 	return 0;
 }

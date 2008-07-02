@@ -33,7 +33,7 @@ int cal_sf_atom_explicit(int ii, int iSpecie, int iAtom, double *uij, double *fi
 int get_values_from_grid(double fxx, double fyy, double fzz, int type, double *usf, double *fsf);
 int call_tasos_forces(int itype, double fxx, double fyy, double fzz, double *usflj_tasos, double *tasos_force);
 
-bool md_move(int nStepMD);
+bool md_move(int (*pfn_md_scheme)(), int nStepMD);
 
 int vver();
 int averages();

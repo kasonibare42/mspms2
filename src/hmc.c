@@ -33,7 +33,7 @@ int hmc()
 			frclong();
 			frcshort();
 		}
-		md_move(nstep_md_per_hmc);
+		md_move(&vver, nstep_md_per_hmc);
 	}
 	else if (rndnum[0]<=pvolm_upper) // volume change moves
 	{

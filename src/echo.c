@@ -422,7 +422,7 @@ int echo()
 	fprintf(fpouts, "uwolf_real=%lf\n", uwolf_real*epsilon_base);
 	fprintf(fpouts, "uwolf_con=%lf\n", uwolf_con*epsilon_base);
 	fprintf(fpouts, "ucoulomb=%lf\n", ucoulomb*epsilon_base);
-	fprintf(fpouts, "udftmcff=%lf (%lf ev/atom)\n", udftmcff, udftmcff/EV_TO_K/natom);
+	fprintf(fpouts, "udftmcff=%lf (%lf ev/atom)\n", udftmcff*epsilon_base, udftmcff*epsilon_base/EV_TO_K/natom);
 	fprintf(fpouts, "ushift=%lf\n", ushift*epsilon_base);
 	fprintf(fpouts, "tinst=%lf\n", tinst*epsilon_base);
 	fprintf(fpouts, "virial=%lf\n", virial*epsilon_base);

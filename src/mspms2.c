@@ -83,6 +83,7 @@ int main(int argc, char *argv[])
 	else if (what_simulation == SIMULATED_ANNEALING)
 	{
 		pfnSimulation = &siman;
+		pfnSimulation();
 		exit(1);
 	} // End of simulation functtion assignment 
 	

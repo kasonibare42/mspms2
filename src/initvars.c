@@ -592,11 +592,6 @@ int init_vars()
 	// Check if any bond, angle, dihedral share the same ending pairs.
 	InitCheckUniques();
 	
-	// initialize velocities for needed simulations
-	fprintf(stderr, "initializing velocities...\n");
-	fprintf(fpouts, "initializing velocities...\n");
-	velinit();
-	
 	if (what_simulation == MOLECULAR_DYNAMICS)
 	{
 	}
@@ -609,6 +604,11 @@ int init_vars()
 		init_siman();
 	}
 
+	// initialize velocities for needed simulations
+	fprintf(stderr, "initializing velocities...\n");
+	fprintf(fpouts, "initializing velocities...\n");
+	velinit();
+	
 	// initialize thermostat/baron stat input data
 	if (what_ensemble == NVT)
 	{

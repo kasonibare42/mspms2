@@ -9,7 +9,7 @@
 /**
  * \brief MD moves for HMC etc.
  */
-bool md_move(int nStepMD)
+bool md_move(int (*pfn_md_scheme)(), int nStepMD)
 {
 	int ii;
 	double du;
@@ -41,11 +41,13 @@ bool md_move(int nStepMD)
 	// MD moves
 	for (ii=0; ii<nStepMD; ii++)
 	{
-		vver();
+		pfn_md_scheme();
+		// vver();
 	}
 
 	// calculate the energy difference
-	du = (uinter - uinter_old) + (uintra - uintra_old) + (ukin - ukin_old) + (ushift - ushift_old);  // kinetic energy should be included??
+	du = (uinter - uinter_old) + (uintra - uintra_old) 
+	   + (ukin - ukin_old) + (ushift - ushift_old);  // kinetic energy should be included??
 
 	// Hamotonial difference
 	dH = du/treq;

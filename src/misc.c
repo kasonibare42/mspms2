@@ -20,8 +20,8 @@
 int printit()
 {
 	fprintf(stdout,"%10d %10.4le %10.4le %10.4le %10.4le %10.4le %10.4le\n",
-	istep,utot*epsilon_base*RGAS,upot*epsilon_base*RGAS,ukin*epsilon_base*RGAS,
-	tinst*epsilon_base,pinst*pressure_base*1.0e5,boxv*sigma_base*sigma_base*sigma_base);
+	istep,utot*epsilon_base, upot*epsilon_base, ukin*epsilon_base,
+	tinst*epsilon_base, pinst, boxv);
 
 	fprintf(
 			fplog,

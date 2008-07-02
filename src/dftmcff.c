@@ -76,7 +76,7 @@ int fnMetalClusterFF()
 	// energy calculation
 	ffieldcu_(&natom, &ndata, xx, yy, zz, &energy);
 
-	udftmcff = energy*EV_TO_K/epsilon_base; // conver to reduced unit
+	udftmcff = energy*EV_TO_K/epsilon_base; // convert to reduced unit
 	udftmcff *= natom; // convert to total energy for the system, keep consistence with other energies
 
 	// numerical forces
