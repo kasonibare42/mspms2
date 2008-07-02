@@ -93,7 +93,7 @@ int siman()
 	done = 0;
 
 	istep = nstep_start;
-	
+
 	while (!done)
 	{
 		treq = T;
@@ -101,11 +101,20 @@ int siman()
 		frclong();
 		frcshort();
 
-		for (ii=0; ii<n_tries;ii++)
+		for (ii=0; ii<n_tries; ii++)
 		{
 			vver_nh_3();
+			upot = uinter + uintra;
+			utot = upot + ukin;
+			virial = virial_inter + virial_intra;
+			utot = utot + unhts + unhtss;
 
-			printit();
+			if (ii%iters_fixed_t==0)
+			{
+				fprintf(stdout, "    %10d  %8d %10.4le %10.4le %10.4le %10.4le\n",
+				istep, ii, utot*epsilon_base,
+				upot*epsilon_base, ukin*epsilon_base, tinst*epsilon_base);
+			}
 
 		}
 
@@ -161,8 +170,10 @@ int siman()
 		pss = 0.0;
 		unhtss = 0.0;
 	}
-
-	fprintf(stderr, "accepted = %d     rejected = %d\n", n_accepts, n_rejects);
+	
+	snapshot();
+	calres();
+	ending();
 
 	return 0;
 }

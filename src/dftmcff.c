@@ -92,17 +92,17 @@ int fnMetalClusterFF()
 
 		param.iWhichAxis = X_AXIS;
 		gsl_deriv_central(&FF, xx[ii], STEP_SIZE, &value, &abserr);
-		fxl[ii] -= value;
+		fxl[ii] -= value*sigma_base;
 		// printf("dx = %lf (%lf)  ", value, abserr);
 
 		param.iWhichAxis = Y_AXIS;
 		gsl_deriv_central(&FF, yy[ii], STEP_SIZE, &value, &abserr);
-		fyl[ii] -= value;
+		fyl[ii] -= value*sigma_base;
 		// printf("dy = %lf (%lf)  ", value, abserr);
 
 		param.iWhichAxis = Z_AXIS;
 		gsl_deriv_central(&FF, zz[ii], STEP_SIZE, &value, &abserr);
-		fzl[ii] -= value;
+		fzl[ii] -= value*sigma_base;
 		// printf("dz = %lf (%lf)  \n", value, abserr);
 	}
 	
