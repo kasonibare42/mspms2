@@ -94,32 +94,19 @@ int siman()
 
 	istep = nstep_start;
 	
-	printf("here, T=%lf, mu_t=%lf\n", T, mu_t);
-
-	printf("n_tries=%d\n", n_tries);
 	while (!done)
 	{
 		treq = T;
-		printf("there, T=%lf, mu_t=%lf\n", T, mu_t);
 		velinit();
-		printf("here1, T=%lf, mu_t=%lf\n", T, mu_t);
 		frclong();
-		printf("here2, T=%lf, mu_t=%lf\n", T, mu_t);
 		frcshort();
-		printf("here3, T=%lf, mu_t=%lf\n", T, mu_t);
 
 		for (ii=0; ii<n_tries;ii++)
 		{
-			printf("n_tries=%d\n", n_tries);
-			printf("Now T=%lf\n", T);
-			printf("ii=%d\n",ii);
-			printf("T=%lf, treq=%lf\n",T,treq);
+			vver_nh_3();
 
-			// vver_nh_3();
+			printit();
 
-			// printit();
-
-			printf("ii=%d\n",ii);
 		}
 
 		// print out, snapshot, trajectory, save
@@ -165,6 +152,14 @@ int siman()
 
 		// apply the cooling schedule to the temperature 
 		T /= mu_t;
+		unhts = 0.0;
+		gg = nfree;
+		ss = 0.0;
+		ps = 0.0;
+		ggs = nfree;
+		sss = 0.0;
+		pss = 0.0;
+		unhtss = 0.0;
 	}
 
 	fprintf(stderr, "accepted = %d     rejected = %d\n", n_accepts, n_rejects);

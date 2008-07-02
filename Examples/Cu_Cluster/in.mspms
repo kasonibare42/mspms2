@@ -4,7 +4,7 @@ Title: Copper cluster simulation.
 3.0                    Sigma(A)
 32.0                   Epsilon(K)
 3.3474                 Mass(*1.0e-27 kg/molecule)
-298.0                  Temperature (K)
+1000.0                  Temperature (K)
 0.08                   Pressure (bar)
 100.0                  Box length (A)
 100.0                  Box width (A)
@@ -22,11 +22,11 @@ Title: Copper cluster simulation.
 100                    Number of save steps
 100                    Number of snapshots steps
 0                      Number of trajectory steps
-1.0                    Time step, delt (fs)
+0.1                    Time step, delt (fs)
 1                      Number of inner steps (can NOT be zero, 1 is the minimum)
 0.0                    1,4 LJ modifier (0.0 for no 14 TraPPE, 0.5 for OPLS)
-2                      Simulation type (0-MD;1-HMC)
-1                      Ensemble type (0-nve;1-nvt;2-npt)
+0                      Simulation type (0-MD;1-HMC)
+0                      Ensemble type (0-nve;1-nvt;2-npt)
 3                      Number of constraints
 0                      Inter-molecular potentials other than LJ (0-LJ;1-SG), Currently NOT used.
 0                      Electrostatic interaction type (0-no elec;1-ewald;2-wolf;3-simple coulomb)
@@ -43,7 +43,7 @@ Title: Copper cluster simulation.
 3                      Dimension(1,2,3 D)
 
    MDNVT
-1.0e5 1.0e0            qq qqs (outer and inner) Nose hoover thermostat mass, qq goes to infinity->NVE
+1.0e100 1.0e100            qq qqs (outer and inner) Nose hoover thermostat mass, qq goes to infinity->NVE
 
    MDNPT
 1.0e3 1.0e3            Qts Qbs (mass of thermostat, barostat), larger number = weaker coupling
@@ -91,5 +91,5 @@ C    14.381768410313    10.229858825919     2.459512146748
 -10.0 1.0              Cpt, specie 0 selected probability, insert probability (other species uses seperate lines)
 
   SimAn
-10  10						How many steps before move to next temperature; How many MD steps before use acceptance rule
+1000  10						How many steps before move to next temperature; How many MD steps before use acceptance rule
 1000.0 300.0 1.01			Initial temperature; Minimal temperature; cooling parameter
