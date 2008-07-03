@@ -114,6 +114,9 @@ int siman()
 				fprintf(stdout, "    %10d  %8d %10.4le %10.4le %10.4le %10.4le\n",
 				istep, ii, utot*epsilon_base,
 				upot*epsilon_base, ukin*epsilon_base, tinst*epsilon_base);
+				fprintf(fplog, "    %10d  %8d %10.4le %10.4le %10.4le %10.4le\n",
+				istep, ii, utot*epsilon_base,
+				upot*epsilon_base, ukin*epsilon_base, tinst*epsilon_base);
 			}
 
 		}

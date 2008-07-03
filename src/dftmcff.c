@@ -66,12 +66,14 @@ int fnMetalClusterFF()
 	double energy;
 	
 	// Convert to real units for Fortran subroutines
+	/*
 	for (ii=0;ii<natom;ii++)
 	{
 		xx[ii] *= sigma_base;
 		yy[ii] *= sigma_base;
 		zz[ii] *= sigma_base;
 	}
+	*/
 
 	// energy calculation
 	ffieldcu_(&natom, &ndata, xx, yy, zz, &energy);
@@ -107,12 +109,14 @@ int fnMetalClusterFF()
 	}
 	
 	// Convert back to reduced units 
+	/*
 	for (ii=0;ii<natom;ii++)
 	{
 		xx[ii] /= sigma_base;
 		yy[ii] /= sigma_base;
 		zz[ii] /= sigma_base;
 	}
+	*/
 
 	return 0;
 }

@@ -49,6 +49,8 @@ int echo()
 	case HYBRID_MONTE_CARLO:
 		strcpy(szSimulation, "HMC");
 		break;
+	case SIMULATED_ANNEALING:
+		strcpy(szSimulation, "Simulation Annealing");
 	default:
 		break;
 	}
