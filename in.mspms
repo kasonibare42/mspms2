@@ -91,5 +91,5 @@ C    14.381768410313    10.229858825919     2.459512146748
 -10.0 1.0              Cpt, specie 0 selected probability, insert probability (other species uses seperate lines)
 
   SimAn
-10  1						How many steps before move to next temperature; How many MD steps before use acceptance rule
+10  1						How many steps before move to next temperature; print step for a single temperature 
 1000.0 300.0 1.01			Initial temperature; Minimal temperature; cooling parameter
