@@ -15,18 +15,18 @@ Title: Copper cluster simulation.
 0                      isLJlrcOn
 0                      isLJswitchOn
 1                      Starting option (1-new;2-continue;3-old config only)
-1000                   Number of total steps
-500                    Number of equilibrium steps
-100                    Number of average steps
+10                     Number of total steps
+5                      Number of equilibrium steps
+1                      Number of average steps
 1                      Number of print steps
 100                    Number of save steps
-100                    Number of snapshots steps
+5                      Number of snapshots steps
 0                      Number of trajectory steps
 0.1                    Time step, delt (fs)
 1                      Number of inner steps (can NOT be zero, 1 is the minimum)
 0.0                    1,4 LJ modifier (0.0 for no 14 TraPPE, 0.5 for OPLS)
-2                      Simulation type (0-MD;1-HMC)
-1                      Ensemble type (0-nve;1-nvt;2-npt)
+0                      Simulation type (0-MD;1-HMC)
+0                      Ensemble type (0-nve;1-nvt;2-npt)
 3                      Number of constraints
 0                      Inter-molecular potentials other than LJ (0-LJ;1-SG), Currently NOT used.
 0                      Electrostatic interaction type (0-no elec;1-ewald;2-wolf;3-simple coulomb)
