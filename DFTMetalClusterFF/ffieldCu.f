@@ -8,18 +8,20 @@ c  ndata - number of clusters with nsize
 c
 c  x,y,z - coordinates of atoms in the cluster
 c
-c  test  - tests di-clusters to ensure proper break-up 
+c  revised (7/30/08) to include analytical derivatives for nsize>25
 c
 c234567
 c     implicit none
 c     integer i,n,nsize,ndata
-c     parameter (nsize=20,ndata=217)
-c     real*8 x(2*nsize),y(2*nsize),z(2*nsize),energy,e
+c     parameter (nsize=32,ndata=1)
+c     real*8 x(nsize),y(nsize),z(nsize),energy,e,eps,
+c    #       xp(nsize),yp(nsize),zp(nsize),ex,ey,ez,
+c    #       dfx(nsize),dfy(nsize),dfz(nsize)
+c     parameter (eps=1.d-7)
 c     character*2 atom
-c     logical test
-c     parameter (test=.true.)
 
 c     open(10,file='ffield.out',status='unknown')
+c     open(30,file='ffield.dump',status='unknown')
 
 c     if(nsize.eq.2)open(20,file='Cu2data',status='old')
 c     if(nsize.eq.3)open(20,file='Cu3data',status='old')
@@ -67,23 +69,30 @@ c     if(nsize.eq.4000)open(20,file='Cu4000data',status='old')
 c     do 100 n=1,ndata
 c     read(20,*)
 c     read(20,*)e   !  DFT energy
-c     if(test)then
 c     do i=1,nsize
-c       read(20,*)atom,x(i),y(i),z(i)
-c       x(nsize+i)=x(i)+40.d0
-c       y(nsize+i)=y(i)
-c       z(nsize+i)=z(i)
+c     read(20,*)atom,x(i),y(i),z(i)
+c     xp(i)=x(i)
+c     yp(i)=y(i)
+c     zp(i)=z(i)
 c     end do
 c     read(20,*)
-c     call ffield(2*nsize,ndata,x,y,z,energy)
-c     write(10,*)2*nsize,n,e/nsize,energy
-c     else
-c     do i=1,nsize
-c       read(20,*)atom,x(i),y(i),z(i)
-c     end do
-c     read(20,*)
-c     call ffield(nsize,ndata,x,y,z,energy)
+c     call ffield(nsize,x,y,z,energy)
 c     write(10,*)nsize,n,e/nsize,energy
+c     if(nsize.gt.25)then
+c     call dfield(nsize,x,y,z,dfx,dfy,dfz)
+c     do i=1,nsize             
+c     xp(i)=x(i)+eps   ! check against finite difference
+c     yp(i)=y(i)+eps
+c     zp(i)=z(i)+eps
+c     call ffield(nsize,xp,y,z,ex)
+c     call ffield(nsize,x,yp,z,ey)
+c     call ffield(nsize,x,y,zp,ez)
+c     write(30,'(2(i2,1x),6(e10.3,1x))')n,i,(ex-energy)/eps,dfx(i),
+c    #               (ey-energy)/eps,dfy(i),(ez-energy)/eps,dfz(i)
+c     xp(i)=x(i)
+c     yp(i)=y(i)
+c     zp(i)=z(i)
+c     end do
 c     endif
 c100  continue
 c  
@@ -91,6 +100,74 @@ c     stop
 c     end
 
 
+c*****************************************************************
+c
+c  FF code to evaluate analytical derivatives of Q-SC model
+c
+c234567
+      subroutine dfield(nm,x,y,z,dfx,dfy,dfz)
+      implicit none
+      integer nm,nmax,i,j
+      parameter (nmax=4000)
+      real*8 x(nm),y(nm),z(nm),dfx(nm),dfy(nm),dfz(nm),
+     #       r(nmax,nmax),rho(nmax),eij,cij,aij,rij,rsq,
+     #       xij,yij,zij,sum1,sum2,sum3,dvax,dvay,dvaz,
+     #       dvrx,dvry,dvrz
+
+      if(nm.gt.nmax)write(*,*)'dimension error in dfield'
+
+      eij=5.35d-3
+      cij=84.843d0
+      aij=3.603d0
+
+      do i=1,nm
+      sum1=0.d0
+      do j=1,nm
+        rsq=(x(i)-x(j))**2+(y(i)-y(j))**2+(z(i)-z(j))**2
+        r(i,j)=sqrt(rsq)
+        rij=r(i,j)
+        if(j.ne.i)sum1=sum1+(aij/rij)**5
+      end do
+      rho(i)=dsqrt(sum1)
+      end do
+
+      sum1=0.d0
+      sum2=0.d0
+      sum3=0.d0
+      do i=1,nm
+      dvrx=0.d0
+      dvax=0.d0
+      dvry=0.d0
+      dvay=0.d0
+      dvrz=0.d0
+      dvaz=0.d0
+      do j=1,nm
+        rij=r(i,j)
+        xij=x(i)-x(j)
+        yij=y(i)-y(j)
+        zij=z(i)-z(j)
+        if(j.ne.i)then
+          dvrx=dvrx-10.d0*aij**10.d0*xij/rij**12.d0
+          dvax=dvax-5.d0*aij**5.d0*xij/rij**7.d0/2.d0/rho(i)
+     #             -5.d0*aij**5.d0*xij/rij**7.d0/2.d0/rho(j)
+          dvry=dvry-10.d0*aij**10.d0*yij/rij**12.d0
+          dvay=dvay-5.d0*aij**5.d0*yij/rij**7.d0/2.d0/rho(i)
+     #             -5.d0*aij**5.d0*yij/rij**7.d0/2.d0/rho(j)
+          dvrz=dvrz-10.d0*aij**10.d0*zij/rij**12.d0
+          dvaz=dvaz-5.d0*aij**5.d0*zij/rij**7.d0/2.d0/rho(i)
+     #             -5.d0*aij**5.d0*zij/rij**7.d0/2.d0/rho(j)
+        endif
+      end do
+      sum1=eij*dvrx-cij*eij*dvax
+      sum2=eij*dvry-cij*eij*dvay
+      sum3=eij*dvrz-cij*eij*dvaz
+      dfx(i)=sum1/nm
+      dfy(i)=sum2/nm
+      dfz(i)=sum3/nm
+      end do
+
+      return
+      end
 
 c*****************************************************************
 c

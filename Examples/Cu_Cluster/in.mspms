@@ -15,14 +15,14 @@ Title: Copper cluster simulation.
 0                      isLJlrcOn
 0                      isLJswitchOn
 1                      Starting option (1-new;2-continue;3-old config only)
-10                     Number of total steps
-5                      Number of equilibrium steps
-1                      Number of average steps
+1000                     Number of total steps
+100                      Number of equilibrium steps
+100                      Number of average steps
 1                      Number of print steps
 100                    Number of save steps
-5                      Number of snapshots steps
+100                    Number of snapshots steps
 0                      Number of trajectory steps
-0.1                    Time step, delt (fs)
+2.0                    Time step, delt (fs)
 1                      Number of inner steps (can NOT be zero, 1 is the minimum)
 0.0                    1,4 LJ modifier (0.0 for no 14 TraPPE, 0.5 for OPLS)
 0                      Simulation type (0-MD;1-HMC)
