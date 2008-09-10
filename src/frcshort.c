@@ -19,7 +19,6 @@
 /// Calcualte hard force interactions, bond, angle, dih etc.
 int frcshort()
 {
-	/*
 	int ii, isum_atom, isum_mole;
 	PSAMPLE_MOLECULE pSampleMole;
 	int iSpecie, iMole, iAtom, iabs;
@@ -93,7 +92,6 @@ int frcshort()
 	// printf("udih=%lf\n",udih*epsilon_base*RGAS);
 	// printf("uimp=%lf\n",uimp*epsilon_base*RGAS);
 	 
-	 */
 	
 	return 0;
 }

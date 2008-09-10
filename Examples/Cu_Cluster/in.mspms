@@ -2,8 +2,8 @@ Title: Copper cluster simulation.
 1024                   Random seed: IJ
 768                    Random seed: JK
 1.0                    Sigma(A) !!!Do NOT Change!!!!
-32.0                   Epsilon(K)
-3.3474                 Mass(*1.0e-27 kg/molecule)
+1.0                    Epsilon(K)
+1.0                    Mass(*1.0e-27 kg/molecule)
 1000.0                 Temperature (K)
 0.08                   Pressure (bar)
 100.0                  Box length (A)

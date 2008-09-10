@@ -40,7 +40,7 @@ int frclong()
 	{
 		fxl[ii] = fyl[ii] = fzl[ii] = 0.0;
 	}
-	/*
+	
 	uvdw = 0.0;
 	ushift = 0.0;
 	uelec = 0.0;
@@ -1208,18 +1208,15 @@ int frclong()
 	}
 	// End of Solid-Fluid interactions ----------------------------------------------------
 	
-	*/
-	
 	uotherff = 0.0;
 	// Calculate metal cluster energy if necessary.
-	// if (iExternal_FF_type == FF_DFT_METAL_CLUSTER)
+	if (iExternal_FF_type == FF_DFT_METAL_CLUSTER)
 	{
 		fnMetalClusterFF(); // Currently, only for the whole system. No single calculation is allowed!
 	}
 
 	// Set the inter-molecular energy
-	uinter = // uvdw + uelec + usflj + 
-	         uotherff;
+	uinter = uvdw + uelec + usflj + uotherff;
 
 	// printf("uvdw = %lf, %lf, %lf\n", uvdw*epsilon_base*RGAS, epsilon_base, RGAS);
 	// printf("ureal=%lf, uexcl=%lf\n", ureal*epsilon_base*RGAS, uexcl*epsilon_base*RGAS);

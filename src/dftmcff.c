@@ -66,6 +66,7 @@ int fnMetalClusterFF()
 	int ndata; // no use at all, just for consistency with the FORTRAN code
 	double energy;
 
+	// sigma_base must be set to 1.0 since the following code is commented out.
 	// Convert to real units for Fortran subroutines
 	// The reduced unit of length has to be 1 Angstrom to ensure the following code
 	// to be commented out correctly
