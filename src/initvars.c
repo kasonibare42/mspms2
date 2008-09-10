@@ -536,6 +536,26 @@ int init_vars()
 
 	fprintf(stderr,"Initializing variables...\n");
 	fprintf(fpouts, "Initializing variables...\n");
+	
+	for (ii=0;ii<natom;ii++)
+	{
+		fxl[ii] = fyl[ii] = fzl[ii] = 0.0;
+		fxs[ii] = fys[ii] = fzs[ii] = 0.0;
+	}
+	uvdw = 0.0;
+	ushift = 0.0;
+	uelec = 0.0;
+	ureal = 0.0;
+	uexcl = 0.0;
+	ucoulomb = 0.0;
+	virial_inter = 0.0;
+	uinter = 0.0;
+	ubond = 0.0;
+	uangle = 0.0;
+	udih = 0.0;
+	uimp = 0.0;
+	virial_intra = 0.0;
+	uintra = 0.0;
 
 	/// Initiate file variables, LOG, TRAJECTORY\n
 	/// Output file is initialized already at the very beginning of the run.
@@ -653,7 +673,7 @@ int init_vars()
 		// calculate the total lj lrc
 		calculate_ljlrc();
 	}
-
+	
 	// if not new run, load from old file
 	if (iStart_option!=NEW)
 	{

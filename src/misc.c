@@ -23,6 +23,11 @@ int printit()
 	istep,utot*epsilon_base, upot*epsilon_base, ukin*epsilon_base,
 	tinst*epsilon_base, pinst, boxv);
 
+	fprintf(fplog,"%10d %10.4le %10.4le %10.4le %10.4le %10.4le %10.4le\n",
+	istep,utot*epsilon_base, upot*epsilon_base, ukin*epsilon_base,
+	tinst*epsilon_base, pinst, boxv);
+
+	/*
 	fprintf(
 			fplog,
 			"%10d %10.4le %10.4le %10.4le %10.4le %10.4le %10.4le %10.4le %10.4le %10.4le ",
@@ -35,6 +40,7 @@ int printit()
 			virial_intra);
 
 	fprintf(fplog, "%10.4le %10.4le %10.4le\n", utsbs, pinst, boxv);
+	*/
 
 	return 0;
 }

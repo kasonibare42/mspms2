@@ -8,18 +8,20 @@ c  ndata - number of clusters with nsize
 c
 c  x,y,z - coordinates of atoms in the cluster
 c
-c  test  - tests di-clusters to ensure proper break-up 
+c  revised (7/30/08) to include analytical derivatives for nsize>25
 c
 c234567
 c     implicit none
 c     integer i,n,nsize,ndata
-c     parameter (nsize=20,ndata=217)
-c     real*8 x(2*nsize),y(2*nsize),z(2*nsize),energy,e
+c     parameter (nsize=32,ndata=1)
+c     real*8 x(nsize),y(nsize),z(nsize),energy,e,eps,
+c    #       xp(nsize),yp(nsize),zp(nsize),ex,ey,ez,
+c    #       dfx(nsize),dfy(nsize),dfz(nsize)
+c     parameter (eps=1.d-7)
 c     character*2 atom
-c     logical test
-c     parameter (test=.true.)
 
 c     open(10,file='ffield.out',status='unknown')
+c     open(30,file='ffield.dump',status='unknown')
 
 c     if(nsize.eq.2)open(20,file='Cu2data',status='old')
 c     if(nsize.eq.3)open(20,file='Cu3data',status='old')
@@ -67,23 +69,30 @@ c     if(nsize.eq.4000)open(20,file='Cu4000data',status='old')
 c     do 100 n=1,ndata
 c     read(20,*)
 c     read(20,*)e   !  DFT energy
-c     if(test)then
 c     do i=1,nsize
-c       read(20,*)atom,x(i),y(i),z(i)
-c       x(nsize+i)=x(i)+40.d0
-c       y(nsize+i)=y(i)
-c       z(nsize+i)=z(i)
+c     read(20,*)atom,x(i),y(i),z(i)
+c     xp(i)=x(i)
+c     yp(i)=y(i)
+c     zp(i)=z(i)
 c     end do
 c     read(20,*)
-c     call ffield(2*nsize,ndata,x,y,z,energy)
-c     write(10,*)2*nsize,n,e/nsize,energy
-c     else
-c     do i=1,nsize
-c       read(20,*)atom,x(i),y(i),z(i)
-c     end do
-c     read(20,*)
-c     call ffield(nsize,ndata,x,y,z,energy)
+c     call ffield(nsize,x,y,z,energy)
 c     write(10,*)nsize,n,e/nsize,energy
+c     if(nsize.gt.25)then
+c     call dfield(nsize,x,y,z,dfx,dfy,dfz)
+c     do i=1,nsize             
+c     xp(i)=x(i)+eps   ! check against finite difference
+c     yp(i)=y(i)+eps
+c     zp(i)=z(i)+eps
+c     call ffield(nsize,xp,y,z,ex)
+c     call ffield(nsize,x,yp,z,ey)
+c     call ffield(nsize,x,y,zp,ez)
+c     write(30,'(2(i2,1x),6(e10.3,1x))')n,i,(ex-energy)/eps,dfx(i),
+c    #               (ey-energy)/eps,dfy(i),(ez-energy)/eps,dfz(i)
+c     xp(i)=x(i)
+c     yp(i)=y(i)
+c     zp(i)=z(i)
+c     end do
 c     endif
 c100  continue
 c  
@@ -91,11 +100,80 @@ c     stop
 c     end
 
 
+c*****************************************************************
+c
+c  FF code to evaluate analytical derivatives of Q-SC model
+c
+c234567
+      subroutine dfield(nm,x,y,z,dfx,dfy,dfz)
+      implicit none
+      integer nm,nmax,i,j
+      parameter (nmax=4000)
+      real*8 x(nm),y(nm),z(nm),dfx(nm),dfy(nm),dfz(nm),
+     #       r(nmax,nmax),rho(nmax),eij,cij,aij,rij,rsq,
+     #       xij,yij,zij,sum1,sum2,sum3,dvax,dvay,dvaz,
+     #       dvrx,dvry,dvrz
 
+      if(nm.gt.nmax)write(*,*)'dimension error in dfield'
+
+      eij=5.35d-3
+      cij=84.843d0
+      aij=3.603d0
+
+      do i=1,nm
+      sum1=0.d0
+      do j=1,nm
+        rsq=(x(i)-x(j))**2+(y(i)-y(j))**2+(z(i)-z(j))**2
+        r(i,j)=sqrt(rsq)
+        rij=r(i,j)
+        if(j.ne.i)sum1=sum1+(aij/rij)**5
+      end do
+      rho(i)=dsqrt(sum1)
+      end do
+
+      sum1=0.d0
+      sum2=0.d0
+      sum3=0.d0
+      do i=1,nm
+      dvrx=0.d0
+      dvax=0.d0
+      dvry=0.d0
+      dvay=0.d0
+      dvrz=0.d0
+      dvaz=0.d0
+      do j=1,nm
+        rij=r(i,j)
+        xij=x(i)-x(j)
+        yij=y(i)-y(j)
+        zij=z(i)-z(j)
+        if(j.ne.i)then
+          dvrx=dvrx-10.d0*aij**10.d0*xij/rij**12.d0
+          dvax=dvax-5.d0*aij**5.d0*xij/rij**7.d0/2.d0/rho(i)
+     #             -5.d0*aij**5.d0*xij/rij**7.d0/2.d0/rho(j)
+          dvry=dvry-10.d0*aij**10.d0*yij/rij**12.d0
+          dvay=dvay-5.d0*aij**5.d0*yij/rij**7.d0/2.d0/rho(i)
+     #             -5.d0*aij**5.d0*yij/rij**7.d0/2.d0/rho(j)
+          dvrz=dvrz-10.d0*aij**10.d0*zij/rij**12.d0
+          dvaz=dvaz-5.d0*aij**5.d0*zij/rij**7.d0/2.d0/rho(i)
+     #             -5.d0*aij**5.d0*zij/rij**7.d0/2.d0/rho(j)
+        endif
+      end do
+      sum1=eij*dvrx-cij*eij*dvax
+      sum2=eij*dvry-cij*eij*dvay
+      sum3=eij*dvrz-cij*eij*dvaz
+      dfx(i)=sum1/nm
+      dfy(i)=sum2/nm
+      dfz(i)=sum3/nm
+      end do
+
+      return
+      end
 
 c*****************************************************************
 c
 c  FF code to evaluate the energy of a copper cluster
+c
+c  revised (7/17/08) to include Q-SC model for large clusters
 c
 c234567
       subroutine ffield(nm,x,y,z,ff)
@@ -114,7 +192,9 @@ c234567
      #       gamma1,gamma2,gamma3,gamma4,gamma5,gamma6,gamma7,
      #       seq,betaq,gc(nmax,nmax),sum1,sum2,sum3,delta0,
      #       sum4,sum5,sum6,sum7,sum8,anew,bnew,cnew,dnew,
-     #       defect1,defect2,defect3,defect4,coeff1,fcclimit
+     #       defect1,defect2,defect3,defect4,coeff1,fcclimit,
+     #       sav1(nm),sav2(nm),sav3(nm),sav4(nm),sav5(nm),
+     #       sav6(nm),sav7(nm),sav8(nm),eij,cij,aij,rij,ncutoff
       character*2 atom
       external scale
  
@@ -142,6 +222,16 @@ c     write(*,*)coeff1
         sum=sum+fc(i,j)
       end do
       lc(i)=sum-1
+      call scale(defect1,defect2,defect3,defect4,
+     #              a0,alpha1,delta0,delta1,sum)
+      sav1(i)=defect1
+      sav2(i)=defect2
+      sav3(i)=defect3
+      sav4(i)=defect4
+      sav5(i)=a0
+      sav6(i)=alpha1
+      sav7(i)=delta0
+      sav8(i)=delta1
       end do
    
       do i=1,nm
@@ -163,52 +253,21 @@ c     write(*,*)coeff1
 c     write(55,*)i,lc(i)+1,nc(i)+1,mc(i)+1
       end do
 
-      sum1=0.d0
-      sum2=0.d0
-      sum3=0.d0
-      sum4=0.d0
-      sum5=0.d0
-      sum6=0.d0
-      sum7=0.d0
-      sum8=0.d0
+      ncutoff=24
       do i=1,nm
-      sum=lc(i)+1
-      call scale(a1,c1,d1,h1,defect1,defect2,
-     #   defect3,defect4,alpha1,delta1,delta0,sum)
-      sum1=sum1+a1
-c     sum2=sum2+c1
-c     sum3=sum3+d1
-c     sum4=sum4+h1
-      sum2=sum2+alpha1
-      sum3=sum3+delta1
-      sum4=sum4+delta0
-      sum5=sum5+defect1
-      sum6=sum6+defect2
-      sum7=sum7+defect3
-      sum8=sum8+defect4
-      end do
-      a1=sum1/nm
-c     c1=sum2/nm
-c     d1=sum3/nm
-c     h1=sum4/nm
-      alpha1=sum2/nm
-      delta1=sum3/nm
-      delta0=sum4/nm
-      defect1=sum5/nm
-      defect2=sum6/nm
-      defect3=sum7/nm
-      defect4=sum8/nm
-
-c     write(66,*)a1,alpha1,delta1,delta0
-c     write(77,*)defect1,defect2,defect3,defect4
-
-      do i=1,nm
+      if(lc(i).gt.ncutoff)go to 100
+      a1=sav5(i)
+      alpha1=sav6(i)
+      delta0=sav7(i)
+      delta1=sav8(i)
       do j=1,nm
+      if(lc(j).gt.ncutoff)write(*,*)'warning, j=',j
       if(i.eq.j .or. fc(i,j).eq.0.d0)then
       b1(i,j)=0.d0
       else
       term1=0.d0
       do k=1,nm
+        if(lc(k).gt.ncutoff)write(*,*)'warning, k=',k
         if(k.ne.i .and. k.ne.j .and. fc(i,k).ne.0.d0)then
         arg1=alpha1*(r(i,j)-r(i,k))
         if(lc(i).lt.0)then
@@ -222,44 +281,56 @@ c     write(77,*)defect1,defect2,defect3,defect4
         endif
         term1=term1+a1*g1*fc(i,k)*exp(arg1)
       end do
-      arg1=max(0,min(8,mc(i)+mc(j)-2*gc(i,j)-2.d0))
-      delta2=delta0+delta1*arg1
-      b1(i,j)=(1.d0+term1)**(-delta2)
-c     write(88,*)mc(i)+mc(j)-2*gc(i,j)-2,delta2,b1(i,j)
+      arg2=max(0,min(8,mc(i)+mc(j)-2*gc(i,j)-2.d0))
+      b1(i,j)=(1.d0+term1)**(-delta0-delta1*arg2)
       endif
       end do
+ 100  continue
       end do
 
       sum=0.d0
-      do i=1,nm-1
+      do i=1,nm
+      if(lc(i).gt.ncutoff)then
+      vr=0.d0
+      va=0.d0
+c     eij=5.7921d-3
+      eij=5.35d-3
+      cij=84.843d0
+      aij=3.603d0
+      do j=1,nm
+        rij=r(i,j)
+        if(j.eq.i)then
+          vr=vr
+          va=va
+        else
+          vr=vr+(aij/rij)**10.d0
+          va=va+(aij/rij)**5.d0
+        endif
+      end do
+      sum=sum+eij*vr/2.d0-cij*eij*sqrt(va)
+      go to 200
+      endif
+      g1=sav1(i)
+      g2=sav2(i)
+      g3=sav3(i)
+      g4=sav4(i)
       do j=i+1,nm
+        if(lc(j).gt.ncutoff)write(*,*)'warning, j=',j
         bsym1=(b1(i,j)+b1(j,i))/2.d0
-c       arg1=max(0,min(22,anew*(mc(i)+mc(j)-2*gc(i,j))))
-c       arg2=max(0,min(22,bnew*(mc(i)+mc(j)-2*gc(i,j))))
-c       arg3=max(0,min(22,cnew*(mc(i)+mc(j)-2*gc(i,j))))
-c       arg4=max(0,min(22,dnew*(mc(i)+mc(j)-2*gc(i,j))))
-c       arg1=max(0,min(21,anew*(mc(i)+mc(j)-2*gc(i,j)-1.d0)))
-c       arg2=max(0,min(21,bnew*(mc(i)+mc(j)-2*gc(i,j)-1.d0)))
-c       arg3=max(0,min(21,cnew*(mc(i)+mc(j)-2*gc(i,j)-1.d0)))
-c       arg4=max(0,min(21,dnew*(mc(i)+mc(j)-2*gc(i,j)-1.d0)))
-c       arg1=max(0,min(20,anew*(mc(i)+mc(j)-2*gc(i,j)-2.d0)))
-c       arg2=max(0,min(20,bnew*(mc(i)+mc(j)-2*gc(i,j)-2.d0)))
-c       arg3=max(0,min(20,cnew*(mc(i)+mc(j)-2*gc(i,j)-2.d0)))
-c       arg4=max(0,min(20,dnew*(mc(i)+mc(j)-2*gc(i,j)-2.d0)))
         arg1=max(0,min(8,anew*(mc(i)+mc(j)-2*gc(i,j)-2.d0)))
         arg2=max(0,min(8,bnew*(mc(i)+mc(j)-2*gc(i,j)-2.d0)))
         arg3=max(0,min(8,cnew*(mc(i)+mc(j)-2*gc(i,j)-2.d0)))
         arg4=max(0,min(8,dnew*(mc(i)+mc(j)-2*gc(i,j)-2.d0)))
-        deq=de+defect1*arg1
-        req=re+defect2*arg2
-        seq=se+defect3*arg3
-        betaq=beta+defect4*arg4
-c       write(99,*)mc(i)+mc(j)-2*gc(i,j)-2,deq,req,seq,betaq,bsym1
+        deq=de+g1*arg1
+        req=re+g2*arg2
+        seq=se+g3*arg3
+        betaq=beta+g4*arg4
         vr=deq/(seq-1.d0)*exp(-(sqrt(2*seq)*betaq*(r(i,j)-req)))
         va=deq*seq/(seq-1.d0)*exp(-(sqrt(2/seq)*betaq*(r(i,j)-req)))
         sum=sum+fc(i,j)*(vr-va)*bsym1
 c       write(99,*)r(i,j),fc(i,j)*(vr-va),fc(i,j)*(vr-va)*bsym1
       end do
+ 200  continue
       end do
 
       ff=sum/nm
@@ -305,16 +376,12 @@ c234567
 c************************************************************
 c
 c234567
-      subroutine scale(a1,c1,d1,h1,shift1,shift2,shift3,shift4,
-     #                             alpha1,delta1,delta0,n)
+      subroutine scale(shift1,shift2,shift3,shift4,
+     #                   a1,alpha1,delta0,delta1,n)
       implicit none
-      real*8 a1,c1,d1,h1,shift1,shift2,shift3,shift4,n,
-     #       alpha1,delta1,delta0
+      real*8 shift1,shift2,shift3,shift4,a1,alpha1,
+     #       delta0,delta1,n
  
-      c1=0.d0
-      d1=1.d0
-      h1=0.d0
-
       if(n.le.2)then
       a1=1.d0
       shift1=0.d0
@@ -434,7 +501,7 @@ c234567
       delta0=0.55d0
       elseif(n.gt.14 .and. n.le.18)then
       a1=1.d0
-      shift1=-0.02d0  
+      shift1=-0.02d0
       shift2=0.0299d0
       shift3=0.d0
       shift4=0.d0

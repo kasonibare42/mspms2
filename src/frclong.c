@@ -36,6 +36,11 @@ int frclong()
 	double uij, fij, uijshift;
 	double fxij, fyij, fzij;
 
+	for (ii=0; ii<natom; ii++)
+	{
+		fxl[ii] = fyl[ii] = fzl[ii] = 0.0;
+	}
+	
 	uvdw = 0.0;
 	ushift = 0.0;
 	uelec = 0.0;
@@ -43,10 +48,6 @@ int frclong()
 	uexcl = 0.0;
 	ucoulomb = 0.0;
 	virial_inter = 0.0;
-	for (ii=0; ii<natom; ii++)
-	{
-		fxl[ii] = fyl[ii] = fzl[ii] = 0.0;
-	}
 
 	// Start of inter-molecule interactions --------------------------------------------------------------------------------------
 	isum_atom = 0; // Count atoms for iSpecie

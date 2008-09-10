@@ -1,10 +1,10 @@
 Title: Copper cluster simulation.
 1024                   Random seed: IJ
 768                    Random seed: JK
-3.0                    Sigma(A)
-32.0                   Epsilon(K)
-3.3474                 Mass(*1.0e-27 kg/molecule)
-1000.0                  Temperature (K)
+1.0                    Sigma(A) !!!Do NOT Change!!!!
+1.0                    Epsilon(K)
+1.0                    Mass(*1.0e-27 kg/molecule)
+1000.0                 Temperature (K)
 0.08                   Pressure (bar)
 100.0                  Box length (A)
 100.0                  Box width (A)
@@ -15,17 +15,17 @@ Title: Copper cluster simulation.
 0                      isLJlrcOn
 0                      isLJswitchOn
 1                      Starting option (1-new;2-continue;3-old config only)
-1000                   Number of total steps
-500                    Number of equilibrium steps
-100                    Number of average steps
+1000                     Number of total steps
+100                      Number of equilibrium steps
+100                      Number of average steps
 1                      Number of print steps
 100                    Number of save steps
 100                    Number of snapshots steps
 0                      Number of trajectory steps
-0.1                    Time step, delt (fs)
+2.0                    Time step, delt (fs)
 1                      Number of inner steps (can NOT be zero, 1 is the minimum)
 0.0                    1,4 LJ modifier (0.0 for no 14 TraPPE, 0.5 for OPLS)
-2                      Simulation type (0-MD;1-HMC)
+2                      Simulation type (0-MD;1-HMC;2-Sim Aneal)
 1                      Ensemble type (0-nve;1-nvt;2-npt)
 3                      Number of constraints
 0                      Inter-molecular potentials other than LJ (0-LJ;1-SG), Currently NOT used.
@@ -43,7 +43,7 @@ Title: Copper cluster simulation.
 3                      Dimension(1,2,3 D)
 
    MDNVT
-1.0e-2   1.0e-2             qq qqs (outer and inner) Nose hoover thermostat mass, qq goes to infinity->NVE
+200      200                qq qqs (outer and inner) Nose hoover thermostat mass, qq goes to infinity->NVE
 
    MDNPT
 1.0e3 1.0e3            Qts Qbs (mass of thermostat, barostat), larger number = weaker coupling
