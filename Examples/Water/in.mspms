@@ -4,41 +4,41 @@ Title: Copper cluster simulation.
 1.0                    Sigma(A) !!!Do NOT Change!!!!
 1.0                    Epsilon(K)
 1.0                    Mass(*1.0e-27 kg/molecule)
-1000.0                 Temperature (K)
+298.0                  Temperature (K)
 0.08                   Pressure (bar)
-100.0                  Box length (A)
-100.0                  Box width (A)
-100.0                  Box height (A)
-20.0                   rcuton (A)
-20.0                   rcutoff (A)
-20.0                   rcutoffelec (A)
+130.9623                Box length (A)
+130.9623                Box width (A)
+130.9623                Box height (A)
+6.00                   rcuton (A)
+6.98                   rcutoff (A)
+6.98                   rcutoffelec (A)
 0                      isLJlrcOn
 0                      isLJswitchOn
 1                      Starting option (1-new;2-continue;3-old config only)
-1000                     Number of total steps
-100                      Number of equilibrium steps
-100                      Number of average steps
-1                      Number of print steps
-100                    Number of save steps
-10                     Number of snapshots steps
+10000                  Number of total steps
+5000                   Number of equilibrium steps
+500                    Number of average steps
+10                     Number of print steps
+1000                   Number of save steps
+100                    Number of snapshots steps
 0                      Number of trajectory steps
 1.0                    Time step, delt (fs)
-1                      Number of inner steps (can NOT be zero, 1 is the minimum)
+10                     Number of inner steps (can NOT be zero, 1 is the minimum)
 0.0                    1,4 LJ modifier (0.0 for no 14 TraPPE, 0.5 for OPLS)
-2                      Simulation type (0-MD;1-HMC;2-Sim Aneal)
-1                      Ensemble type (0-nve;1-nvt;2-npt)
+0                      Simulation type (0-MD;1-HMC;2-Sim Aneal)
+0                      Ensemble type (0-nve;1-nvt;2-npt)
 3                      Number of constraints
 0                      Inter-molecular potentials other than LJ (0-LJ;1-SG), Currently NOT used.
-0                      Electrostatic interaction type (0-no elec;1-ewald;2-wolf;3-simple coulomb)
+1                      Electrostatic interaction type (0-no elec;1-ewald;2-wolf;3-simple coulomb)
 0                      iSF_type (0-no sf;1-hypergeo;2-atomexplicit;3-tasos;4-my interp)
-1                      Other force fields (0-no other FF;1-metal cluster FF)
+0                      Other force fields (0-no other FF;1-metal cluster FF)
 
    Electrostatic
-0.2                    kappa ~4/cutoff (1/A)
-2                      kmaxx
-2                      kmaxy
-2                      kmaxz
-16                     ksqmax ~kappa*box length, kmax^2<ksqmax<3*kmax^2
+0.59                   kappa ~4/cutoff (1/A)
+8                      kmaxx
+8                      kmaxy
+8                      kmaxz
+128                    ksqmax ~kappa*box length, kmax^2<ksqmax<3*kmax^2
 1                      Boundary conditions(1-tinfoil,2-vaccum)
 3                      Dimension(1,2,3 D)
 

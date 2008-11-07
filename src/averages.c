@@ -53,7 +53,7 @@ int collect_aves()
 	accum[1][0] += upot;
 	accum[1][1] += upot*upot;
 	accum[2][0] += ukin;
-	accum[2][1] += ukin*upot;
+	accum[2][1] += ukin*ukin;
 	accum[3][0] += uinter;
 	accum[3][1] += uinter*uinter;
 	accum[4][0] += uintra;
