@@ -71,7 +71,8 @@
 #define SOLID_UNIFORM		1 ///< e.g. nanotoubes
 
 #define FF_NONE					0
-#define FF_DFT_METAL_CLUSTER	1
+#define FF_DFT_METAL_CLUSTER_Cu	1
+#define FF_DFT_METAL_CLUSTER_Ag	2
 
 #define NCOUNTS_MAX	40
 #define NUNIQUE_ATOM_MAX	5 ///< number of unqiue atoms for grid interpolation

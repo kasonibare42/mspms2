@@ -6,6 +6,7 @@ FFLAGS  = -O3
 
 OBJECTS = \
 ffieldCu.o\
+ffieldAg.o\
 
 SUFFIX = .f
 
@@ -21,7 +22,7 @@ $(TARGET): $(OBJECTS)
 clean :
 	rm -f *.o $(TARGET) *.mod 
 
-$(OBJECTS): ffieldCu.f
+$(OBJECTS): ffieldCu.f ffieldAg.f
 
 %.o: %.mod
 

@@ -13,6 +13,7 @@
 
 extern void ffield_(int* nm, double* x, double* y, double* z, double* ff);
 extern void dfield_(int* nm, double* x, double* y, double* z, double* dx, double* dy, double* dz);
+extern void ffieldag_(int* nm, double* x, double* y, double* z, double* ff, double* dx, double* dy, double* dz);
 
 /**
  * \ This is just a wrapper function for the actually fortran subroutine.
@@ -60,7 +61,7 @@ double deriv_ffieldcu(double pos, void* params)
 	return energy*EV_TO_K*natom/epsilon_base;
 }
 
-int fnMetalClusterFF()
+int fnMetalClusterFF_Cu()
 {
 	int ii;
 	int ndata; // no use at all, just for consistency with the FORTRAN code
@@ -139,3 +140,21 @@ int fnMetalClusterFF()
 
 	return 0;
 }
+
+int fnMetalClusterFF_Ag()
+{
+	int ii;
+	double energy;
+	ffieldag_(&natom, xx, yy, zz, &energy, fxl, fyl, fzl);
+	udftmcff = energy*EV_TO_K/epsilon_base;
+	udftmcff *= natom;
+	for (ii=0;ii<natom;ii++)
+	{
+		fxl[ii] = -fxl[ii]*natom*EV_TO_K/epsilon_base*sigma_base; 
+		fyl[ii] = -fyl[ii]*natom*EV_TO_K/epsilon_base*sigma_base; 
+		fzl[ii] = -fzl[ii]*natom*EV_TO_K/epsilon_base*sigma_base;
+	}
+	
+	return 0;
+}
+

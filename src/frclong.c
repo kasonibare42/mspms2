@@ -1210,9 +1210,13 @@ int frclong()
 	
 	uotherff = 0.0;
 	// Calculate metal cluster energy if necessary.
-	if (iExternal_FF_type == FF_DFT_METAL_CLUSTER)
+	if (iExternal_FF_type == FF_DFT_METAL_CLUSTER_Cu)
 	{
-		fnMetalClusterFF(); // Currently, only for the whole system. No single calculation is allowed!
+		fnMetalClusterFF_Cu(); // Currently, only for the whole system. No single calculation is allowed!
+	}
+	else if (iExternal_FF_type == FF_DFT_METAL_CLUSTER_Ag)
+	{
+		fnMetalClusterFF_Ag();
 	}
 
 	// Set the inter-molecular energy

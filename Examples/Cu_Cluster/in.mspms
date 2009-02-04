@@ -31,7 +31,7 @@ Title: Copper cluster simulation.
 0                      Inter-molecular potentials other than LJ (0-LJ;1-SG), Currently NOT used.
 0                      Electrostatic interaction type (0-no elec;1-ewald;2-wolf;3-simple coulomb)
 0                      iSF_type (0-no sf;1-hypergeo;2-atomexplicit;3-tasos;4-my interp)
-1                      Other force fields (0-no other FF;1-metal cluster FF)
+1                      Other force fields (0-no other FF;1-Cu metal cluster FF;2-Ag metal cluster FF)
 
    Electrostatic
 0.2                    kappa ~4/cutoff (1/A)
