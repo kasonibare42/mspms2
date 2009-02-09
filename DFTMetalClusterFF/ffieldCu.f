@@ -105,14 +105,14 @@ c
 c  FF code to evaluate analytical derivatives of Q-SC model
 c
 c234567
-      subroutine dfield(nm,x,y,z,dfx,dfy,dfz)
+      subroutine dfield(nm,x,y,z,dfx,dfy,dfz,boxlx,boxly,boxlz)
       implicit none
       integer nm,nmax,i,j
       parameter (nmax=4000)
       real*8 x(nm),y(nm),z(nm),dfx(nm),dfy(nm),dfz(nm),
      #       r(nmax,nmax),rho(nmax),eij,cij,aij,rij,rsq,
      #       xij,yij,zij,sum1,sum2,sum3,dvax,dvay,dvaz,
-     #       dvrx,dvry,dvrz
+     #       dvrx,dvry,dvrz, rxij, ryij, rzij, boxlx, boxly, boxlz
 
       if(nm.gt.nmax)write(*,*)'dimension error in dfield'
 
@@ -123,7 +123,18 @@ c234567
       do i=1,nm
       sum1=0.d0
       do j=1,nm
-        rsq=(x(i)-x(j))**2+(y(i)-y(j))**2+(z(i)-z(j))**2
+c       rsq=(x(i)-x(j))**2+(y(i)-y(j))**2+(z(i)-z(j))**2
+c minimum image convention
+        rxij = x(i) - x(j)
+        ryij = y(i) - y(j)
+        rzij = z(i) - z(j)
+c       write(*,*) '------------------------'
+c       write(*,*) rxij, ryij, rzij
+        rxij = rxij - boxlx*anint(rxij/boxlx)
+        ryij = ryij - boxly*anint(ryij/boxly)
+        rzij = rzij - boxlz*anint(rzij/boxlz)
+c       write(*,*) rxij, ryij, rzij
+        rsq = rxij**2 + ryij**2 + rzij**2
         r(i,j)=sqrt(rsq)
         rij=r(i,j)
         if(j.ne.i)sum1=sum1+(aij/rij)**5
@@ -146,6 +157,10 @@ c234567
         xij=x(i)-x(j)
         yij=y(i)-y(j)
         zij=z(i)-z(j)
+c MIC
+        xij = xij - boxlx*anint(xij/boxlx)
+        yij = yij - boxly*anint(yij/boxly)
+        zij = zij - boxlz*anint(zij/boxlz)
         if(j.ne.i)then
           dvrx=dvrx-10.d0*aij**10.d0*xij/rij**12.d0
           dvax=dvax-5.d0*aij**5.d0*xij/rij**7.d0/2.d0/rho(i)
@@ -176,7 +191,7 @@ c
 c  revised (7/17/08) to include Q-SC model for large clusters
 c
 c234567
-      subroutine ffield(nm,x,y,z,ff)
+      subroutine ffield(nm,x,y,z,ff,boxlx,boxly,boxlz)
       implicit none
       integer i,j,k,l,m,n,p,nmax,nm,ierror,lcount,lmax,ncoord
       parameter (nmax=4000)
@@ -194,7 +209,8 @@ c234567
      #       sum4,sum5,sum6,sum7,sum8,anew,bnew,cnew,dnew,
      #       defect1,defect2,defect3,defect4,coeff1,fcclimit,
      #       sav1(nm),sav2(nm),sav3(nm),sav4(nm),sav5(nm),
-     #       sav6(nm),sav7(nm),sav8(nm),eij,cij,aij,rij,ncutoff
+     #       sav6(nm),sav7(nm),sav8(nm),eij,cij,aij,rij,ncutoff,
+     #       rxij, ryij, rzij, boxlx, boxly, boxlz
       character*2 atom
       external scale
  
@@ -216,7 +232,15 @@ c     write(*,*)coeff1
       do i=1,nm
       sum=0.d0
       do j=1,nm
-        rsq=(x(i)-x(j))**2+(y(i)-y(j))**2+(z(i)-z(j))**2
+c       rsq=(x(i)-x(j))**2+(y(i)-y(j))**2+(z(i)-z(j))**2
+c minimum image convention
+        rxij = x(i) - x(j)
+        ryij = y(i) - y(j)
+        rzij = z(i) - z(j)
+        rxij = rxij - boxlx*anint(rxij/boxlx)
+        ryij = ryij - boxly*anint(ryij/boxly)
+        rzij = rzij - boxlz*anint(rzij/boxlz)
+        rsq = rxij**2 + ryij**2 + rzij**2
         r(i,j)=sqrt(rsq)
         fc(i,j)=fcutoff(r(i,j),1)
         sum=sum+fc(i,j)

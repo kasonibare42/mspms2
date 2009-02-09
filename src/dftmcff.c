@@ -11,9 +11,9 @@
 #include <gsl/gsl_deriv.h>
 #include "mspms2.h"
 
-extern void ffield_(int* nm, double* x, double* y, double* z, double* ff);
-extern void dfield_(int* nm, double* x, double* y, double* z, double* dx, double* dy, double* dz);
-extern void ffieldag_(int* nm, double* x, double* y, double* z, double* ff, double* dx, double* dy, double* dz);
+extern void ffield_(int* nm, double* x, double* y, double* z, double* ff, double* boxlx, double* boxly, double* boxlz);
+extern void dfield_(int* nm, double* x, double* y, double* z, double* dx, double* dy, double* dz, double* boxlx, double* boxly, double* boxlz);
+extern void ffieldag_(int* nm, double* x, double* y, double* z, double* ff, double* dx, double* dy, double* dz, double* boxlx, double* boxly, double* boxlz);
 
 /**
  * \ This is just a wrapper function for the actually fortran subroutine.
@@ -22,7 +22,7 @@ extern void ffieldag_(int* nm, double* x, double* y, double* z, double* ff, doub
  */
 void ffieldcu_(int* nm, int* ndata, double* x, double* y, double* z, double* ff)
 {
-	ffield_(nm, x, y, z, ff);
+	ffield_(nm, x, y, z, ff, &boxlx, &boxly, &boxlz);
 }
 
 double deriv_ffieldcu(double pos, void* params)
@@ -90,7 +90,7 @@ int fnMetalClusterFF_Cu()
 
 	if (natom > 25)
 	{
-		dfield_(&natom, xx, yy, zz, fxl, fyl, fzl);
+		dfield_(&natom, xx, yy, zz, fxl, fyl, fzl, &boxlx, &boxly, &boxlz);
 		for (ii=0;ii<natom;ii++)
 		{
 			fxl[ii] = -fxl[ii]*natom*EV_TO_K/epsilon_base*sigma_base;
@@ -145,7 +145,7 @@ int fnMetalClusterFF_Ag()
 {
 	int ii;
 	double energy;
-	ffieldag_(&natom, xx, yy, zz, &energy, fxl, fyl, fzl);
+	ffieldag_(&natom, xx, yy, zz, &energy, fxl, fyl, fzl, &boxlx, &boxly, &boxlz);
 	udftmcff = energy*EV_TO_K/epsilon_base;
 	udftmcff *= natom;
 	for (ii=0;ii<natom;ii++)

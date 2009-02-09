@@ -77,7 +77,7 @@ c  Computes derivatives using analytic formula for large-N
 c                       and finite differences for small-N 
 c
 c234567
-      subroutine ffieldag(nm,x,y,z,energy,dfx,dfy,dfz)
+      subroutine ffieldag(nm,x,y,z,energy,dfx,dfy,dfz,boxlx,boxly,boxlz)
       implicit none
       integer nm,nmax,i,j,ip,nlarge
       parameter (nmax=2000,nlarge=55)
@@ -114,7 +114,8 @@ c234567
      #       sum10,sum11,sum12,arg10,arg11,arg12,
      #       rmin1,rmax1,rmin2,rmax2,rmin3,rmax3,
      #       rmin4,rmax4,rmin5,rmax5,rmin6,rmax6,
-     #       rmin7,rmax7,rmin8,rmax8,rmin9,rmax9
+     #       rmin7,rmax7,rmin8,rmax8,rmin9,rmax9,
+     #       rxij, ryij, rzij, boxlx, boxly, boxlz
       data e1,c1,a1 /-0.165501,  0.178600,  0.044569/
       data e2,c2,a2 /-0.164846,  1.460703,  0.105401/
       data e3,c3,a3 / 0.171883, -1.488742, -0.112043/
@@ -145,7 +146,18 @@ c234567
       do i=1,nm
       sum=0.d0
       do j=1,nm
-        rsq=(x(i)-x(j))**2+(y(i)-y(j))**2+(z(i)-z(j))**2
+c       rsq=(x(i)-x(j))**2+(y(i)-y(j))**2+(z(i)-z(j))**2
+c minimum image convention
+        rxij = x(i) - x(j)
+        ryij = y(i) - y(j)
+        rzij = z(i) - z(j)
+c       write(*,*) '------------------------'
+c       write(*,*) rxij, ryij, rzij
+        rxij = rxij - boxlx*anint(rxij/boxlx)
+        ryij = ryij - boxly*anint(ryij/boxly)
+        rzij = rzij - boxlz*anint(rzij/boxlz)
+c       write(*,*) rxij, ryij, rzij
+        rsq = rxij**2 + ryij**2 + rzij**2
         r(i,j)=sqrt(rsq)
         gc(i,j)=fcutoffag(r(i,j),7.d0,10.d0)
         sum=sum+gc(i,j)
@@ -213,6 +225,10 @@ c234567
         xij=x(i)-x(j)
         yij=y(i)-y(j)
         zij=z(i)-z(j)
+c MIC
+        xij = xij - boxlx*anint(xij/boxlx)
+        yij = yij - boxly*anint(yij/boxly)
+        zij = zij - boxlz*anint(zij/boxlz)
         vr=vr+eij*(aij/rij)**10.d0
         va=va+(cij*eij)**2*(aij/rij)**5.d0
         dvrx=dvrx-10.d0*aij**10.d0*xij/rij**12.d0
